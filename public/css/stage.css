@@ -1,8 +1,8 @@
-/* Nhậu Đêm 134 – sân khấu 430 x 764 (9:16), phóng to vừa cửa sổ bằng transform scale (stage.js) */
+/* Nhậu Đêm 134 – sân khấu 430 x 764 (9:16), phóng to vừa cửa sổ bằng CSS zoom (stage.js) */
 html, body { margin: 0; background: #050307; }
 [hidden] { display: none !important; }
 .stage-page { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #050307; }
-.stage { position: relative; width: 430px; height: 764px; overflow: hidden; background: #0b0712; font-family: 'Be Vietnam Pro', system-ui, sans-serif; user-select: none; flex: none; transform-origin: 50% 50%; }
+.stage { position: relative; width: 430px; height: 764px; overflow: hidden; background: #0b0712; font-family: 'Be Vietnam Pro', system-ui, sans-serif; user-select: none; flex: none; }
 .layer { position: absolute; inset: 0; }
 .scene-svg { width: 100%; height: 100%; display: block; }
 .custom-bg { width: 100%; height: 100%; object-fit: cover; }
@@ -20,8 +20,6 @@ html, body { margin: 0; background: #050307; }
 .ui { z-index: 40; pointer-events: none; }
 .ui button { pointer-events: auto; }
 .chef-home svg, .sitter svg, .walker svg, .table svg, .table-base-wrap svg, .dish-wrap svg, .moto svg { width: 100%; height: 100%; display: block; overflow: visible; }
-/* mỗi lớp tự vẽ phần của mình: trình duyệt không phải tính lại cả sân khấu khi một người bước một bước */
-.street, .floor, .wfx, .fx { contain: layout paint style; }
 
 /* ---------------------------------------------------------------- scene life */
 .bulb { animation: twinkle 4s ease-in-out infinite; }
@@ -108,15 +106,9 @@ html, body { margin: 0; background: #050307; }
 
 /* ---------------------------------------------------------------- people */
 .sitter, .walker { position: absolute; pointer-events: none; }
-/* người đi bộ: khung cố định 53.6 x 134, vị trí và độ xa gần nằm hết trong transform (stage.js placeWalker) */
-.walker { left: 0; top: 0; width: 53.6px; height: 134px; transform-origin: 0 0; will-change: transform; }
-.pbody { position: absolute; inset: 0; }
-.sitter.flip .pbody { transform: scaleX(-1); }
-/* thở nhẹ: đặt trên lớp div bọc ngoài để trình duyệt chạy bằng GPU, không vẽ lại cả hình người */
-.sitter .pbody { animation: breathe var(--sway, 4.4s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
-.sitter.flip .pbody { animation-name: breathe-flip; }
+.sitter.flip > svg { transform: scaleX(-1); }
+.sitter .body { animation: breathe var(--sway, 4.4s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
 @keyframes breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.7px); } }
-@keyframes breathe-flip { 0%, 100% { transform: scaleX(-1) translateY(0); } 50% { transform: scaleX(-1) translateY(-0.7px); } }
 .sitter.sit-down { animation: sit-down 0.45s ease-out; }
 @keyframes sit-down { from { transform: translateY(-8px); opacity: 0.4; } to { transform: none; opacity: 1; } }
 .sitter.cheer .arm-cheer { animation: cheer-up 2.2s ease-in-out; }
@@ -125,19 +117,10 @@ html, body { margin: 0; background: #050307; }
 @keyframes nod { 30%, 60% { transform: rotate(-4deg) translateY(-0.6px); } }
 .sitter.panic .body { animation: panic 0.25s ease-in-out infinite; }
 @keyframes panic { 0%, 100% { transform: translate(-0.8px, 0); } 50% { transform: translate(0.8px, -1.6px); } }
-.sitter.glow svg { filter: drop-shadow(0 0 3px #ffd166) drop-shadow(0 0 6px rgba(255, 209, 102, 0.6)); }
-
-/* thẻ tên trên đầu khách: ảnh đại diện TikTok + tên, khách thật thì hiện suốt */
-.name-tag { position: absolute; left: 50%; top: var(--tagy, 0px); transform: translate(-50%, -100%); display: flex; align-items: center; gap: 2px; max-width: 62px; box-sizing: border-box; padding: 0.5px 4px 0.5px 1px; border-radius: 99px; background: rgba(10, 7, 5, 0.8); border: 1px solid rgba(255, 209, 102, 0.6); color: #fff; font: 700 6.6px/1.45 'Be Vietnam Pro', sans-serif; white-space: nowrap; opacity: 0; transition: opacity 0.35s; z-index: 2; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
-.name-tag i { flex: none; display: block; width: 9px; height: 9px; border-radius: 50%; overflow: hidden; background: #3b2a1c; box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.5); }
-.name-tag i img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.name-tag i.letter { font: 800 6.2px/9px 'Be Vietnam Pro', sans-serif; font-style: normal; text-align: center; color: #ffe1a0; background: linear-gradient(#8a4b1f, #5a2d10); }
-.name-tag span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.name-tag.noav { padding-left: 1.5px; }
-.name-tag.npc { padding: 1px 5px; border-color: rgba(140, 190, 230, 0.5); background: rgba(8, 12, 18, 0.72); color: #dcebf7; font-weight: 600; }
+.sitter.glow > svg { filter: drop-shadow(0 0 3px #ffd166) drop-shadow(0 0 6px rgba(255, 209, 102, 0.6)); }
+.name-tag { position: absolute; left: 50%; top: 0; transform: translate(-50%, -110%); max-width: 92px; padding: 1px 5px; border-radius: 7px; background: rgba(12, 8, 6, 0.72); border: 1px solid rgba(255, 209, 102, 0.55); color: #fff; font: 700 7.4px/1.35 'Be Vietnam Pro', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity 0.35s; z-index: 2; }
+.name-tag:empty { display: none; }
 .sitter.named .name-tag, .sitter.glow .name-tag, .name-tag.on { opacity: 1; }
-/* đang có bóng chữ thì nhường chỗ cho bóng chữ */
-.sitter.talking .name-tag { opacity: 0; }
 .walker.walking .leg-l { animation: step 0.52s ease-in-out infinite alternate; }
 .walker.walking .leg-r { animation: step 0.52s ease-in-out infinite alternate-reverse; }
 .walker.walking:not(.server) .arm-l { animation: swing 0.52s ease-in-out infinite alternate-reverse; }

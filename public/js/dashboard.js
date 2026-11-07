@@ -105,19 +105,19 @@ app.innerHTML = `
     </div>
     <div class="card">
       <h3>🪑 Vào bàn, đổi bàn, rời bàn</h3>
-      <p class="note">Khách vào live chỉ được chào. Muốn có ghế thì <b>follow</b>, chat <b>“nhậu”</b> hoặc tặng quà: khách đi bộ từ ngoài đường vào ngồi, trên đầu hiện <b>tên và avatar TikTok</b>. Gõ <b>“bàn 3”</b> (hay “sang bàn 3”) để đổi bàn; quán có <b>8 bàn, mỗi bàn 6 ghế (48 chỗ)</b>. TikTok không báo ai rời live, nên ai im lặng quá lâu sẽ tự đứng dậy đi về.</p>
+      <p class="note">Khách vào live chỉ được chào. Muốn có ghế thì <b>follow</b>, chat <b>“nhậu”</b>, gọi món hoặc tặng quà: khách đi bộ từ ngoài đường vào ngồi. Gõ <b>“bàn 3”</b> (hay “sang bàn 3”) để đổi bàn, quán có 8 bàn. TikTok không báo ai rời live, nên ai im lặng quá lâu sẽ tự đứng dậy đi về.</p>
       <label class="field"><span>Im lặng bao nhiêu phút thì rời bàn</span><div class="row"><input id="s-seatIdleMin" type="number" min="2" max="120" /><button class="btn" data-save="seatIdleMin">Lưu</button></div></label>
       <div class="row wrap"><button class="btn" data-demo="nhau">🍻 Thử chat “nhậu”</button><button class="btn" data-demo="table">🪑 Thử “bàn 3”</button><button class="btn" data-demo="follow">❤️ Thử follow</button></div>
     </div>
     <div class="card">
       <h3>🍽 Gọi món miễn phí</h3>
-      <p class="note"><b>Phải vào bàn mới gọi được món:</b> khách chưa có ghế thì chủ quán nhắc chat “nhậu” trước. Ngồi rồi, comment tên món là bếp làm, phiếu order treo dưới mép bạt, xong chủ quán bưng ra bàn: <b>${FREE.map((m) => m.short).join(', ')}</b>. Khách đã tặng quà được làm trước ⭐. Gọi món ngon hay lẩu thì chủ quán nhắc tặng quà.</p>
+      <p class="note">Khách comment tên món là bếp làm, phiếu order treo dưới mép bạt, xong chủ quán bưng ra bàn: <b>${FREE.map((m) => m.short).join(', ')}</b>. Khách đã tặng quà được làm trước ⭐. Gọi món ngon hay lẩu thì chủ quán nhắc tặng quà.</p>
       <label class="field switch big"><input type="checkbox" id="s-orders" /><span><b>Bật gọi món</b></span></label>
       <div class="row wrap"><button class="btn" data-demo="free">🥜 Thử gọi món</button></div>
     </div>
     <div class="card">
       <h3>🧑‍🤝‍🧑 Khách quen của quán</h3>
-      <p class="note">Quán có <b>6 khách quen</b> ngồi sẵn (chú Tư, anh Hùng, chị Lan, anh Tuấn, cô Ba, chị Mai — là nhân vật của quán, không phải người xem), 42 ghế còn lại để dành cho người xem thật. Bật lên thì họ tự gọi món, nói vài câu, chủ quán đáp lại họ lúc không có comment nào cần đọc, cho quán lúc nào cũng có chuyện. Người xem vào thì khách quen nhường ghế.</p>
+      <p class="note">Mấy ghế có sẵn khách quen (chú Tư, anh Hùng, chị Lan…, là nhân vật của quán, không phải người xem). Bật lên thì họ tự gọi món, nói vài câu, chủ quán đáp lại họ lúc không có comment nào cần đọc, cho quán lúc nào cũng có chuyện. Người xem vào thì khách quen nhường ghế.</p>
       <label class="field switch big"><input type="checkbox" id="s-npcLife" /><span><b>Khách quen tự gọi món, nói chuyện</b></span></label>
     </div>
     <div class="card">
