@@ -66,6 +66,7 @@ ui.innerHTML = `
   <div class="ticker"><div class="ticker-text" id="ticker"></div></div>
   <div class="hint-sign"><span>Gõ <b id="kw"></b></span><small>để cụng ly 🍻</small></div>
   <div class="chalkboard" id="board"><div class="chalk-title" id="board-title"></div><ol id="board-list"></ol></div>
+  <div class="chalkboard giftboard" id="giftboard" hidden><div class="chalk-title">QUÀ → MỒI</div><ul id="giftboard-list"></ul></div>
   <div class="wheel-box"><div class="wheel-pointer"></div><div class="wheel" id="wheel"></div><div class="wheel-label">VÒNG QUAY MỒI</div></div>
   <div class="gift-banner" id="gift-banner" hidden></div>
   <div class="dish-card" id="dish-card" hidden></div>
@@ -828,6 +829,30 @@ function renderBoard(/** @type {Array<{ id: string; name: string; avatar: string
   seatVips(top);
 }
 
+/** Menu board of "gift -> dish" so viewers know what to send */
+function renderGiftMenu() {
+  const rows = [];
+  for (const row of String(settings.giftFoods || '').split('\n')) {
+    const [names, dishName] = row.split('=').map((x) => x.trim());
+    const gift = names?.split(',').map((x) => x.trim()).filter(Boolean).pop();
+    if (!gift || !dishName) continue;
+    const dish = DISHES.find((d) => foldName(d.ten) === foldName(dishName));
+    rows.push({ gift, dish: dishName, icon: dish?.icon ?? '🍽️' });
+  }
+  const list = $('giftboard-list');
+  list.replaceChildren();
+  for (const r of rows.slice(0, 6)) {
+    const li = el('li');
+    const a = el('b');
+    a.textContent = `🎁 ${r.gift}`;
+    const b = el('span');
+    b.textContent = `${r.icon} ${r.dish}`;
+    li.append(a, b);
+    list.appendChild(li);
+  }
+  $('giftboard').hidden = !rows.length;
+}
+
 function applySettings(/** @type {any} */ s) {
   const voiceChanged = s.voice !== settings.voice || !host.innerHTML;
   settings = { ...settings, ...s };
@@ -837,6 +862,7 @@ function applySettings(/** @type {any} */ s) {
   $('kw').textContent = `“${settings.keyword}”`;
   $('board-title').textContent = settings.boardTitle;
   $('board').hidden = !settings.showBoard;
+  renderGiftMenu();
   const custom = Boolean(settings.background);
   customBg.hidden = !custom;
   if (custom) customBg.src = settings.background;
