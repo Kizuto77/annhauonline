@@ -89,7 +89,10 @@ export class SoundEngine {
 
   /** Queue a line (or several, read in order). `first` puts them ahead of everything waiting. */
   say(/** @type {string | string[]} */ text, first = false) {
-    const items = (Array.isArray(text) ? text : [text]).map((t) => t.trim()).filter(Boolean);
+    // every sentence starts with a capital ("bạn Lan tặng…" -> "Bạn Lan tặng…"): the voice reads it as a new sentence
+    const items = (Array.isArray(text) ? text : [text])
+      .map((t) => t.trim().replace(/(^|[.!?…]\s+)(\p{Ll})/gu, (_, p, c) => p + c.toUpperCase()))
+      .filter(Boolean);
     if (!items.length) return;
     if (first) this.priority.push(...items);
     else this.queue.push(...items);

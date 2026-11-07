@@ -144,12 +144,29 @@ export const BUA_REPLIES = {
     '{ban} ở {city} hả? Xa vậy mà vẫn ghé, quán xúc động muốn bao luôn tiền xe, xe ảo thôi nha.',
     'Hello {city}! {ban} giơ tay lên cho cả quán thấy dân {city} chịu chơi cỡ nào!',
   ],
+  dao: [
+    '{ban} đòi {n} em đào hả? Quán làm ăn sòng phẳng, muốn có đào thì tặng quà đi rồi tính!',
+    '{n} em đào hả {ban}? Có liền, có liền! Mà quán không bán chịu, quà tới thì đào mới tới nha.',
+    'Trời ơi {ban} chịu chơi ghê, gọi tới {n} em đào. Tặng một món quà là đào ra bàn liền, chủ quán hứa danh dự!',
+    '{ban} muốn đào thì phải có lòng nha, quà tới đâu đào tới đó, quán nói rồi đó.',
+    'Đào thì quán có cả kho {ban} ơi, xinh lắm, ngọt lắm! Nhưng phải tặng quà mới mở cửa kho nha.',
+    'Đào đang ngồi sau bếp chờ {ban} đó. Tặng quà là quán dắt ra liền, {n} em đúng số luôn!',
+  ],
   question: [
     '{ban} hỏi câu khó quá, chủ quán học hết lớp mười hai mà cũng chịu. Cả nhà trả lời giùm đi!',
     'Câu này hay tới mức chủ quán phải suy nghĩ… xong rồi, không biết. Ai biết giúp {ban} với!',
     '{ban} hỏi vậy làm chủ quán đứng hình mất năm giây. Cả nhà cứu chủ quán với!',
   ],
 };
+
+/** The gift came: the "đào" turn out to be glasses of trà đào */
+export const DAO_SERVED = [
+  'Quà tới rồi, {n} em đào ra bàn {ban} đây! Ủa sao mặt ngơ vậy? Thì {n} ly trà đào nè, đào xịn nằm trong ly luôn!',
+  'Chủ quán giữ lời nha {ban}! {n} em đào mát lạnh, ngọt hơn người yêu cũ, tên là trà đào. Uống đi cho tỉnh!',
+  'Đào tới rồi {ban} ơi! {n} ly trà đào xinh xắn, có cả miếng đào bên trong. Ai nghĩ bậy là tự phạt một ly nước lọc nha!',
+  'Quán nói là làm! {n} em đào đã lên bàn {ban}, em nào cũng có ống hút đàng hoàng. Trà đào đó, hi hi.',
+];
+export const DAO_SERVED_PLAIN = ['Cảm ơn {ban}! {n} ly trà đào ra bàn rồi nè, mát lạnh luôn.'];
 
 /** Reply to any other comment: works whatever they wrote */
 export const BUA_ACK = [

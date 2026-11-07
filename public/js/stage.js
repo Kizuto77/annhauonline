@@ -8,7 +8,7 @@ import { TABLES, SEATS, VIP_SEATS, SEAT_ORDER, NPC_SEATS, personWidth, scaleAt }
 import { SoundEngine } from './sound.js';
 import { lines } from './lines.js';
 import { tellNext } from './stories.js';
-import { detectTopic, detectCity, mayAnswer } from './chat.js';
+import { detectTopic, detectCity, mayAnswer, daoCount } from './chat.js';
 import { DISHES } from './dishes.js';
 import { readableComment } from './bua.js';
 import { tokensOf } from './text.js';
@@ -545,8 +545,13 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user
     }
   }
   noteChatter(user, dzo);
-  if (!settings.chatReply) return;
   const topic = detectTopic(text);
+  // "cho thêm 3 em đào": remembered for 15 minutes; their next gift brings 3 glasses of trà đào
+  if (topic === 'dao') {
+    daoWish.set(user.id, { n: daoCount(text), at: Date.now() });
+    if (occ) bubble(occ, `🍑 Gọi ${daoCount(text)} em đào`);
+  }
+  if (!settings.chatReply) return;
   if (settings.readChat) {
     // "Đọc to comment": every comment is read and answered in turn (a lone "dzô" is cheered, not read)
     if (!(dzo && tokensOf(text).length <= 3)) queueRead(user, text, topic);
@@ -557,13 +562,17 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user
     if (sound && sound.waiting() >= 4) return;
     if (mayAnswer(user.id, topic)) {
       chatters.delete(user.id); // answered by name: no need to thank in the group line
-      auto(say().reply(topic, user.name, topic === 'city' ? detectCity(text) : ''));
+      auto(say().reply(topic, user.name, topic === 'city' ? detectCity(text) : '', daoCount(text)));
     }
   } else if (!dzo && sound && sound.waiting() < 2 && Math.random() < 0.25 && mayAck(user.id)) {
     chatters.delete(user.id);
     auto(say().ack(user.name));
   }
 }
+
+/** @type {Map<string, { n: number; at: number }>} who asked for "đào", and how many */
+const daoWish = new Map();
+const DAO_WISH_MS = 15 * 60 * 1000;
 
 /** Comments waiting to be read aloud: newest kept when the chat runs faster than the voice */
 /** @type {Array<{ user: User; text: string; topic: import('./chat.js').Topic | null; at: number }>} */
@@ -601,7 +610,7 @@ setInterval(() => {
   const next = toRead.shift();
   if (!next) return;
   const city = next.topic === 'city' ? detectCity(next.text) : '';
-  auto(say().readComment(next.user.name, next.text, next.topic, city));
+  auto(say().readComment(next.user.name, next.text, next.topic, city, daoCount(next.text)));
 }, 500);
 
 /** People who commented and were not answered by name; thanked together while the chat is busy */
@@ -680,6 +689,12 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
   const occ = seatUser(user, true);
   showBanner(user, g.giftName, combo.count);
   const food = foodFor(g.giftName);
+  // they asked for "đào" earlier: here they come… as glasses of trà đào
+  const wish = daoWish.get(user.id);
+  if (wish && now - wish.at < DAO_WISH_MS) {
+    daoWish.delete(user.id);
+    setTimeout(() => serveDao(user, wish.n), 2600);
+  }
   if (occ) {
     const hd = headOf(occ.seat);
     const icon = food?.icon ?? (tier >= 4 ? '💎' : tier >= 3 ? '🍺' : '🎁');
@@ -756,6 +771,28 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
       auto(f ? say().giftFood(user.name, c?.giftName ?? g.giftName, f.ten, Math.min(c?.count ?? g.count, 8)) : say().gift(user.name, c?.giftName ?? g.giftName, tierOf(c?.coins ?? g.coins)), true);
     }, 1500);
   }
+}
+
+/** n glasses of trà đào to the giver's table, a few waiter trips, and the punchline */
+function serveDao(/** @type {User} */ user, /** @type {number} */ n) {
+  const at = seatOf.get(user.id);
+  if (at === undefined) return;
+  const hd = headOf(at);
+  floatUp(wfx, hd.x, hd.y, ['🍑', '🍹', '😏'], 13);
+  for (let i = 0; i < n; i++) {
+    setTimeout(() => {
+      const seat = seatOf.get(user.id);
+      if (seat === undefined) return;
+      const t = SEATS[seat].table;
+      serve(t, giftItem(2, '🍹'), () => {
+        sound?.clink(0.35);
+        sparkles(wfx, TABLES[t].x, TABLES[t].y - 2, 4, 16, '#ffb3c6');
+      });
+    }, i * 650);
+  }
+  const occ = seats.get(at);
+  if (occ) bubble(occ, `🍹 ${n} ly trà đào 😂`, 6000);
+  auto(say().daoServed(user.name, n), true);
 }
 
 function showBanner(/** @type {User} */ user, /** @type {string} */ giftName, /** @type {number} */ count) {
@@ -1288,7 +1325,7 @@ listen({
 }, PREVIEW ? 'preview' : 'stage');
 
 // For quick checks in the browser console: window.__xb.wave()
-/** @type {any} */ (window).__xb = { wave, smash, spinWheel, startRain, seats, spotlight, onGift, onFollow, sound };
+/** @type {any} */ (window).__xb = { wave, smash, spinWheel, startRain, seats, spotlight, onGift, onFollow, onChat, sound };
 
 // Dòng nhắc trách nhiệm: đổi câu theo vòng, mỗi câu vừa khít khung
 {

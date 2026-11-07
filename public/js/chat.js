@@ -5,7 +5,7 @@
 // banned words, links and phone numbers.
 import { tokensOf } from './text.js';
 
-/** @typedef {'birthday' | 'drunk' | 'sad' | 'hungry' | 'bye' | 'tired' | 'thanks' | 'hello' | 'first' | 'praise' | 'praiseHost' | 'love' | 'laugh' | 'music' | 'seat' | 'gift' | 'like' | 'follow' | 'share' | 'money' | 'work' | 'weekend' | 'weather' | 'sleepy' | 'lovelife' | 'about' | 'food' | 'critic' | 'city' | 'question'} Topic */
+/** @typedef {'birthday' | 'drunk' | 'sad' | 'hungry' | 'bye' | 'tired' | 'thanks' | 'hello' | 'first' | 'praise' | 'praiseHost' | 'love' | 'laugh' | 'music' | 'seat' | 'gift' | 'like' | 'follow' | 'share' | 'money' | 'work' | 'weekend' | 'weather' | 'sleepy' | 'lovelife' | 'about' | 'food' | 'critic' | 'city' | 'question' | 'dao'} Topic */
 
 /** @type {Array<[Topic, string[]]>} checked in order, first match wins */
 const TOPICS = [
@@ -39,10 +39,29 @@ const TOPICS = [
   ['bye', ['đi ngủ', 'ngủ đây', 'ngủ thôi', 'về đây', 'về nha', 'về nhé', 'về thôi', 'tạm biệt', 'bye', 'bai bai', 'pp', 'out đây', 'off đây', 'đi về', 'good night', 'g9']],
 ];
 
+const NUMBER_WORDS = ['một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'];
+/** "cho thêm 3 em đào", "gọi đào", "kêu hai em": asking for "đào" (the joke ends with glasses of trà đào) */
+export function wantsDao(/** @type {string} */ comment) {
+  const w = tokensOf(comment);
+  const i = w.indexOf('đào');
+  if (i < 0 || w[i + 1] === 'tạo') return false; // "đào tạo" is training
+  return w.some((x) => ['thêm', 'gọi', 'kêu', 'cho', 'order', 'em', 'ẻm', 'bé', 'đâu', 'xin', 'dắt', 'book', 'mấy', 'có'].includes(x) || /^\d+$/.test(x) || NUMBER_WORDS.includes(x));
+}
+/** How many "em đào" were asked for: 1 to 10 */
+export function daoCount(/** @type {string} */ comment) {
+  for (const x of tokensOf(comment)) {
+    if (/^\d+$/.test(x)) return Math.max(1, Math.min(10, Number(x)));
+    const k = NUMBER_WORDS.indexOf(x);
+    if (k >= 0) return k + 1;
+  }
+  return 1;
+}
+
 /** @returns {Topic | null} */
 export function detectTopic(/** @type {string} */ comment) {
   const t = ` ${tokensOf(comment).join(' ')} `;
   if (t.length < 3) return null;
+  if (wantsDao(comment)) return 'dao';
   if (detectCity(comment)) return 'city';
   for (const [topic, phrases] of TOPICS) {
     if (phrases.some((p) => t.includes(` ${p} `))) return topic;
@@ -67,7 +86,7 @@ const PER_USER_MS = 3 * 60 * 1000;
 const GLOBAL_MS = 6 * 1000;
 const GLOBAL_PRIORITY_MS = 3 * 1000;
 /** @type {Set<Topic>} */
-const PRIORITY = new Set(['birthday', 'bye', 'city', 'thanks', 'sad', 'drunk', 'first', 'follow', 'share']);
+const PRIORITY = new Set(['dao', 'birthday', 'bye', 'city', 'thanks', 'sad', 'drunk', 'first', 'follow', 'share']);
 /** @type {Map<string, number>} */
 const lastByUser = new Map();
 let lastAny = 0;
