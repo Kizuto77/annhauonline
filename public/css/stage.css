@@ -293,3 +293,7 @@
 .smash-banner span { font-size: 15px; color: #fff3c4; text-shadow: 0 2px 4px #000; max-width: 380px; overflow: hidden; text-overflow: ellipsis; }
 .smash-banner.go { animation: smash-pop 5s both; }
 @keyframes smash-pop { 0% { opacity: 0; scale: 2.2; } 8% { opacity: 1; scale: 1; } 85% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 0.9; } }
+
+.story-tag { position: absolute; left: 50%; top: 27.5%; transform: translateX(-50%); max-width: 88%; padding: 3px 12px; border-radius: 99px; background: rgba(20, 10, 4, 0.82); border: 1px solid #f2a516; color: #ffe08a; font: 700 10px/16px 'Be Vietnam Pro', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px #000; }
+.story-tag.go { animation: story-in 9s both; }
+@keyframes story-in { 0% { opacity: 0; translate: 0 -6px; } 6% { opacity: 1; translate: 0 0; } 92% { opacity: 1; } 100% { opacity: 0; } }

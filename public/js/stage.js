@@ -7,6 +7,7 @@ import { customerSVG, waiterSVG, hostSVG, stoolSVG, tableSVG, giftItem, hash } f
 import { TABLES, SEATS, VIP_SEATS, SEAT_ORDER, NPC_SEATS, personWidth, scaleAt } from './layout.js';
 import { SoundEngine } from './sound.js';
 import { lines } from './lines.js';
+import { tellNext } from './stories.js';
 import { detectTopic, mayAnswer } from './chat.js';
 import { DISHES } from './dishes.js';
 
@@ -23,7 +24,7 @@ const COMBO_MS = 4500;
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
-let settings = { channelName: 'Xỉn Bia', keyword: 'dzo', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, music: true, musicVolume: 0.22, ambience: true, background: '' };
+let settings = { channelName: 'Xỉn Bia', keyword: 'dzo', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, background: '' };
 const say = () => lines({ q: settings.channelName, kw: lettersKeyword() });
 const lettersKeyword = () => (settings.keyword === 'dzo' ? 'dzô' : settings.keyword);
 
@@ -69,6 +70,7 @@ ui.innerHTML = `
   <div class="gift-banner" id="gift-banner" hidden></div>
   <div class="dish-card" id="dish-card" hidden></div>
   <div class="spot-card" id="spot-card" hidden></div>
+  <div class="story-tag" id="story-tag" hidden></div>
   <div class="smash-banner" id="smash-banner" hidden><b>💥 ĐẬP QUÁN! 💥</b><span id="smash-who"></span></div>
   <div class="wave-banner" id="wave-banner" hidden><span>MỘT</span><span>HAI</span><span>BA</span><b>DZÔ!!!</b></div>
   <button class="unlock" id="unlock" hidden>🔊 Bấm vào đây để bật tiếng quán</button>
@@ -905,6 +907,7 @@ function onControl(/** @type {{ action: string; text: string }} */ { action, tex
   if (action === 'unlockAudio') sound.unlock();
   if (action === 'speak') sound.say(text, true); // "Đọc ngay" works even with Tự động đọc off
   if (action === 'share') sound.say(say().share(recentNames()), true);
+  if (action === 'story') tellStory(true);
   if (action === 'testGift') sound.say(say().gift('Minh An', 'Rose', 1), true);
   if (action === 'testGreet') sound.say(say().greet(['Minh An', 'Thu Hà', 'Quốc Bảo']), true);
   if (action === 'testFollow') sound.say(say().follow('Minh An'), true);
@@ -918,7 +921,39 @@ const recentNames = () =>
     .reverse()
     .slice(0, 3);
 
+/** The host tells a story / joke / fact / riddle, then asks for a like, share, follow or gift */
+let lastStoryAt = Date.now();
+function tellStory(force = false) {
+  if (!sound) return;
+  if (!force && (!settings.stories || !settings.autoVoice || smashing || sound.waiting() >= 3)) return;
+  lastStoryAt = Date.now();
+  const t = tellNext({ q: settings.channelName, kw: lettersKeyword() });
+  if (t.title) showStoryTag(t.title);
+  sound.say(t.lines, force);
+  if (t.after) {
+    const text = t.after.text;
+    setTimeout(() => {
+      if (sound) sound.say(text, true);
+    }, t.after.ms);
+  }
+}
+/** Small caption on the stage while a story is told */
+function showStoryTag(/** @type {string} */ title) {
+  const tag = $('story-tag');
+  tag.textContent = `📖 ${title}`;
+  tag.hidden = false;
+  tag.classList.remove('go');
+  void tag.offsetWidth;
+  tag.classList.add('go');
+  setTimeout(() => (tag.hidden = true), 9000);
+}
+
 if (sound) {
+  // First story a minute after opening, then every `storyEvery` minutes
+  setInterval(() => {
+    const every = Math.max(1, settings.storyEvery) * 60_000;
+    if (Date.now() - lastStoryAt >= every) tellStory();
+  }, 10_000);
   setInterval(() => {
     if (settings.idleTalk) auto(say().share(recentNames()));
   }, SHARE_EVERY_MS);

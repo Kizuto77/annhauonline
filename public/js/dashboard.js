@@ -135,7 +135,10 @@ app.innerHTML = `
         <label class="field switch"><input type="checkbox" id="s-greet" /><span>Chào khách mới vào</span></label>
         <label class="field switch"><input type="checkbox" id="s-chatReply" /><span>Đáp comment (sinh nhật, buồn, say, đòi mồi, chào về)</span></label>
         <label class="field switch"><input type="checkbox" id="s-idleTalk" /><span>Live im lâu thì tự nói chuyện, nhắc chia sẻ</span></label>
+        <label class="field switch"><input type="checkbox" id="s-stories" /><span><b>Tự kể chuyện</b> (chuyện quán, chuyện cười, đố vui, nhắc thả tim / chia sẻ / quà)</span></label>
       </div>
+      <label class="field"><span>Cứ bao nhiêu phút kể một lần: <b id="story-val"></b></span><input type="range" id="s-storyEvery" min="1" max="15" step="1" /></label>
+      <div class="row wrap"><button class="btn primary" data-control="story">📖 Kể chuyện ngay</button></div>
       <div class="row wrap">
         <span class="lbl">Giọng:</span>
         <button class="btn seg" data-voice="female">👩 Chị chủ quán (Hoài My)</button>
@@ -275,14 +278,15 @@ for (const b of document.querySelectorAll('[data-save]')) {
   };
   input.onkeydown = (/** @type {KeyboardEvent} */ e) => e.key === 'Enter' && save();
 }
-const SWITCHES = ['showBoard', 'autoVoice', 'greet', 'chatReply', 'idleTalk', 'music', 'ambience', 'smashEnabled'];
+const SWITCHES = ['showBoard', 'autoVoice', 'greet', 'chatReply', 'idleTalk', 'music', 'ambience', 'smashEnabled', 'stories'];
 for (const key of SWITCHES) $(`s-${key}`).onchange = (/** @type {Event} */ e) => saveSetting(key, /** @type {HTMLInputElement} */ (e.target).checked);
-for (const key of ['rate', 'musicVolume']) {
+for (const key of ['rate', 'musicVolume', 'storyEvery']) {
   const input = $(`s-${key}`);
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   let t;
   input.oninput = () => {
     showRanges(Number(key === 'rate' ? input.value : $('s-rate').value), Number(key === 'musicVolume' ? input.value : $('s-musicVolume').value));
+    $('story-val').textContent = `${$('s-storyEvery').value} phút`;
     clearTimeout(t);
     t = setTimeout(() => saveSetting(key, Number(input.value)), 250);
   };
@@ -306,6 +310,8 @@ function applySettings(/** @type {any} */ s) {
   for (const key of ['greet', 'chatReply', 'idleTalk']) $(`s-${key}`).closest('label').classList.toggle('dim', !s.autoVoice);
   $('s-rate').value = s.rate;
   $('s-musicVolume').value = s.musicVolume;
+  $('s-storyEvery').value = s.storyEvery;
+  $('story-val').textContent = `${s.storyEvery} phút`;
   showRanges(s.rate, s.musicVolume);
   for (const b of document.querySelectorAll('[data-voice]')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.voice === s.voice);
   $('bg-state').textContent = s.background ? 'Đang dùng ảnh của bạn' : 'Đang dùng cảnh quán vẽ sẵn';

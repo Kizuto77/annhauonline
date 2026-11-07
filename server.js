@@ -47,6 +47,8 @@ const DEFAULTS = {
   music: true,
   musicVolume: 0.22,
   ambience: true, // tiếng quán ồn ào, ly chạm lách cách
+  stories: true, // chủ quán tự kể chuyện, chuyện cười, đố vui, nhắc thả tim / chia sẻ
+  storyEvery: 4, // phút giữa hai lần kể
   smashEnabled: true, // quà đặc biệt = đập quán
   smashGifts: 'Galaxy, Lion, Universe', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
   smashMinCoins: 0, // >0: mọi quà có giá từ số xu này trở lên (mỗi cái) cũng đập quán; 0 = tắt
@@ -73,6 +75,8 @@ const VALIDATE = {
   music: bool,
   musicVolume: num(0, 1),
   ambience: bool,
+  stories: bool,
+  storyEvery: num(1, 30),
   smashEnabled: bool,
   smashGifts: (v) => (typeof v === 'string' ? cleanText(v, 160) : undefined),
   smashMinCoins: num(0, 1_000_000),
@@ -621,7 +625,7 @@ function snapshot() {
   return { settings, status, board: topBoard(), meters: metersPayload(), stages: stagePages() };
 }
 
-const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGift', 'testGreet', 'testFollow', 'testChat', 'clearHall', 'unlockAudio']);
+const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGift', 'testGreet', 'testFollow', 'testChat', 'clearHall', 'unlockAudio', 'story']);
 
 /** @type {Record<string, (req: http.IncomingMessage, res: http.ServerResponse, url: URL) => Promise<void> | void>} */
 const routes = {

@@ -85,7 +85,7 @@ export class SoundEngine {
     if (first) this.priority.push(...items);
     else this.queue.push(...items);
     // Never let a flood pile up minutes of talking: oldest normal lines go first
-    if (this.queue.length > 8) this.queue.splice(0, this.queue.length - 8);
+    if (this.queue.length > 12) this.queue.splice(0, this.queue.length - 12);
     if (!this.speaking && !this.blocked) this.next();
   }
 
