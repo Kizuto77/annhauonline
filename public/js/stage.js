@@ -1043,7 +1043,8 @@ listen(
   },
   PREVIEW ? 'preview' : 'stage',
 );
-ledNext();
+// measure LED text only once the web font is in, so short lines sit exactly in the middle
+document.fonts.ready.then(ledNext, ledNext);
 
 // For quick checks in the browser console: window.__nd.wave()
 /** @type {any} */ (window).__nd = { wave, smash, treat, seats, onGift, onFollow, onChat, onSeat, serve, addDish, sound, motorbike, hash };

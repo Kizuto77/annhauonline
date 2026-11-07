@@ -180,7 +180,7 @@ export function backSVG() {
   <rect x="96" y="214" width="238" height="18" fill="#3b3b40"/>${[...Array(4)].map((_, i) => `<line x1="96" y1="${217 + i * 4}" x2="334" y2="${217 + i * 4}" stroke="#2a2a2e" stroke-width="1.2"/>`).join('')}
   <rect x="96" y="214" width="238" height="${GROUND - 214}" fill="url(#facadeSide)" opacity="0.6"/>
   <!-- house number plate, blue like every Hanoi house -->
-  <g transform="translate(384 120)"><rect width="34" height="20" rx="2" fill="#1d4fa3" stroke="#e8eef8" stroke-width="1.2"/><text x="17" y="15" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Be Vietnam Pro, sans-serif">134</text></g>
+  <g transform="translate(384 147)"><rect width="42" height="30" rx="2.5" fill="#1d4fa3" stroke="#e8eef8" stroke-width="1.3"/><rect x="2.4" y="2.4" width="37.2" height="25.2" rx="1.5" fill="none" stroke="#e8eef8" stroke-opacity="0.5" stroke-width="0.5"/><text x="21" y="15.6" text-anchor="middle" font-size="13" font-weight="900" fill="#fff" font-family="Be Vietnam Pro, sans-serif">134</text><path d="M6 18.4 H36" stroke="#e8eef8" stroke-opacity="0.6" stroke-width="0.5"/><text x="21" y="25" text-anchor="middle" font-size="6.2" font-weight="800" fill="#fff" letter-spacing="0.3" font-family="Be Vietnam Pro, sans-serif">TRẦN PHÚ</text></g>
   <!-- awning (bạt) pulled out over the sidewalk -->
   <path d="M100 252 L330 252 L346 278 L84 278 Z" fill="url(#awning)"/>
   <path d="M84 278 ${[...Array(13)].map(() => 'q10 8 20 0').join(' ')}" fill="#7a1717"/>
