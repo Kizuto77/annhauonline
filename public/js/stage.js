@@ -32,7 +32,7 @@ const COMBO_MS = 4500;
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
-let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: false, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', readChat: true, replyStyle: 'bua', background: '' };
+let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: false, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, foodMinCoins: 1, smashMinCoins: 30, smashEnabled: true, readChat: true, replyStyle: 'bua', background: '' };
 const say = () => lines({ q: settings.channelName, kw: lettersKeyword(), style: settings.replyStyle });
 /** The first cheers keyword, the one shown and said */
 const firstKeyword = () => String(settings.keyword || 'dzô').split(',')[0].trim() || 'dzô';
@@ -710,7 +710,7 @@ setInterval(() => {
   } else if (chatters.size > 40) chatters.clear();
 }, 15_000);
 
-/** @type {Map<string, { at: number; coins: number; count: number; giftName: string; served: number }>} */
+/** @type {Map<string, { at: number; coins: number; count: number; giftName: string; served: number; food?: import('./dishes.js').Dish }>} */
 const combos = new Map();
 /** @type {Map<string, number>} */
 const lastThanks = new Map();
@@ -720,15 +720,13 @@ let bannerTimer;
 
 
 const foldName = (/** @type {string} */ s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
-/** Gift -> dish set in the dashboard: one line per dish, "Rose, Bông hoa = Gỏi gà xé phay" */
-function foodFor(/** @type {string} */ giftName) {
-  const want = foldName(giftName);
-  for (const row of String(settings.giftFoods || '').split('\n')) {
-    const [names, dishName] = row.split('=').map((x) => x.trim());
-    if (!names || !dishName || !names.split(',').some((n) => foldName(n) === want)) continue;
-    return DISHES.find((d) => foldName(d.ten) === foldName(dishName)) ?? { ten: dishName, icon: '🍽️', loi: '' };
-  }
-  return undefined;
+/** A gift that smashes the quán: by coins each, as the server decides */
+const smashes = (/** @type {number} */ each) => settings.smashEnabled !== false && settings.smashMinCoins > 0 && each >= settings.smashMinCoins;
+/** A gift worth at least "foodMinCoins" coins each (and not a smash) brings a dish: picked at random from the menu */
+function foodFor(/** @type {{ coins: number; count: number }} */ g) {
+  const each = g.coins / Math.max(1, g.count);
+  if (!(settings.foodMinCoins > 0) || each < settings.foodMinCoins || smashes(each)) return undefined;
+  return DISHES[Math.floor(Math.random() * DISHES.length)];
 }
 
 /** @type {ReturnType<typeof setTimeout> | undefined} */
@@ -747,8 +745,9 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
   const tier = tierOf(combo.coins);
 
   const occ = seatUser(user, true);
-  showBanner(user, g.giftName, combo.count);
-  const food = foodFor(g.giftName);
+  const food = foodFor(g);
+  combo.food = food ?? combo.food;
+  showBanner(user, g.giftName, combo.count, food?.icon);
   // they asked for "đào" earlier: here they come… as glasses of trà đào
   const wish = daoWish.get(user.id);
   if (wish && now - wish.at < DAO_WISH_MS) {
@@ -788,7 +787,7 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
         }, 700 + i * 1100);
       }
       bubble(occ, `🎁 ${g.giftName} → ${food.icon} ${food.ten}`);
-    } else if (combo.served < tier) {
+    } else if (combo.served < tier && !smashes(g.coins / Math.max(1, g.count))) {
       combo.served = tier;
       const dish = DISHES[Math.floor(Math.random() * DISHES.length)];
       // A big gift can move the giver up to the VIP table a moment later: serve wherever they sit by then
@@ -827,7 +826,7 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
     // wait a moment so a combo is thanked once, at its size
     setTimeout(() => {
       const c = combos.get(user.id);
-      const f = foodFor(c?.giftName ?? g.giftName);
+      const f = c?.food ?? food;
       auto(f ? say().giftFood(user.name, c?.giftName ?? g.giftName, f.ten, Math.min(c?.count ?? g.count, 8)) : say().gift(user.name, c?.giftName ?? g.giftName, tierOf(c?.coins ?? g.coins)), true);
     }, 1500);
   }
@@ -855,7 +854,7 @@ function serveDao(/** @type {User} */ user, /** @type {number} */ n) {
   auto(say().daoServed(user.name, n), true);
 }
 
-function showBanner(/** @type {User} */ user, /** @type {string} */ giftName, /** @type {number} */ count) {
+function showBanner(/** @type {User} */ user, /** @type {string} */ giftName, /** @type {number} */ count, icon = '') {
   const b = $('gift-banner');
   b.replaceChildren();
   const av = el('div', 'av');
@@ -880,7 +879,7 @@ function showBanner(/** @type {User} */ user, /** @type {string} */ giftName, /*
   if (!b.hidden) {
     cnt.classList.add('bump');
   }
-  /** @type {HTMLElement} */ (b.querySelector('.ico')).textContent = foodFor(giftName)?.icon ?? '🍺';
+  /** @type {HTMLElement} */ (b.querySelector('.ico')).textContent = icon || '🍺';
   b.hidden = false;
   b.classList.remove('pulse');
   void b.offsetWidth;
@@ -1056,58 +1055,26 @@ function renderBoard(/** @type {Array<{ id: string; name: string; avatar: string
 let menuTimer;
 let menuKey = '';
 function renderGiftMenu() {
-  const rows = [];
-  for (const row of String(settings.giftFoods || '').split('\n')) {
-    const [names, dishName] = row.split('=').map((x) => x.trim());
-    const gift = names?.split(',').map((x) => x.trim()).filter(Boolean).pop();
-    if (!gift || !dishName) continue;
-    const dish = DISHES.find((d) => foldName(d.ten) === foldName(dishName));
-    rows.push({ gift, dish: dishName, icon: dish?.icon ?? '🍽️' });
-  }
-  const smashNames = String(settings.smashGifts || '').split(',').map((x) => x.trim()).filter(Boolean);
-  const coins = Number(settings.smashMinCoins) || 0;
-  const smashOn = settings.smashEnabled !== false && (smashNames.length > 0 || coins > 0);
-  const key = JSON.stringify([rows, smashOn, smashNames, coins]);
+  const foodCoins = Number(settings.foodMinCoins) || 0;
+  const coins = settings.smashEnabled !== false ? Number(settings.smashMinCoins) || 0 : 0;
+  const smashOn = coins > 0;
+  const key = JSON.stringify([foodCoins, coins]);
   if (key === menuKey) return;
   menuKey = key;
 
   /** @type {HTMLElement[]} */
   const pages = [];
-  // 3 gifts a page, so the names fit and can be read on a phone
-  const shown = rows.slice(0, 9);
-  for (let k = 0; k < shown.length; k += 3) {
-    const p = el('div', 'mb-page');
-    const h = el('div', 'mb-title');
-    h.textContent = '🎁 TẶNG QUÀ LÊN MỒI';
-    const ul = el('ul');
-    for (const r of shown.slice(k, k + 3)) {
-      const li = el('li');
-      const g = el('b');
-      g.textContent = r.gift;
-      const d = el('span');
-      d.textContent = `${r.icon} ${r.dish}`;
-      li.append(g, d);
-      ul.appendChild(li);
-    }
-    p.append(h, ul);
+  if (foodCoins > 0) {
+    const p = el('div', 'mb-page simple');
+    p.innerHTML = '<div class="mb-title">🎁 TẶNG QUÀ LÊN MỒI</div><div class="mb-big"></div><div class="mb-line">→ 1 dĩa mồi ra bàn</div><div class="mb-line dim">tặng 5 cái = 5 dĩa 🍢🦑🐚</div>';
+    // below the smash price, so nobody thinks a smash gift also brings food
+    /** @type {HTMLElement} */ (p.querySelector('.mb-big')).textContent = smashOn && coins - 1 > foodCoins ? `Quà ${foodCoins.toLocaleString('vi-VN')} – ${(coins - 1).toLocaleString('vi-VN')} xu` : `Quà từ ${foodCoins.toLocaleString('vi-VN')} xu`;
     pages.push(p);
   }
   if (smashOn) {
-    const p = el('div', 'mb-page smash');
-    const h = el('div', 'mb-title');
-    h.textContent = '💥 QUÀ ĐẬP QUÁN';
-    const ul = el('ul');
-    for (const n of smashNames.slice(0, 5)) {
-      const li = el('li');
-      li.textContent = n;
-      ul.appendChild(li);
-    }
-    p.append(h, ul);
-    if (coins > 0) {
-      const c = el('div', 'mb-coins');
-      c.textContent = `${smashNames.length ? 'hoặc ' : ''}quà từ ${coins.toLocaleString('vi-VN')} xu`;
-      p.appendChild(c);
-    }
+    const p = el('div', 'mb-page simple smash');
+    p.innerHTML = '<div class="mb-title">💥 QUÀ ĐẬP QUÁN</div><div class="mb-big"></div><div class="mb-line">→ cả quán bị đập 😭</div><div class="mb-line dim">chủ quán khóc rồi dọn lại</div>';
+    /** @type {HTMLElement} */ (p.querySelector('.mb-big')).textContent = `Quà từ ${coins.toLocaleString('vi-VN')} xu`;
     pages.push(p);
   }
   clearInterval(menuTimer);

@@ -384,6 +384,12 @@
 .mb-page.smash .mb-title { color: #ff9b9b; animation: smash-glow 1.6s ease-in-out infinite; }
 .mb-page.smash li { flex-direction: row; justify-content: center; font-size: 7px; line-height: 9.6px; color: #ffe1e1; }
 .mb-page.smash li::before { content: '•'; color: #ff8f8f; margin-right: 3px; }
+.mb-page.simple { align-items: center; text-align: center; }
+.mb-page.simple .mb-title { align-self: stretch; }
+.mb-big { margin-top: 5px; padding: 2px 6px 1px; border-radius: 99px; background: #ffd166; color: #2a1406; font: 900 9.6px/1.25 'Baloo 2', sans-serif; white-space: nowrap; }
+.mb-page.smash .mb-big { background: #ff6b6b; color: #fff; }
+.mb-line { margin-top: 5px; font: 800 8.2px/1.2 'Baloo 2', sans-serif; color: #f6f1d8; white-space: nowrap; }
+.mb-line.dim { margin-top: 3px; font-size: 6.8px; font-weight: 600; opacity: 0.8; }
 .mb-coins { margin-top: 2px; text-align: center; font-size: 6.8px; font-weight: 800; color: #1a120c; background: #ffd166; border-radius: 99px; line-height: 9px; padding: 1px 3px 0; white-space: nowrap; }
 @keyframes smash-glow { 50% { color: #ffd166; text-shadow: 0 0 5px #ff4d4d; } }
 .mb-dots { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; gap: 3px; }

@@ -1,7 +1,6 @@
 // @ts-check
 // Bảng điều khiển admin (http://localhost:3000). Im lặng: mọi tiếng phát trên trang stage trong TikTok LIVE Studio.
 import { listen, post } from './api.js';
-import { DISHES } from './dishes.js';
 import { LEVELS } from './levels.js';
 
 const app = /** @type {HTMLElement} */ (document.getElementById('app'));
@@ -123,18 +122,16 @@ app.innerHTML = `
   <div class="tab" data-pane="gift" hidden>
     <div class="card smash-card">
       <h3>💥 Đập quán</h3>
-      <p class="note">Khách tặng quà đặc biệt thì cả quán bị đập, chủ quán khóc rồi dọn lại (~15 giây; quà tới trong lúc đó bỏ qua).</p>
+      <p class="note">Khách tặng quà <b>đủ số xu</b> (giá mỗi cái, không cần tên quà) thì cả quán bị đập, chủ quán khóc rồi dọn lại (~15 giây; quà tới trong lúc đó bỏ qua).</p>
       <label class="field switch big"><input type="checkbox" id="s-smashEnabled" /><span><b>Bật đập quán</b></span></label>
-      <label class="field"><span>Tên quà sẽ đập quán (tên tiếng Anh như trên TikTok, cách nhau dấu phẩy)</span><div class="row"><input id="s-smashGifts" maxlength="160" placeholder="Doughnut, Cheese Donuts, Bubble Tea, Bouquet Flower" /><button class="btn" data-save="smashGifts">Lưu</button></div></label>
-      <label class="field"><span>Hoặc quà có giá từ bao nhiêu xu trở lên (0 = không dùng cách này)</span><div class="row"><input id="s-smashMinCoins" type="number" min="0" max="1000000" /><button class="btn" data-save="smashMinCoins">Lưu</button></div></label>
+      <label class="field"><span>Quà có giá từ bao nhiêu xu trở lên thì đập quán</span><div class="row"><input id="s-smashMinCoins" type="number" min="0" max="1000000" /><button class="btn" data-save="smashMinCoins">Lưu</button></div></label>
       <div class="row wrap"><button class="btn smash" data-control="smash">💥 Thử đập quán ngay</button></div>
     </div>
     <div class="card">
       <h3>🍢 Quà lên mồi</h3>
-      <p class="note">Mỗi quà tặng 1 cái là một dĩa mồi ra bàn người tặng (tặng 5 cái thì 5 dĩa, tối đa 8). Mỗi dòng một món: <b>tên quà (cách nhau dấu phẩy) = tên món</b>. Tên món trùng thực đơn thì có hình đẹp, gõ tên khác vẫn được.</p>
-      <label class="field"><span>Danh sách quà → mồi</span><textarea id="s-giftFoods" rows="6" maxlength="1200" spellcheck="false"></textarea></label>
-      <div class="row wrap"><button class="btn primary" id="save-giftFoods">Lưu</button><button class="btn" data-demo="giftFood">🍢 Thử quà lên mồi</button></div>
-      <p class="note" id="menu-names"></p>
+      <p class="note">Quà nào cũng được, miễn <b>đủ số xu</b> (giá mỗi cái) là một dĩa mồi ngẫu nhiên trong 30 món ra bàn người tặng; tặng 5 cái thì 5 dĩa (tối đa 8). Quà đủ giá đập quán thì chỉ đập quán, không ra mồi. Bảng thực đơn trên tường tự ghi theo số xu này.</p>
+      <label class="field"><span>Quà có giá từ bao nhiêu xu trở lên thì có mồi (0 = tắt)</span><div class="row"><input id="s-foodMinCoins" type="number" min="0" max="1000000" /><button class="btn" data-save="foodMinCoins">Lưu</button></div></label>
+      <div class="row wrap"><button class="btn" data-demo="giftFood">🍢 Thử quà lên mồi</button></div>
     </div>
     <div class="card">
       <h3>🔑 Từ khóa cụng ly</h3>
@@ -363,8 +360,6 @@ for (const b of document.querySelectorAll('[data-save]')) {
   };
   input.onkeydown = (/** @type {KeyboardEvent} */ e) => e.key === 'Enter' && save();
 }
-$('menu-names').textContent = `Món có sẵn: ${DISHES.map((d) => d.ten).join(', ')}.`;
-$('save-giftFoods').onclick = () => saveSetting('giftFoods', $('s-giftFoods').value);
 for (const b of document.querySelectorAll('[data-style]')) /** @type {HTMLElement} */ (b).onclick = () => saveSetting('replyStyle', /** @type {HTMLElement} */ (b).dataset.style);
 const SWITCHES = ['orders', 'levels', 'autoEvents', 'games', 'autoGames', 'rps', 'showBoard', 'autoVoice', 'greet', 'chatReply', 'readChat', 'idleTalk', 'music', 'ambience', 'smashEnabled', 'stories'];
 for (const key of SWITCHES) $(`s-${key}`).onchange = (/** @type {Event} */ e) => saveSetting(key, /** @type {HTMLInputElement} */ (e.target).checked);
@@ -416,9 +411,7 @@ function applySettings(/** @type {any} */ s) {
   settings = s;
   $('title').textContent = s.channelName;
   document.title = `${s.channelName} · Admin`;
-  const foodBox = $('s-giftFoods');
-if (document.activeElement !== foodBox) foodBox.value = s.giftFoods ?? '';
-  for (const key of ['channelName', 'keyword', 'boardTitle', 'smashGifts', 'smashMinCoins', 'likeGoal', 'rainSeconds', 'wheelGoal']) {
+  for (const key of ['channelName', 'keyword', 'boardTitle', 'foodMinCoins', 'smashMinCoins', 'likeGoal', 'rainSeconds', 'wheelGoal']) {
     const input = $(`s-${key}`);
     if (document.activeElement !== input) input.value = s[key];
   }

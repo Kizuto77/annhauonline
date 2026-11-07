@@ -72,6 +72,7 @@ const DEFAULTS = {
   storyEvery: 4, // phút giữa hai lần kể
   smashEnabled: true, // quà đặc biệt = đập quán
   smashGifts: 'Doughnut, Cheese Donuts, Bubble Tea, Bouquet Flower', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
+  foodMinCoins: 1, // quà có giá từ số xu này (mỗi cái) là có một dĩa mồi; 0 = tắt
   smashMinCoins: 30, // >0: mọi quà có giá từ số xu này trở lên (mỗi cái) cũng đập quán; 0 = tắt
   giftFoods: 'Rose, Bông hoa = Gỏi gà xé phay\nFinger Heart, Bắn Tim = Nem chua rán\nRosa = Khô mực nướng\nLucky Pig, Chú Heo May Mắn = Chân gà sả tắc\nIce Cream Cone, Kem Ốc Quế = Ốc len xào dừa', // mỗi dòng: tên quà (cách nhau dấu phẩy) = tên món mồi
   orders: true, // khách comment gọi món theo thực đơn, bếp nấu rồi bưng ra; gõ "tính tiền" ra hóa đơn ảo
@@ -119,6 +120,7 @@ const VALIDATE = {
   smashEnabled: bool,
   smashGifts: (v) => (typeof v === 'string' ? cleanText(v, 160) : undefined),
   smashMinCoins: num(0, 1_000_000),
+  foodMinCoins: num(0, 1_000_000),
   orders: bool,
   levels: bool,
   autoEvents: bool,
@@ -355,10 +357,8 @@ const fold = (/** @type {string} */ s) => s.normalize('NFD').replace(/[\u0300-\u
 /** @param {string} giftName @param {number} coinsEach */
 function shouldSmash(giftName, coinsEach) {
   if (!settings.smashEnabled) return false;
-  const name = fold(String(giftName));
-  const byName = settings.smashGifts.split(',').map(fold).filter(Boolean).includes(name);
-  const byCoins = settings.smashMinCoins > 0 && coinsEach >= settings.smashMinCoins;
-  return byName || byCoins;
+  // chỉ theo số xu (mỗi cái), không cần tên quà
+  return settings.smashMinCoins > 0 && coinsEach >= settings.smashMinCoins;
 }
 /** @param {User} user @returns {boolean} false when a smash is already going on */
 function triggerSmash(user) {
@@ -668,8 +668,7 @@ function demo(type) {
   else if (type === 'dzo') onChat(demoUser(), pick(['Dzô!', 'dzo dzo', 'Một hai ba dzô', 'zô 100%']));
   else if (type === 'gift') onGift(demoUser(), pick(['Rose', 'Finger Heart', 'TikTok', 'GG']), 1, 1);
   else if (type === 'giftFood') {
-    const row = settings.giftFoods.split('\n').map((r) => r.split('=')[0]?.split(',')[0]?.trim()).filter(Boolean);
-    onGift(demoUser(), pick(row.length ? row : ['Rose']), 1, pick([1, 1, 3]));
+    onGift(demoUser(), pick(['Rose', 'Finger Heart', 'Rosa', 'Ice Cream Cone']), Math.max(1, settings.foodMinCoins), pick([1, 1, 3]));
   } else if (type === 'bigGift') onGift(demoUser(), pick(['Perfume', 'Galaxy', 'Money Gun']), pick([99, 199, 500, 1000]), 1);
   else if (type === 'smash') triggerSmash(demoUser());
   else if (type === 'follow') onFollow(demoUser());

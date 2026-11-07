@@ -22,11 +22,11 @@ Sân khấu tương tác dọc 9:16 chạy cùng TikTok LIVE Studio. Bối cản
 - **Chủ quán đọc to từng comment rồi đáp kiểu bựa** (hoặc kiểu hiền, chọn trong admin). Comment có từ tục, link, số điện thoại, @tag thì bỏ qua; teencode được đọc thành chữ. Khi quán im, chủ quán tự gọi tên người vừa chat để bắt chuyện hoặc hỏi cả quán.
 - **Giọng đọc 8 kiểu** (Hoài My, Nam Minh với nhiều cao độ/tốc độ, giọng Google), lỗi mạng thì thử lại cùng giọng chứ không đổi giọng.
 - **Gọi món & bếp:** khách gõ "cho 1 dĩa ốc len", "gọi lẩu thái"... là phiếu order treo trên dây, bếp nấu có thanh tiến độ, phục vụ bưng tận bàn; khách đã tặng quà được làm trước. Gõ "tính tiền" ra hóa đơn ảo 0đ.
-- **Quà lên mồi, gọi đào:** quà cấu hình sẵn ra dĩa mồi (bảng thực đơn trên tường ghi rõ); khách đòi "3 em đào" thì tặng quà xong ra… 3 ly trà đào.
+- **Quà theo số xu, không cần tên quà:** quà từ 1 xu (mỗi cái) ra một dĩa mồi ngẫu nhiên, quà từ 30 xu đập quán; hai mốc đổi trong admin, bảng thực đơn trên tường tự ghi. Khách đòi "3 em đào" thì tặng quà xong ra… 3 ly trà đào.
 - **Khách quen & cấp bậc** (lưu trong `viewers.json` qua nhiều buổi live): 🍺 Khách mới → 🥂 Khách quen → 🍻 Chiến hữu → 😎 Dân chơi → 💰 Đại gia → 👑 Trùm quán → 🐉 Huyền thoại. Huy hiệu cạnh tên, lên cấp có ăn mừng.
 - **Sự kiện trong quán** (tự động hoặc bấm trong admin): giờ vàng x2 điểm, mất điện, mưa bão sấm chớp, người bán dạo, bàn bên hát karaoke.
 - **Mini game:** oẳn tù tì với chủ quán (gõ kéo/búa/bao), đoán số 1–50, kéo co đội Ốc (gõ 1) với đội Mực (gõ 2).
-- **Đập quán:** quà đặc biệt làm cả quán bị đập, chủ quán khóc rồi dọn lại.
+- **Đập quán:** quà đủ số xu làm cả quán bị đập, chủ quán khóc rồi dọn lại.
 - **Quán sống động:** sao, mây, đèn lồng, quạt, mèo đi dạo, khói mồi, khách tự cụng ly, đom đóm, pháo hoa khi có quà lớn.
 - **Âm thanh:** nhạc nền quán nhậu Việt tự tổng hợp (`tools/nhac-nhau.py`) hoặc nhạc chill, tiếng quán ồn ào, ly chạm, sấm, chuông kem.
 - **Trang điều khiển:**
