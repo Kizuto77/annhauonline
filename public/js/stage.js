@@ -70,7 +70,7 @@ ui.innerHTML = `
   <div class="ticker"><div class="ticker-text" id="ticker"></div></div>
   <div class="hint-sign"><span>Gõ <b id="kw"></b></span><small>để cụng ly 🍻</small></div>
   <div class="chalkboard" id="board"><div class="chalk-title" id="board-title"></div><ol id="board-list"></ol></div>
-  <div class="chalkboard giftboard" id="giftboard" hidden><div class="chalk-title">QUÀ → MỒI</div><ul id="giftboard-list"></ul></div>
+  <div class="chalkboard giftboard" id="giftboard" hidden><div id="giftboard-food"><div class="chalk-title">QUÀ → MỒI</div><ul id="giftboard-list"></ul></div><div class="smash-list" id="smash-list"><div class="chalk-title">💥 QUÀ ĐẬP QUÁN</div><p id="smash-gifts"></p><p class="coins" id="smash-coins"></p></div></div>
   <div class="wheel-box"><div class="wheel-pointer"></div><div class="wheel" id="wheel"></div><div class="wheel-label">VÒNG QUAY MỒI</div></div>
   <div class="gift-banner" id="gift-banner" hidden></div>
   <div class="dish-card" id="dish-card" hidden></div>
@@ -921,13 +921,23 @@ function renderGiftMenu() {
   for (const r of rows.slice(0, 6)) {
     const li = el('li');
     const a = el('b');
-    a.textContent = `🎁 ${r.gift}`;
+    a.textContent = r.gift;
     const b = el('span');
     b.textContent = `${r.icon} ${r.dish}`;
     li.append(a, b);
     list.appendChild(li);
   }
-  $('giftboard').hidden = !rows.length;
+  $('giftboard-food').hidden = !rows.length;
+  // which gifts smash the quán, so viewers know what to send
+  const smashNames = String(settings.smashGifts || '').split(',').map((x) => x.trim()).filter(Boolean);
+  const coins = Number(settings.smashMinCoins) || 0;
+  const smashOn = settings.smashEnabled !== false && (smashNames.length > 0 || coins > 0);
+  $('smash-list').hidden = !smashOn;
+  $('smash-gifts').textContent = smashNames.join(' · ');
+  $('smash-gifts').hidden = !smashNames.length;
+  $('smash-coins').textContent = coins > 0 ? `${smashNames.length ? 'hoặc ' : ''}quà từ ${coins.toLocaleString('vi-VN')} xu trở lên` : '';
+  $('smash-coins').hidden = !(coins > 0);
+  $('giftboard').hidden = !rows.length && !smashOn;
 }
 
 function applySettings(/** @type {any} */ s) {

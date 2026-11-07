@@ -66,8 +66,8 @@ const DEFAULTS = {
   stories: true, // chủ quán tự kể chuyện, chuyện cười, đố vui, nhắc thả tim / chia sẻ
   storyEvery: 4, // phút giữa hai lần kể
   smashEnabled: true, // quà đặc biệt = đập quán
-  smashGifts: 'Galaxy, Lion, Universe', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
-  smashMinCoins: 0, // >0: mọi quà có giá từ số xu này trở lên (mỗi cái) cũng đập quán; 0 = tắt
+  smashGifts: 'Doughnut, Cheese Donuts, Bubble Tea, Bouquet Flower', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
+  smashMinCoins: 30, // >0: mọi quà có giá từ số xu này trở lên (mỗi cái) cũng đập quán; 0 = tắt
   giftFoods: 'Rose, Bông hoa = Gỏi gà xé phay\nFinger Heart, Bắn Tim = Nem chua rán\nRosa = Khô mực nướng\nLucky Pig, Chú Heo May Mắn = Chân gà sả tắc\nIce Cream Cone, Kem Ốc Quế = Ốc len xào dừa', // mỗi dòng: tên quà (cách nhau dấu phẩy) = tên món mồi
   background: '', // ảnh nền tự tải lên; rỗng = cảnh quán vẽ sẵn
 };
@@ -116,6 +116,11 @@ try {
   }
   // older versions had a single keyword: move the default one to the full list
   if (settings.keyword === 'dzo') settings.keyword = DEFAULTS.keyword;
+  // the old smash setup that nobody changed: move to the new one
+  if (settings.smashGifts === 'Galaxy, Lion, Universe' && settings.smashMinCoins === 0) {
+    settings.smashGifts = DEFAULTS.smashGifts;
+    settings.smashMinCoins = DEFAULTS.smashMinCoins;
+  }
   if (typeof saved.background === 'string' && /^\/uploads\/background-\d+\.(jpg|png|webp)$/.test(saved.background)) {
     settings.background = saved.background;
   }

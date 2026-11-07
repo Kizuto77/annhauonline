@@ -122,7 +122,7 @@ app.innerHTML = `
       <h3>💥 Đập quán</h3>
       <p class="note">Khách tặng quà đặc biệt thì cả quán bị đập, chủ quán khóc rồi dọn lại (~15 giây; quà tới trong lúc đó bỏ qua).</p>
       <label class="field switch big"><input type="checkbox" id="s-smashEnabled" /><span><b>Bật đập quán</b></span></label>
-      <label class="field"><span>Tên quà sẽ đập quán (tên tiếng Anh như trên TikTok, cách nhau dấu phẩy)</span><div class="row"><input id="s-smashGifts" maxlength="160" placeholder="Galaxy, Lion, Universe" /><button class="btn" data-save="smashGifts">Lưu</button></div></label>
+      <label class="field"><span>Tên quà sẽ đập quán (tên tiếng Anh như trên TikTok, cách nhau dấu phẩy)</span><div class="row"><input id="s-smashGifts" maxlength="160" placeholder="Doughnut, Cheese Donuts, Bubble Tea, Bouquet Flower" /><button class="btn" data-save="smashGifts">Lưu</button></div></label>
       <label class="field"><span>Hoặc quà có giá từ bao nhiêu xu trở lên (0 = không dùng cách này)</span><div class="row"><input id="s-smashMinCoins" type="number" min="0" max="1000000" /><button class="btn" data-save="smashMinCoins">Lưu</button></div></label>
       <div class="row wrap"><button class="btn smash" data-control="smash">💥 Thử đập quán ngay</button></div>
     </div>
