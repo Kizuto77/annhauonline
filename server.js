@@ -52,6 +52,7 @@ const DEFAULTS = {
   smashEnabled: true, // quà đặc biệt = đập quán
   smashGifts: 'Galaxy, Lion, Universe', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
   smashMinCoins: 0, // >0: mọi quà có giá từ số xu này trở lên (mỗi cái) cũng đập quán; 0 = tắt
+  giftFoods: 'Rose, Bông hoa = Gỏi gà xé phay\nFinger Heart, Bắn Tim = Nem chua rán\nRosa = Khô mực nướng\nLucky Pig, Chú Heo May Mắn = Chân gà sả tắc\nIce Cream Cone, Kem Ốc Quế = Ốc len xào dừa', // mỗi dòng: tên quà (cách nhau dấu phẩy) = tên món mồi
   background: '', // ảnh nền tự tải lên; rỗng = cảnh quán vẽ sẵn
 };
 
@@ -80,6 +81,7 @@ const VALIDATE = {
   smashEnabled: bool,
   smashGifts: (v) => (typeof v === 'string' ? cleanText(v, 160) : undefined),
   smashMinCoins: num(0, 1_000_000),
+  giftFoods: (v) => (typeof v === 'string' ? v.replace(/[\x00-\x09\x0b-\x1f\x7f]/g, '').replace(/\r/g, '').trim().slice(0, 1200) : undefined),
 };
 
 /** @type {Settings} */
@@ -526,7 +528,10 @@ function demo(type) {
   else if (type === 'chat') onChat(demoUser(), pick(DEMO_CHATS));
   else if (type === 'dzo') onChat(demoUser(), pick(['Dzô!', 'dzo dzo', 'Một hai ba dzô', 'zô 100%']));
   else if (type === 'gift') onGift(demoUser(), pick(['Rose', 'Finger Heart', 'TikTok', 'GG']), 1, 1);
-  else if (type === 'bigGift') onGift(demoUser(), pick(['Perfume', 'Galaxy', 'Money Gun']), pick([99, 199, 500, 1000]), 1);
+  else if (type === 'giftFood') {
+    const row = settings.giftFoods.split('\n').map((r) => r.split('=')[0]?.split(',')[0]?.trim()).filter(Boolean);
+    onGift(demoUser(), pick(row.length ? row : ['Rose']), 1, pick([1, 1, 3]));
+  } else if (type === 'bigGift') onGift(demoUser(), pick(['Perfume', 'Galaxy', 'Money Gun']), pick([99, 199, 500, 1000]), 1);
   else if (type === 'smash') triggerSmash(demoUser());
   else if (type === 'follow') onFollow(demoUser());
   else if (type === 'likes99') addLikes(99);

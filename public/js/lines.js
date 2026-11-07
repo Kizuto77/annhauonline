@@ -116,6 +116,14 @@ const GIFT_NAMES = {
 };
 const giftWords = (/** @type {string} */ name) => GIFT_NAMES[(name || '').toLowerCase().trim()] || 'món quà';
 
+// Thanks for a gift that is set to bring a dish
+const GIFT_FOOD = [
+  'Cảm ơn {ban} tặng {gift}! Quán lên mồi liền, {mon} nóng hổi ra bàn của {ban} đây!',
+  '{ban} tặng {gift}, quán đáp lễ ngay một dĩa {mon}! Ăn đi {ban}, dzô nào!',
+  'Có {gift} của {ban} là có mồi! {mon} ra bàn, mời {ban} nhâm nhi nha!',
+  'Cảm ơn {ban}! Tặng {gift} thì quán lên {mon} cho {ban} liền, nhậu ngon miệng nha!',
+];
+
 const FOLLOW = [
   'Cảm ơn {ban} đã theo dõi quán! Từ nay là khách quen rồi, lần sau ghé là có ghế liền nha.',
   '{q} cảm ơn {ban} đã follow nha! Khách quen của quán là có ưu tiên chỗ ngồi đó.',
@@ -246,6 +254,10 @@ export const lines = (ctx) => ({
     const t = /** @type {1 | 2 | 3 | 4} */ (Math.min(4, Math.max(1, tier)));
     const thanks = fill(pick(GIFT[t]), { q: ctx.q, ban: ban(name), gift: giftWords(giftName) });
     return [thanks, fill(pick(TOASTS), { ban: ban(name) })];
+  },
+  giftFood: (/** @type {string} */ name, /** @type {string} */ giftName, /** @type {string} */ dish, /** @type {number} */ count) => {
+    const more = count > 1 ? ` ${count} phần` : '';
+    return [fill(pick(GIFT_FOOD), { ban: ban(name), gift: giftWords(giftName), mon: dish + more }), fill(pick(TOASTS), { ban: ban(name) })];
   },
   follow: (/** @type {string} */ name) => fill(pick(FOLLOW), { q: ctx.q, ban: ban(name) }),
   share: (/** @type {string[]} */ names) => (names.length ? fill(SHARE_NAMED, { q: ctx.q, list: listNames(names) }) : fill(pick(SHARE), { q: ctx.q })),

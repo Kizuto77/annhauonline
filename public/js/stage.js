@@ -24,7 +24,7 @@ const COMBO_MS = 4500;
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
-let settings = { channelName: 'Xỉn Bia', keyword: 'dzo', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, background: '' };
+let settings = { channelName: 'Xỉn Bia', keyword: 'dzo', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', background: '' };
 const say = () => lines({ q: settings.channelName, kw: lettersKeyword() });
 const lettersKeyword = () => (settings.keyword === 'dzo' ? 'dzô' : settings.keyword);
 
@@ -567,6 +567,19 @@ const tierOf = (/** @type {number} */ coins) => (coins >= 500 ? 4 : coins >= 99 
 /** @type {ReturnType<typeof setTimeout> | undefined} */
 let bannerTimer;
 
+
+const foldName = (/** @type {string} */ s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
+/** Gift -> dish set in the dashboard: one line per dish, "Rose, Bông hoa = Gỏi gà xé phay" */
+function foodFor(/** @type {string} */ giftName) {
+  const want = foldName(giftName);
+  for (const row of String(settings.giftFoods || '').split('\n')) {
+    const [names, dishName] = row.split('=').map((x) => x.trim());
+    if (!names || !dishName || !names.split(',').some((n) => foldName(n) === want)) continue;
+    return DISHES.find((d) => foldName(d.ten) === foldName(dishName)) ?? { ten: dishName, icon: '🍽️', loi: '' };
+  }
+  return undefined;
+}
+
 function onGift(/** @type {{ id: string; user: User; giftName: string; coins: number; count: number }} */ g) {
   const { user } = g;
   noteActive(user);
@@ -588,7 +601,24 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
     const seat = SEATS[occ.seat];
     const tableId = seat.table;
     // One waiter trip per combo (and again if the combo grows into a bigger tier)
-    if (combo.served < tier) {
+    const food = foodFor(g.giftName);
+    if (food) {
+      // A mapped gift: every unit brings one plate of its dish to the giver's table (a few trips at a time)
+      const plates = Math.min(g.count, 8);
+      for (let i = 0; i < plates; i++) {
+        setTimeout(() => {
+          const at = seatOf.get(user.id);
+          const t = at === undefined ? tableId : SEATS[at].table;
+          serve(t, giftItem(2, food.icon), () => {
+            sound?.clink(0.4);
+            burst(TABLES[t].x, TABLES[t].y - 4, 'foam', 8);
+            for (const o of occupantsAt(t)) cheer(o, Math.random() * 400);
+          });
+          if (i === 0) spotlight(user, at ?? occ.seat);
+        }, 700 + i * 1100);
+      }
+      bubble(occ, `🎁 ${g.giftName} → ${food.icon} ${food.ten}`);
+    } else if (combo.served < tier) {
       combo.served = tier;
       const dish = DISHES[Math.floor(Math.random() * DISHES.length)];
       // A big gift can move the giver up to the VIP table a moment later: serve wherever they sit by then
@@ -603,7 +633,7 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
         spotlight(user, at ?? occ.seat);
       }, 700);
     }
-    bubble(occ, `🎁 ${g.giftName}${combo.count > 1 ? ` x${combo.count}` : ''}`);
+    if (!food) bubble(occ, `🎁 ${g.giftName}${combo.count > 1 ? ` x${combo.count}` : ''}`);
   }
   // A gift (or a combo adding up) that reaches a bigger tier: gold flash and confetti, the whole quán for the biggest
   const before = tierOf(combo.coins - g.coins);
@@ -622,7 +652,8 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
     // wait a moment so a combo is thanked once, at its size
     setTimeout(() => {
       const c = combos.get(user.id);
-      auto(say().gift(user.name, c?.giftName ?? g.giftName, tierOf(c?.coins ?? g.coins)), true);
+      const f = foodFor(c?.giftName ?? g.giftName);
+      auto(f ? say().giftFood(user.name, c?.giftName ?? g.giftName, f.ten, Math.min(c?.count ?? g.count, 8)) : say().gift(user.name, c?.giftName ?? g.giftName, tierOf(c?.coins ?? g.coins)), true);
     }, 1500);
   }
 }
