@@ -168,6 +168,47 @@ export const DAO_SERVED = [
 ];
 export const DAO_SERVED_PLAIN = ['Cảm ơn {ban}! {n} ly trà đào ra bàn rồi nè, mát lạnh luôn.'];
 
+/** The host starts a conversation with someone who chatted recently */
+export const TALK_NAMED = [
+  '{ban} ơi, nãy giờ nói chuyện vui ghê. Hỏi thiệt nè, tối nay ăn gì chưa?',
+  '{ban} ơi, đang xem live ở đâu đó? Trên giường hay trên sofa? Khai thật đi!',
+  'Ê {ban}, kể quán nghe chuyện vui nhất hôm nay đi, không vui thì kể chuyện xui cũng được.',
+  '{ban} ơi, được chọn một món mồi ăn suốt đời thì {ban} chọn món gì?',
+  '{ban} thấy chủ quán hôm nay có gì khác không? Nói đẹp hơn là được cộng điểm đó.',
+  '{ban} ơi, ngồi lâu rồi, đứng dậy vươn vai cái đi. Xong gõ {kw} báo cáo quán nha!',
+  'Hỏi {ban} nè: đi nhậu thì {ban} là người say trước, hay người dìu người say về?',
+  '{ban} ơi, quê ở đâu vậy? Comment cho cả quán biết, xem tối nay có đồng hương không.',
+  '{ban} ơi, chấm điểm quán đi, thang điểm mười. Dưới chín là chủ quán khóc đó nha.',
+  '{ban} nói nhỏ quán nghe: mai đi làm hay được nghỉ? Được nghỉ là quán ganh tị đó.',
+  'Ủa {ban} đâu rồi, nãy chat sôi nổi lắm mà giờ im re. Bị ai bắt đi rửa chén hả?',
+  '{ban} ơi, nhậu ảo vậy đủ chưa, hay muốn quán bưng thêm dĩa mồi ảo nữa?',
+  'Câu hỏi triết lý cho {ban} nè: ăn ốc thì nên mút hay nên khều? Trả lời đi!',
+  '{ban} ơi, giới thiệu bản thân đi, tên dễ thương vậy chắc người cũng dễ thương.',
+  '{ban} ơi, nói thiệt đi, xem quán có vui không? Vui thì thả tim, không vui thì… cũng thả tim cho quán vui.',
+  'Ê {ban}, đố {ban} đoán chủ quán năm nay bao nhiêu tuổi? Đoán trẻ là được khen một câu.',
+  '{ban} ơi, hôm nay đi làm có bị sếp la không? Kể quán nghe, quán la sếp giùm.',
+  '{ban} ơi, tửu lượng thiệt ngoài đời được mấy lon? Khai gian là quán biết đó nha.',
+];
+/** The host asks the whole room something, to get the chat going */
+export const TALK_ROOM = [
+  'Cả quán ơi, ai ăn tối rồi thì comment món gì cho quán thèm chơi!',
+  'Hỏi cả nhà nè: ốc len xào dừa với khô mực nướng, chọn một thôi, chọn gì?',
+  'Ai đang nằm trên giường xem live thì gõ chữ giường. Quán đếm thử coi bao nhiêu người lười.',
+  'Cả nhà ơi, ai ở xa quán nhất? Comment tỉnh của mình coi ai thắng!',
+  'Quán hơi im rồi nha, cả nhà nói gì đi, chủ quán nói một mình nãy giờ ngại quá.',
+  'Đố vui nè: con gì càng to càng nhỏ? Comment đáp án đi!',
+  'Ai độc thân thì gõ chữ ế. Xem tối nay quán có bao nhiêu hội viên!',
+  'Cả nhà hay nhậu với ai nhất: bạn thân, đồng nghiệp hay ông hàng xóm? Comment coi!',
+  'Thử thách nè: ai gõ {kw} nhanh nhất trong năm giây tới là chiến hữu số một!',
+  'Hỏi thiệt cả nhà: đi nhậu về mà ở nhà còn có người thức chờ thì nên làm gì? Comment cứu quán với!',
+  'Ai đang làm ca đêm mà lén xem live thì gõ chữ ca đêm, quán giữ bí mật cho.',
+  'Cả nhà ơi, chấm điểm giọng chủ quán đi, thang mười. Chấm thấp là quán hát cho nghe đó.',
+  'Ai mai phải dậy sớm mà giờ còn ngồi đây thì gõ chữ liều. Quán đếm coi!',
+  'Kể nhanh một chuyện xui nhất tuần này đi cả nhà, kể xong là hết xui, quán bảo đảm!',
+  'Cả nhà đi nhậu thích quán vỉa hè hay nhà hàng máy lạnh? Comment đi!',
+  'Ai muốn gọi đào thì comment số em đi, quán ghi sổ hết, tặng quà là đào ra bàn liền!',
+];
+
 /** Reply to any other comment: works whatever they wrote */
 export const BUA_ACK = [
   'Câu này phải đóng khung treo giữa quán.',

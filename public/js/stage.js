@@ -12,6 +12,7 @@ import { detectTopic, detectCity, mayAnswer, daoCount } from './chat.js';
 import { DISHES } from './dishes.js';
 import { readableComment } from './bua.js';
 import { tokensOf } from './text.js';
+import { livingScene } from './living.js';
 import { ambient, beams, fireworks, flyArc, floatUp, hearts, reveal, ring, sparkles, splash } from './effects.js';
 
 const params = new URLSearchParams(location.search);
@@ -19,7 +20,9 @@ const PREVIEW = params.get('preview') === '1';
 
 const GREET_EVERY_MS = 6000;
 const SHARE_EVERY_MS = 5 * 60 * 1000;
-const IDLE_AFTER_MS = 90 * 1000;
+/** The host starts talking after this much silence, and not more often than every TALK_GAP_MS */
+const TALK_AFTER_MS = 14 * 1000;
+const TALK_GAP_MS = 22 * 1000;
 const GIFT_THANKS_GAP_MS = 30 * 1000;
 const COMBO_MS = 4500;
 
@@ -27,7 +30,7 @@ const COMBO_MS = 4500;
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
-let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', readChat: true, replyStyle: 'bua', background: '' };
+let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: false, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', readChat: true, replyStyle: 'bua', background: '' };
 const say = () => lines({ q: settings.channelName, kw: lettersKeyword(), style: settings.replyStyle });
 /** The first cheers keyword, the one shown and said */
 const firstKeyword = () => String(settings.keyword || 'dzô').split(',')[0].trim() || 'dzô';
@@ -55,6 +58,7 @@ const host = el('div', 'host');
 const counter = el('div', 'layer counter');
 counter.innerHTML = counterSVG();
 const floor = el('div', 'layer floor');
+const living = el('div', 'layer living');
 // The neon sign hangs on the building, so it moves with the camera
 const sign = el('div', 'neon-wrap');
 sign.innerHTML = '<div class="neon"></div><div class="neon-sub">QUÁN NHẬU ONLINE</div>';
@@ -62,7 +66,8 @@ const wfx = el('div', 'layer wfx'); // effects that live in the room and follow 
 // The wall menu board shows what each gift does (gift -> dish, gifts that smash the quán), page by page
 const menuBoard = el('div', 'menu-board');
 menuBoard.hidden = true;
-world.append(bgLayer, customBg, sign, menuBoard, host, counter, floor, wfx);
+world.append(bgLayer, living, customBg, sign, menuBoard, host, counter, floor, wfx);
+livingScene(living, bgLayer.querySelector('svg'));
 stage.appendChild(world);
 
 const fx = el('div', 'layer fx'); // rain, confetti, foam: over the world, under the boards
@@ -574,6 +579,50 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user
 const daoWish = new Map();
 const DAO_WISH_MS = 15 * 60 * 1000;
 
+/** The host turns to someone: their name tag glows and a soft ring lights up around them */
+function spotlightSoft(/** @type {number} */ seatId) {
+  const occ = seats.get(seatId);
+  if (!occ) return;
+  occ.el.classList.add('glow');
+  setTimeout(() => occ.el.classList.remove('glow'), 5000);
+  const hd = headOf(seatId);
+  ring(wfx, hd.x, hd.y + 3, '#8ef0c8', 34);
+  floatUp(wfx, hd.x, hd.y, ['💬'], 12);
+}
+
+// The room lives on its own: steam from dishes on the tables, neighbours clinking glasses, a laugh here and there
+setInterval(() => {
+  if (document.hidden) return;
+  const withFood = [...tableEls].filter(([, te]) => te.querySelector('.drop-in'));
+  if (!withFood.length) return;
+  const [id] = withFood[Math.floor(Math.random() * withFood.length)];
+  const t = TABLES[id];
+  for (let k = 0; k < 2; k++) {
+    const e = el('span', 'fx-steam');
+    e.style.left = `${t.x + (Math.random() - 0.5) * t.w * 0.6}%`;
+    e.style.top = `${t.y - 0.5}%`;
+    e.style.setProperty('--dx', `${(Math.random() - 0.5) * 12}px`);
+    e.style.animationDelay = `${k * 0.5}s`;
+    wfx.appendChild(e);
+    setTimeout(() => e.remove(), 3400);
+  }
+}, 1400);
+setInterval(() => {
+  if (document.hidden || smashing) return;
+  const busy = TABLES.filter((t) => occupantsAt(t.id).length >= 2);
+  if (!busy.length) return;
+  const t = busy[Math.floor(Math.random() * busy.length)];
+  const two = occupantsAt(t.id).sort(() => Math.random() - 0.5).slice(0, 2);
+  two.forEach((o, i) => cheer(o, i * 120));
+  setTimeout(() => {
+    sparkles(wfx, t.x, t.y - 5, 4, 12);
+    sound?.clink(0.12);
+  }, 700);
+  // a background customer says something now and then (never a real viewer: that would put words in their mouth)
+  const npc = everyone().filter((o) => o.npc);
+  if (npc.length && Math.random() < 0.5) bubble(npc[Math.floor(Math.random() * npc.length)], ['🍻', '😂', 'Dzô!', '🍢', 'Hết mồi rồi!', '🤣', 'Một hai ba dzô!'][Math.floor(Math.random() * 7)], 2600);
+}, 6500);
+
 /** Comments waiting to be read aloud: newest kept when the chat runs faster than the voice */
 /** @type {Array<{ user: User; text: string; topic: import('./chat.js').Topic | null; at: number }>} */
 const toRead = [];
@@ -1083,6 +1132,7 @@ function applySettings(/** @type {any} */ s) {
   renderGiftMenu();
   const custom = Boolean(settings.background);
   customBg.hidden = !custom;
+  living.hidden = custom;
   if (custom) customBg.src = settings.background;
   bgLayer.hidden = counter.hidden = host.hidden = custom;
   if (voiceChanged) host.innerHTML = hostSVG(String(settings.voice).startsWith('male') ? 'male' : 'female') + '<div class="host-tag">Chủ quán</div>';
@@ -1285,11 +1335,24 @@ if (sound) {
   setInterval(() => {
     if (settings.idleTalk) auto(say().share(recentNames()));
   }, SHARE_EVERY_MS);
-  let idleCount = 0;
+  // When the quán goes quiet the host starts a conversation: with someone who chatted lately (by name), or the room
+  let lastTalkAt = 0;
+  /** @type {Map<string, number>} */
+  const talkedTo = new Map();
   setInterval(() => {
-    if (!settings.idleTalk || sound.quietFor() < IDLE_AFTER_MS) return;
-    auto(idleCount++ % 3 === 2 ? say().share([]) : say().idle());
-  }, 15_000);
+    const now = Date.now();
+    if (!settings.idleTalk || !settings.autoVoice || smashing || sound.waiting() > 0) return;
+    if (sound.quietFor() < TALK_AFTER_MS || now - lastTalkAt < TALK_GAP_MS) return;
+    lastTalkAt = now;
+    const people = [...recent.entries()].filter(([id, r]) => now - r.at < 5 * 60_000 && now - (talkedTo.get(id) ?? 0) > 6 * 60_000);
+    if (people.length && Math.random() < 0.7) {
+      const [id, r] = people[Math.floor(Math.random() * people.length)];
+      talkedTo.set(id, now);
+      const at = seatOf.get(id);
+      if (at !== undefined) spotlightSoft(at);
+      auto(settings.replyStyle === 'hien' ? say().greetBack(r.name) : say().talkTo(r.name));
+    } else auto(settings.replyStyle === 'hien' ? say().idle() : say().talkRoom());
+  }, 3000);
   sound.onSpeaking = (on) => host.classList.toggle('talking', on);
   sound.onBlocked = (b) => ($('unlock').hidden = !b);
   $('unlock').onclick = () => sound.unlock();

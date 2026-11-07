@@ -66,7 +66,7 @@ const DEFAULTS = {
   musicVolume: 0.22,
   musicTrack: 'nhau', // nhau = nhạc quán nhậu (đàn tranh, đàn bầu, mõ, nhịp remix); chill = nhạc chill cũ
   ambience: true, // tiếng quán ồn ào, ly chạm lách cách
-  stories: true, // chủ quán tự kể chuyện, chuyện cười, đố vui, nhắc thả tim / chia sẻ
+  stories: false, // chủ quán tự kể chuyện, chuyện cười, đố vui, nhắc thả tim / chia sẻ
   storyEvery: 4, // phút giữa hai lần kể
   smashEnabled: true, // quà đặc biệt = đập quán
   smashGifts: 'Doughnut, Cheese Donuts, Bubble Tea, Bouquet Flower', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
@@ -124,6 +124,8 @@ try {
   if (settings.keyword === 'dzo') settings.keyword = DEFAULTS.keyword;
   // chủ quán chọn dùng một giọng "Em gái nhí nhảnh": đổi giọng mặc định cũ sang giọng này (một lần)
   if (!saved.voiceSet && settings.voice === 'female') settings.voice = DEFAULTS.voice;
+  // chủ quán bỏ kể chuyện để trò chuyện với người chat: tắt kể chuyện một lần (bật lại được trong admin)
+  if (!saved.talkMode) settings.stories = false;
   // the old smash setup that nobody changed: move to the new one
   if (settings.smashGifts === 'Galaxy, Lion, Universe' && settings.smashMinCoins === 0) {
     settings.smashGifts = DEFAULTS.smashGifts;
@@ -138,7 +140,7 @@ try {
 const saveSettings = () => {
   try {
     // voiceSet: the voice in this file is the owner's choice, not an old default to move on
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ ...settings, voiceSet: true }, null, 2));
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ ...settings, voiceSet: true, talkMode: true }, null, 2));
   } catch (err) {
     console.error('Không lưu được settings.json:', err);
   }

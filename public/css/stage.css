@@ -389,3 +389,43 @@
 .mb-dots { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; gap: 3px; }
 .mb-dots i { width: 3px; height: 3px; border-radius: 50%; background: rgba(246, 241, 216, 0.35); transition: background 0.3s, width 0.3s; }
 .mb-dots i.on { width: 8px; border-radius: 2px; background: #ffd166; }
+
+/* quán "sống" (living.js) */
+.living { pointer-events: none; }
+.living[hidden] { display: none; }
+.lv-star { fill: #fffbe8; animation: lv-twinkle 3s ease-in-out infinite; }
+@keyframes lv-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+.lv-clouds { fill: #6b5a8f; opacity: 0.28; }
+.lv-cloud { animation: lv-drift 150s linear infinite; }
+@keyframes lv-drift { from { transform: translateX(-80px); } to { transform: translateX(520px); } }
+.lv-breathe { animation: lv-breathe 6s ease-in-out infinite; mix-blend-mode: screen; }
+@keyframes lv-breathe { 0%, 100% { opacity: 0.55; } 40% { opacity: 1; } 55% { opacity: 0.8; } 70% { opacity: 1; } }
+.lv-cone { animation: lv-cone 7s ease-in-out infinite; }
+@keyframes lv-cone { 0%, 100% { opacity: 0.85; } 46% { opacity: 1; } 48% { opacity: 0.5; } 50% { opacity: 1; } }
+.lv-moth { animation: lv-orbit 2.5s linear infinite; }
+@keyframes lv-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
+.lv-lantern { animation: lv-swing 3.6s ease-in-out infinite; }
+@keyframes lv-swing { 0%, 100% { rotate: -5deg; } 50% { rotate: 5deg; } }
+.lv-lantern-glow { animation: lv-glow 2.4s ease-in-out infinite alternate; }
+@keyframes lv-glow { from { opacity: 0.15; } to { opacity: 0.4; } }
+.lv-fan-blades { animation: lv-spin 0.35s linear infinite; }
+@keyframes lv-spin { to { rotate: 360deg; } }
+.lv-fan-head { animation: lv-turn 7s ease-in-out infinite; }
+@keyframes lv-turn { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.55); } }
+.lv-cat .lv-cat-legs line { transform-box: fill-box; transform-origin: 50% 0; }
+.lv-cat.walking .lv-cat-legs .a { animation: lv-leg 0.34s ease-in-out infinite alternate; }
+.lv-cat.walking .lv-cat-legs .b { animation: lv-leg 0.34s ease-in-out infinite alternate-reverse; }
+@keyframes lv-leg { from { rotate: -25deg; } to { rotate: 25deg; } }
+.lv-cat-tail { transform-box: fill-box; transform-origin: 100% 100%; animation: lv-tail 1.8s ease-in-out infinite; }
+@keyframes lv-tail { 0%, 100% { rotate: -8deg; } 50% { rotate: 12deg; } }
+.lv-cat-body { transition: transform 0.4s; transform-box: fill-box; transform-origin: 30% 100%; }
+.lv-cat.sitting .lv-cat-body { transform: rotate(-22deg); }
+.lv-cat.sitting .lv-cat-legs { opacity: 0; }
+
+/* steam from dishes on the tables, glasses clinking on their own */
+.fx-steam { position: absolute; width: 6px; height: 14px; margin: -14px -3px 0; border-radius: 50%; background: radial-gradient(ellipse, rgba(255, 255, 255, 0.55), transparent 70%); filter: blur(1.5px); animation: fx-steam 2.6s ease-out both; }
+@keyframes fx-steam { 0% { transform: translate(0, 0) scale(0.6); opacity: 0; } 25% { opacity: 0.9; } 100% { transform: translate(var(--dx), -26px) scale(1.6, 2); opacity: 0; } }
+
+/* the drawn scene breathes a little, like a camera on a tripod */
+.world > .layer:first-child, .world > .living { animation: lv-cam 24s ease-in-out infinite alternate; transform-origin: 50% 40%; }
+@keyframes lv-cam { from { scale: 1; } to { scale: 1.012; } }

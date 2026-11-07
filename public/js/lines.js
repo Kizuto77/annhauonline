@@ -2,7 +2,7 @@
 // Mọi câu chủ quán nói. {q} = tên quán (dashboard "Tên quán"), {ban} = "bạn Lan", {list} = "bạn A, bạn B và bạn C".
 // Quán ảo cho vui: không giục ai uống thật, thỉnh thoảng nhắc uống có chừng và không lái xe.
 import { ban, listNames } from './names.js';
-import { BUA_ACK, BUA_REPLIES, DAO_SERVED, DAO_SERVED_PLAIN, PLAIN_SAY, READ_ASK, READ_SAY } from './bua.js';
+import { BUA_ACK, BUA_REPLIES, DAO_SERVED, DAO_SERVED_PLAIN, PLAIN_SAY, READ_ASK, READ_SAY, TALK_NAMED, TALK_ROOM } from './bua.js';
 
 const NUM = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'];
 
@@ -281,6 +281,10 @@ export const lines = (ctx) => ({
   rain: () => pick(['Sáu trăm sáu mươi sáu tim! Quán mưa bọt bia một phút, cả nhà cụng ly nào!', 'Đủ tim rồi! Mưa bọt bia khắp quán, cảm ơn cả nhà nha!']),
   reply: (/** @type {import('./chat.js').Topic} */ topic, /** @type {string} */ name, /** @type {string} */ city = '', n = 1) =>
     fill(pick((ctx.style === 'hien' ? REPLIES : BUA_REPLIES)[topic]), { q: ctx.q, kw: ctx.kw, ban: ban(name), city, n: NUM[n] ?? String(n) }),
+  /** Start a chat with someone who commented a little while ago */
+  talkTo: (/** @type {string} */ name) => sentences(fill(pick(TALK_NAMED), { q: ctx.q, kw: ctx.kw, ban: ban(name) })),
+  /** Ask the whole room something */
+  talkRoom: () => sentences(fill(pick(TALK_ROOM), { q: ctx.q, kw: ctx.kw })),
   /** Someone who asked for "đào" sent a gift: n glasses of trà đào */
   daoServed: (/** @type {string} */ name, /** @type {number} */ n) =>
     sentences(fill(pick(ctx.style === 'hien' ? DAO_SERVED_PLAIN : DAO_SERVED), { ban: ban(name), n: NUM[n] ?? String(n) })),
