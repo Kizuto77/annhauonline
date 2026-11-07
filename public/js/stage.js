@@ -25,9 +25,11 @@ const COMBO_MS = 4500;
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
-let settings = { channelName: 'Xỉn Bia', keyword: 'dzo', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', background: '' };
+let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', background: '' };
 const say = () => lines({ q: settings.channelName, kw: lettersKeyword() });
-const lettersKeyword = () => (settings.keyword === 'dzo' ? 'dzô' : settings.keyword);
+/** The first cheers keyword, the one shown and said */
+const firstKeyword = () => String(settings.keyword || 'dzô').split(',')[0].trim() || 'dzô';
+const lettersKeyword = () => (firstKeyword() === 'dzo' ? 'dzô' : firstKeyword());
 
 const sound = PREVIEW ? null : new SoundEngine();
 /** Lines the host says on her own (greetings, thanks, replies): all muted when "Tự động đọc" is off */
@@ -934,7 +936,7 @@ function applySettings(/** @type {any} */ s) {
   const neon = /** @type {HTMLElement} */ (sign.querySelector('.neon'));
   neon.textContent = settings.channelName;
   neon.style.fontSize = `${Math.max(26, Math.min(52, 470 / Math.max(6, [...settings.channelName].length)))}px`;
-  $('kw').textContent = `“${settings.keyword}”`;
+  $('kw').textContent = `“${lettersKeyword()}”`;
   $('board-title').textContent = settings.boardTitle;
   $('board').hidden = !settings.showBoard;
   renderGiftMenu();

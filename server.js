@@ -35,7 +35,7 @@ const POINTS_PER_COIN = 10; // bảng TOP: 1 comment = 1 điểm, 1 xu quà = 10
 /** @typedef {typeof DEFAULTS} Settings */
 const DEFAULTS = {
   channelName: 'Xỉn Bia', // tên quán: tiêu đề bảng neon và tên giọng đọc xưng
-  keyword: 'dzo', // comment có từ này là cụng ly (không phân biệt dấu, hoa thường): "Dzô!", "dzo dzo"
+  keyword: 'dzô, dzo, dô, zô, do, zo', // các từ cụng ly, cách nhau dấu phẩy; từ đầu tiên hiện trên bảng hiệu
   boardTitle: 'TOP CHIẾN HỮU',
   showBoard: true,
   voice: 'female', // female = vi-VN-HoaiMyNeural, male = vi-VN-NamMinhNeural
@@ -64,7 +64,10 @@ const num = (/** @type {number} */ min, /** @type {number} */ max) => (/** @type
 /** @type {Record<string, (v: unknown) => unknown>} */
 const VALIDATE = {
   channelName: (v) => cleanText(v, 40) || undefined,
-  keyword: (v) => (lettersOnly(cleanText(v, 30)) ? cleanText(v, 30) : undefined),
+  keyword: (v) => {
+    const list = cleanText(v, 120).split(',').map((k) => k.trim()).filter((k) => lettersOnly(k));
+    return list.length ? list.join(', ') : undefined;
+  },
   boardTitle: (v) => cleanText(v, 24) || undefined,
   showBoard: bool,
   voice: (v) => (v === 'female' || v === 'male' ? v : undefined),
@@ -92,6 +95,8 @@ try {
     const v = check(saved[key]);
     if (v !== undefined) /** @type {any} */ (settings)[key] = v;
   }
+  // older versions had a single keyword: move the default one to the full list
+  if (settings.keyword === 'dzo') settings.keyword = DEFAULTS.keyword;
   if (typeof saved.background === 'string' && /^\/uploads\/background-\d+\.(jpg|png|webp)$/.test(saved.background)) {
     settings.background = saved.background;
   }
@@ -219,12 +224,24 @@ function noteDzo(userId) {
   if (people >= WAVE_PEOPLE && now - lastWaveAt > WAVE_COOLDOWN_MS) triggerWave();
 }
 
-/** @param {string} text */
+/** "zôôô" -> "zô", "dooo" -> "do": stretched words count too */
+const squeeze = (/** @type {string} */ s) => s.normalize('NFC').toLowerCase().replace(/(.)\1+/gu, '$1');
+/**
+ * Cheers keywords, comma separated. Long ones (3+ letters, like "dzo") match anywhere and ignore accents:
+ * "Dzô!!", "dzodzo". Short ones ("dô", "zo") must be a word on their own and keep their accents, so "do"
+ * does not catch "đó", "đồ" and the like.
+ * @param {string} text
+ */
 function isKeyword(text) {
-  const kw = lettersOnly(settings.keyword) || 'dzo';
-  if (lettersOnly(text).includes(kw)) return true;
-  // "zô", "dô" alone also mean cheers when the keyword is the default
-  return kw === 'dzo' && tokensOf(text).some((t) => ['zo', 'zô', 'dô', 'dzô'].includes(t));
+  const all = lettersOnly(text);
+  const words = tokensOf(text).map(squeeze);
+  for (const k of settings.keyword.split(',')) {
+    const key = k.trim();
+    const plain = lettersOnly(key);
+    if (!plain) continue;
+    if (plain.length >= 3 ? all.includes(plain) : words.includes(squeeze(key))) return true;
+  }
+  return false;
 }
 
 // Everything below is fed by TikTok and by the dashboard's test buttons (/api/demo) alike

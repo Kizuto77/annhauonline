@@ -122,7 +122,7 @@ app.innerHTML = `
     </div>
     <div class="card">
       <h3>🔑 Từ khóa cụng ly</h3>
-      <label class="field"><span>Comment có từ này là khách nâng ly (không phân biệt dấu, hoa thường). 4 người cùng gõ trong 15 giây thì cả quán dzô.</span><div class="row"><input id="s-keyword" maxlength="30" /><button class="btn" data-save="keyword">Lưu</button></div></label>
+      <label class="field"><span>Comment có một trong các từ này là khách nâng ly. Cách nhau dấu phẩy, từ đầu tiên hiện trên bảng hiệu. Từ 3 chữ cái trở lên (dzo) không phân biệt dấu; từ ngắn (dô, zo) phải gõ đứng riêng và đúng dấu, để "do" không bắt nhầm "đó", "đồ". 4 người cùng gõ trong 15 giây thì cả quán dzô.</span><div class="row"><input id="s-keyword" maxlength="120" placeholder="dzô, dzo, dô, zô, do, zo" /><button class="btn" data-save="keyword">Lưu</button></div></label>
     </div>
     <div class="card">
       <h3>🏆 Bảng xếp hạng</h3>
