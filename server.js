@@ -23,9 +23,6 @@ const UPLOAD_DIR = path.join(ROOT, 'uploads');
 const SETTINGS_FILE = path.join(ROOT, 'settings.json');
 const PORT = Number(process.env.PORT) || 3000;
 
-const LIKES_PER_RAIN = 666; // tim cả phòng cho 60 giây mưa bọt bia
-const RAIN_MS = 60_000;
-const LIKES_PER_WHEEL = 99; // tim cả phòng cho một lần quay vòng mồi
 const POINTS_PER_COIN = 10; // bảng TOP: 1 comment = 1 điểm, 1 xu quà = 10 điểm
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -33,12 +30,31 @@ const POINTS_PER_COIN = 10; // bảng TOP: 1 comment = 1 điểm, 1 xu quà = 10
 // ---------------------------------------------------------------------------------------------------------------
 
 /** @typedef {typeof DEFAULTS} Settings */
+/**
+ * Voices to choose from in the dashboard. Microsoft has two Vietnamese voices (Hoài My, Nam Minh); each comes in a
+ * few styles by pitch and speed. "google" is the Google Translate voice.
+ * @type {Record<string, { name: string; pitch: string; rate: number }>}
+ */
+const VOICES = {
+  female: { name: 'vi-VN-HoaiMyNeural', pitch: '+4%', rate: 0 }, // chị chủ quán, vui vẻ
+  female_cute: { name: 'vi-VN-HoaiMyNeural', pitch: '+12%', rate: 6 }, // em gái nhí nhảnh
+  female_soft: { name: 'vi-VN-HoaiMyNeural', pitch: '-3%', rate: -7 }, // cô chủ dịu dàng
+  female_news: { name: 'vi-VN-HoaiMyNeural', pitch: '0%', rate: -3 }, // chị phát thanh viên, rõ chữ
+  male: { name: 'vi-VN-NamMinhNeural', pitch: '-1%', rate: 0 }, // anh chủ quán, trầm ấm
+  male_deep: { name: 'vi-VN-NamMinhNeural', pitch: '-9%', rate: -6 }, // anh trầm, chậm rãi
+  male_hype: { name: 'vi-VN-NamMinhNeural', pitch: '+6%', rate: 9 }, // MC sôi động
+  google: { name: 'google', pitch: '0%', rate: 0 }, // giọng Google
+};
+
 const DEFAULTS = {
   channelName: 'Xỉn Bia', // tên quán: tiêu đề bảng neon và tên giọng đọc xưng
   keyword: 'dzô, dzo, dô, zô, do, zo', // các từ cụng ly, cách nhau dấu phẩy; từ đầu tiên hiện trên bảng hiệu
   boardTitle: 'TOP CHIẾN HỮU',
   showBoard: true,
-  voice: 'female', // female = vi-VN-HoaiMyNeural, male = vi-VN-NamMinhNeural
+  voice: 'female', // một trong VOICES bên dưới (Hoài My / Nam Minh với nhiều kiểu, hoặc giọng Google)
+  likeGoal: 666, // tim cả phòng cho một trận mưa bọt bia
+  rainSeconds: 60, // mưa bọt bia kéo dài bao lâu
+  wheelGoal: 99, // tim cả phòng cho một lần quay vòng mồi
   rate: 1.05,
   autoVoice: true, // tắt là giọng đọc im hẳn (trừ "Đọc ngay")
   greet: true, // chào khách mới vào
@@ -70,7 +86,10 @@ const VALIDATE = {
   },
   boardTitle: (v) => cleanText(v, 24) || undefined,
   showBoard: bool,
-  voice: (v) => (v === 'female' || v === 'male' ? v : undefined),
+  voice: (v) => (typeof v === 'string' && Object.hasOwn(VOICES, v) ? v : undefined),
+  likeGoal: num(10, 1_000_000),
+  rainSeconds: num(10, 600),
+  wheelGoal: num(10, 1_000_000),
   rate: num(0.7, 1.3),
   autoVoice: bool,
   greet: bool,
@@ -176,26 +195,52 @@ function addPoints(user, points, coins = 0) {
   sendBoard();
 }
 
-const meters = { likes: 0, likeGoal: LIKES_PER_RAIN, wheel: 0, wheelGoal: LIKES_PER_WHEEL, rainUntil: 0 };
-const metersPayload = () => ({ ...meters, rainLeft: Math.max(0, meters.rainUntil - Date.now()) });
+// Goals come from the settings, so a change in the dashboard shows at once
+const meters = { likes: 0, wheel: 0, rainUntil: 0, total: 0, rains: 0, wheels: 0 };
+/** like counts of the last minute, for "tim/phút" */
+/** @type {Array<{ at: number; n: number }>} */
+let likeLog = [];
+const perMinute = () => {
+  const now = Date.now();
+  likeLog = likeLog.filter((l) => now - l.at < 60_000);
+  return likeLog.reduce((a, l) => a + l.n, 0);
+};
+const metersPayload = () => ({
+  ...meters,
+  likeGoal: settings.likeGoal,
+  wheelGoal: settings.wheelGoal,
+  rainLeft: Math.max(0, meters.rainUntil - Date.now()),
+  perMinute: perMinute(),
+});
 const sendMeters = throttle(() => broadcast('meters', metersPayload()), 250);
+/** @type {NodeJS.Timeout | undefined} */
+let rainEndTimer;
+// "tim/phút" drifts down when likes stop: refresh it now and then while someone is watching
+setInterval(() => likeLog.length && sendMeters(), 5000);
 
 /** @param {number} count */
 function addLikes(count) {
   if (!(count > 0)) return;
   const now = Date.now();
+  meters.total += count;
+  likeLog.push({ at: now, n: count });
   meters.likes += count;
-  const rains = Math.floor(meters.likes / LIKES_PER_RAIN);
-  meters.likes %= LIKES_PER_RAIN;
+  const rains = Math.floor(meters.likes / settings.likeGoal);
+  meters.likes %= settings.likeGoal;
   if (rains > 0) {
     // Thêm tim trong lúc đang mưa thì mưa lâu hơn
-    meters.rainUntil = Math.max(meters.rainUntil, now) + rains * RAIN_MS;
+    meters.rains += rains;
+    meters.rainUntil = Math.max(meters.rainUntil, now) + rains * settings.rainSeconds * 1000;
     broadcast('rain', { left: meters.rainUntil - now, id: uid() });
+    // tell every page when the rain is over
+    clearTimeout(rainEndTimer);
+    rainEndTimer = setTimeout(sendMeters, meters.rainUntil - now + 200);
   }
   meters.wheel += count;
-  if (meters.wheel >= LIKES_PER_WHEEL) {
+  if (meters.wheel >= settings.wheelGoal) {
     // Một đợt tim qua mốc nhiều lần vẫn chỉ quay một lần, cho khỏi dồn bảng
-    meters.wheel %= LIKES_PER_WHEEL;
+    meters.wheels++;
+    meters.wheel %= settings.wheelGoal;
     broadcast('wheel', { id: uid(), index: Math.floor(Math.random() * DISHES.length) });
   }
   sendMeters();
@@ -439,10 +484,6 @@ function disconnectTikTok(announce = true) {
 // Voice: Microsoft Edge neural voices (msedge-tts), Google Translate as fallback
 // ---------------------------------------------------------------------------------------------------------------
 
-const VOICES = {
-  female: { name: 'vi-VN-HoaiMyNeural', pitch: '+4%' }, // chị chủ quán, vui vẻ
-  male: { name: 'vi-VN-NamMinhNeural', pitch: '-1%' }, // anh chủ quán, trầm ấm
-};
 const escapeXml = (/** @type {string} */ s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Text as the voice should say it: no emoji or symbols, a breath after "!" and "?" so it sounds less flat */
@@ -454,7 +495,7 @@ const speakable = (/** @type {string} */ t) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-/** @param {string} text @param {number} rate @param {'female' | 'male'} voice */
+/** @param {string} text @param {number} rate @param {string} voice */
 async function edgeTts(text, rate, voice) {
   /** @type {any} */
   const { MsEdgeTTS, OUTPUT_FORMAT } = await import('msedge-tts');
@@ -464,7 +505,7 @@ async function edgeTts(text, rate, voice) {
   try {
     // 48 kHz / 192 kbps: giữ được âm cao, giọng sáng và rõ hơn bản 24 kHz (tiếng bị "tù")
     await tts.setMetadata(VOICES[voice].name, OUTPUT_FORMAT.AUDIO_48KHZ_192KBITRATE_MONO_MP3 ?? OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
-    const { audioStream } = tts.toStream(escapeXml(speakable(text)), { rate: `${Math.round((rate - 1) * 100)}%`, pitch: VOICES[voice].pitch, volume: '+6%' });
+    const { audioStream } = tts.toStream(escapeXml(speakable(text)), { rate: `${Math.round((rate - 1) * 100) + VOICES[voice].rate}%`, pitch: VOICES[voice].pitch, volume: '+6%' });
     /** @type {Buffer[]} */
     const chunks = [];
     const read = (async () => {
@@ -687,6 +728,12 @@ const routes = {
     if (!changed.length) return json(res, 400, { success: false, error: 'Không có gì để lưu' });
     saveSettings();
     broadcast('settings', settings);
+    if (changed.some((k) => k === 'likeGoal' || k === 'wheelGoal')) {
+      // a lower goal than the hearts already in: keep the bar just under it
+      meters.likes = Math.min(meters.likes, settings.likeGoal - 1);
+      meters.wheel = Math.min(meters.wheel, settings.wheelGoal - 1);
+      sendMeters();
+    }
     json(res, 200, { success: true, settings });
   },
 
@@ -769,15 +816,16 @@ const routes = {
     const text = cleanText(url.searchParams.get('text'), 600);
     if (!text) return json(res, 400, { error: 'Thiếu nội dung' });
     const rate = num(0.5, 1.5)(url.searchParams.get('rate') ?? 1) ?? 1;
-    const voice = url.searchParams.get('voice') === 'male' ? 'male' : 'female';
+    const asked = url.searchParams.get('voice') || '';
+    const voice = Object.hasOwn(VOICES, asked) ? asked : 'female';
     const key = `${voice}|${rate}|${text}`;
     let audio = ttsCache.get(key);
     if (!audio) {
       try {
-        audio = await edgeTts(text, rate, voice);
+        audio = voice === 'google' ? await googleTts(speakable(text)) : await edgeTts(text, rate, voice);
       } catch (err) {
-        console.warn('Edge TTS lỗi, chuyển sang Google:', err instanceof Error ? err.message : err);
-        audio = await googleTts(text);
+        console.warn(`Giọng ${voice} lỗi, chuyển giọng dự phòng:`, err instanceof Error ? err.message : err);
+        audio = voice === 'google' ? await edgeTts(text, rate, 'female') : await googleTts(speakable(text));
       }
       cacheTts(key, audio);
     }

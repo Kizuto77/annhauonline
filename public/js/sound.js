@@ -2,7 +2,7 @@
 // Âm thanh của trang stage: hàng chờ giọng đọc (TTS từ server), tiếng cụng ly, mở nắp, chuông vòng quay,
 // tiếng quán ồn ào và nhạc nền. Chỉ trang ?view=stage tạo SoundEngine; dashboard và bản xem trước im lặng.
 
-/** @typedef {{ voice: 'female' | 'male'; rate: number; music: boolean; musicVolume: number; ambience: boolean }} SoundSettings */
+/** @typedef {{ voice: string; rate: number; music: boolean; musicVolume: number; ambience: boolean }} SoundSettings */
 
 export class SoundEngine {
   /** @type {AudioContext | null} */

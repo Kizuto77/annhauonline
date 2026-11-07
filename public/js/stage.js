@@ -931,7 +931,7 @@ function renderGiftMenu() {
 }
 
 function applySettings(/** @type {any} */ s) {
-  const voiceChanged = s.voice !== settings.voice || !host.innerHTML;
+  const voiceChanged = String(s.voice).startsWith('male') !== String(settings.voice).startsWith('male') || !host.innerHTML;
   settings = { ...settings, ...s };
   const neon = /** @type {HTMLElement} */ (sign.querySelector('.neon'));
   neon.textContent = settings.channelName;
@@ -944,7 +944,7 @@ function applySettings(/** @type {any} */ s) {
   customBg.hidden = !custom;
   if (custom) customBg.src = settings.background;
   bgLayer.hidden = counter.hidden = host.hidden = custom;
-  if (voiceChanged) host.innerHTML = hostSVG(settings.voice === 'male' ? 'male' : 'female') + '<div class="host-tag">Chủ quán</div>';
+  if (voiceChanged) host.innerHTML = hostSVG(String(settings.voice).startsWith('male') ? 'male' : 'female') + '<div class="host-tag">Chủ quán</div>';
   sound?.apply({ voice: settings.voice, rate: settings.rate, music: settings.music, musicVolume: settings.musicVolume, ambience: settings.ambience });
 }
 

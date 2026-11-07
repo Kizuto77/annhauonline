@@ -46,17 +46,30 @@ app.innerHTML = `
     <div class="warn" id="warn-stage" hidden>⚠️ Chưa có trang <b>stage</b> nào đang mở, nên quán chưa có tiếng và người xem chưa thấy gì. Thêm nguồn Link trong LIVE Studio (xem tab <a href="#control">Điều khiển</a>).</div>
     <div class="kpis">
       <div class="kpi"><small>👁 Người xem</small><b id="k-viewers">0</b><em id="k-viewers-s">chưa kết nối</em></div>
-      <div class="kpi"><small>❤️ Tổng tim</small><b id="k-likes">0</b><em>từ TikTok</em></div>
+      <div class="kpi"><small>❤️ Tổng tim</small><b id="k-likes">0</b><em id="k-likes-s">cả buổi live</em></div>
       <div class="kpi"><small>🎁 Quà (xu)</small><b id="k-coins">0</b><em id="k-gifts">0 lượt quà</em></div>
       <div class="kpi"><small>💬 Bình luận</small><b id="k-chats">0</b><em id="k-dzo">0 lượt dzô</em></div>
       <div class="kpi"><small>🚶 Khách vào</small><b id="k-joins">0</b><em id="k-follows">0 follow</em></div>
       <div class="kpi hot"><small>💥 Lần đập quán</small><b id="k-smash">0</b><em id="k-smash-s">chưa lần nào</em></div>
     </div>
 
-    <div class="card">
-      <h3>🎯 Mục tiêu tim</h3>
-      <div class="goal"><div class="goal-top"><span>🫧 Mưa bọt bia</span><b id="g-rain-t">0/666</b></div><div class="bar"><i id="g-rain"></i></div></div>
-      <div class="goal"><div class="goal-top"><span>🎡 Vòng quay món nhậu</span><b id="g-wheel-t">0/99</b></div><div class="bar teal"><i id="g-wheel"></i></div></div>
+    <div class="card goals-card">
+      <div class="card-head"><h3>🎯 Mục tiêu tim</h3><span class="live-dot" id="g-live">trực tiếp</span></div>
+      <div class="goal" id="g-rain-box"><div class="goal-top"><span>🫧 Mưa bọt bia</span><b id="g-rain-t">0/666</b></div><div class="bar"><i id="g-rain"></i></div><small class="goal-sub" id="g-rain-s">còn 666 tim nữa là mưa</small></div>
+      <div class="goal" id="g-wheel-box"><div class="goal-top"><span>🎡 Vòng quay món nhậu</span><b id="g-wheel-t">0/99</b></div><div class="bar teal"><i id="g-wheel"></i></div><small class="goal-sub" id="g-wheel-s">còn 99 tim nữa là quay</small></div>
+      <div class="goal-stats">
+        <div><b id="g-total">0</b><small>tim phiên này</small></div>
+        <div><b id="g-pm">0</b><small>tim / phút</small></div>
+        <div><b id="g-rains">0</b><small>lần mưa bia</small></div>
+        <div><b id="g-wheels">0</b><small>lần quay mồi</small></div>
+      </div>
+      <details class="goal-set"><summary>⚙️ Đổi mốc tim</summary>
+        <div class="grid3">
+          <label class="field"><span>Tim để mưa bọt bia</span><div class="row"><input id="s-likeGoal" type="number" min="10" max="1000000" /><button class="btn" data-save="likeGoal">Lưu</button></div></label>
+          <label class="field"><span>Mưa kéo dài (giây)</span><div class="row"><input id="s-rainSeconds" type="number" min="10" max="600" /><button class="btn" data-save="rainSeconds">Lưu</button></div></label>
+          <label class="field"><span>Tim để quay mồi</span><div class="row"><input id="s-wheelGoal" type="number" min="10" max="1000000" /><button class="btn" data-save="wheelGoal">Lưu</button></div></label>
+        </div>
+      </details>
     </div>
 
     <div class="card feed-card">
@@ -147,11 +160,8 @@ app.innerHTML = `
       </div>
       <label class="field"><span>Cứ bao nhiêu phút kể một lần: <b id="story-val"></b></span><input type="range" id="s-storyEvery" min="1" max="15" step="1" /></label>
       <div class="row wrap"><button class="btn primary" data-control="story">📖 Kể chuyện ngay</button></div>
-      <div class="row wrap">
-        <span class="lbl">Giọng:</span>
-        <button class="btn seg" data-voice="female">👩 Chị chủ quán (Hoài My)</button>
-        <button class="btn seg" data-voice="male">👨 Anh chủ quán (Nam Minh)</button>
-      </div>
+      <span class="lbl">Chọn giọng (bấm ▶ để nghe thử ở đây, bấm tên để dùng):</span>
+      <div class="voices" id="voices"></div>
       <label class="field"><span>Tốc độ đọc: <b id="rate-val"></b></span><input type="range" id="s-rate" min="0.7" max="1.3" step="0.05" /></label>
       <div class="row wrap">
         <span class="lbl">Nghe thử trên stage:</span>
@@ -301,7 +311,19 @@ for (const key of ['rate', 'musicVolume', 'storyEvery']) {
     t = setTimeout(() => saveSetting(key, Number(input.value)), 250);
   };
 }
+const VOICE_LIST = [
+  ['female', '👩', 'Chị chủ quán', 'Hoài My · vui vẻ, rõ ràng'],
+  ['female_cute', '👧', 'Em gái nhí nhảnh', 'Hoài My · cao, nhanh, dễ thương'],
+  ['female_soft', '🌸', 'Cô chủ dịu dàng', 'Hoài My · nhẹ, chậm, ấm'],
+  ['female_news', '📻', 'Chị phát thanh', 'Hoài My · đều, rõ từng chữ'],
+  ['male', '👨', 'Anh chủ quán', 'Nam Minh · trầm ấm'],
+  ['male_deep', '🧔', 'Anh trầm chậm', 'Nam Minh · trầm, chậm rãi'],
+  ['male_hype', '🎤', 'MC sôi động', 'Nam Minh · cao, nhanh, hào hứng'],
+  ['google', '🤖', 'Giọng Google', 'Giọng chị Google quen thuộc'],
+];
+$('voices').innerHTML = VOICE_LIST.map(([id, ic, name, desc]) => `<div class="voice" data-v="${id}"><button class="pick" data-voice="${id}"><i>${ic}</i><span><b>${name}</b><small>${desc}</small></span></button><button class="play" data-play="${id}" title="Nghe thử">▶</button></div>`).join('');
 for (const b of document.querySelectorAll('[data-voice]')) /** @type {HTMLElement} */ (b).onclick = () => saveSetting('voice', /** @type {HTMLElement} */ (b).dataset.voice);
+for (const b of document.querySelectorAll('[data-play]')) /** @type {HTMLElement} */ (b).onclick = () => playSample(/** @type {HTMLElement} */ (b).dataset.play || 'female');
 
 const showRanges = (/** @type {number} */ rate, /** @type {number} */ vol) => {
   $('rate-val').textContent = `${rate.toFixed(2)}x`;
@@ -314,7 +336,7 @@ function applySettings(/** @type {any} */ s) {
   document.title = `${s.channelName} · Admin`;
   const foodBox = $('s-giftFoods');
 if (document.activeElement !== foodBox) foodBox.value = s.giftFoods ?? '';
-  for (const key of ['channelName', 'keyword', 'boardTitle', 'smashGifts', 'smashMinCoins']) {
+  for (const key of ['channelName', 'keyword', 'boardTitle', 'smashGifts', 'smashMinCoins', 'likeGoal', 'rainSeconds', 'wheelGoal']) {
     const input = $(`s-${key}`);
     if (document.activeElement !== input) input.value = s[key];
   }
@@ -325,7 +347,7 @@ if (document.activeElement !== foodBox) foodBox.value = s.giftFoods ?? '';
   $('s-storyEvery').value = s.storyEvery;
   $('story-val').textContent = `${s.storyEvery} phút`;
   showRanges(s.rate, s.musicVolume);
-  for (const b of document.querySelectorAll('[data-voice]')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.voice === s.voice);
+  for (const b of document.querySelectorAll('.voice')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.v === s.voice);
   $('bg-state').textContent = s.background ? 'Đang dùng ảnh của bạn' : 'Đang dùng cảnh quán vẽ sẵn';
   $('bg-reset').disabled = !s.background;
 }
@@ -383,12 +405,13 @@ $('reset-board').onclick = async () => {
   toast(r.success ? 'Đã xóa bảng TOP' : r.error, r.success);
 };
 let sample = /** @type {HTMLAudioElement | null} */ (null);
-$('listen-here').onclick = () => {
+const playSample = (/** @type {string} */ voice) => {
   sample?.pause();
-  const text = `${settings.channelName || 'Xỉn Bia'} chào bạn Minh An mới ghé quán. Kéo ghế ngồi chơi nha!`;
-  sample = new Audio(`/api/tts?voice=${settings.voice}&rate=${settings.rate}&text=${encodeURIComponent(text)}`);
+  const text = `${settings.channelName || 'Xỉn Bia'} chào bạn Minh An mới ghé quán. Kéo ghế ngồi chơi, cả quán dzô một cái nào!`;
+  sample = new Audio(`/api/tts?voice=${voice}&rate=${settings.rate}&text=${encodeURIComponent(text)}`);
   sample.play().catch(() => toast('Không phát được, thử lại sau', false));
 };
+$('listen-here').onclick = () => playSample(settings.voice);
 
 // ---------------------------------------------------------------- TikTok
 $('tt-connect').onclick = async () => {
@@ -427,7 +450,8 @@ function applyStatus(/** @type {any} */ s) {
   $('st-room').textContent = s.roomId ? `#${String(s.roomId).slice(-6)}` : '–';
   $('k-viewers').textContent = fmt(s.viewers);
   $('k-viewers-s').textContent = s.connected ? `phòng @${s.username}` : 'chưa kết nối';
-  $('k-likes').textContent = fmt(s.totalLikes);
+  tiktokLikes = s.totalLikes || 0;
+  showLikes();
   showError(s.error);
   if (s.username && document.activeElement !== $('tt-user') && !$('tt-user').value) $('tt-user').value = s.username;
 }
@@ -473,13 +497,48 @@ const refreshCounts = () => {
   $('k-smash-s').textContent = lastSmash ? `gần nhất lúc ${new Date(lastSmash).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}` : 'chưa lần nào';
 };
 
+let tiktokLikes = 0;
+/** TikTok's own running total when connected, else the hearts counted since the server started */
+const showLikes = () => {
+  $('k-likes').textContent = fmt(Math.max(tiktokLikes, lastMeters?.total ?? 0));
+  $('k-likes-s').textContent = lastMeters?.perMinute ? `${fmt(lastMeters.perMinute)} tim / phút` : 'cả buổi live';
+};
+/** @type {any} */
+let lastMeters = null;
+let rainEndsAt = 0;
+const bumpBox = (/** @type {string} */ id) => {
+  const b = $(id);
+  b.classList.remove('bump');
+  void b.offsetWidth;
+  b.classList.add('bump');
+};
 function applyMeters(/** @type {any} */ m) {
-  const rain = m.rainLeft > 0;
-  $('g-rain-t').textContent = rain ? `đang mưa ${Math.ceil(m.rainLeft / 1000)}s` : `${fmt(m.likes)}/${fmt(m.likeGoal)}`;
-  $('g-rain').style.width = `${rain ? 100 : Math.min(100, (m.likes / m.likeGoal) * 100)}%`;
+  if (lastMeters && (m.likes !== lastMeters.likes || m.rains !== lastMeters.rains)) bumpBox('g-rain-box');
+  if (lastMeters && (m.wheel !== lastMeters.wheel || m.wheels !== lastMeters.wheels)) bumpBox('g-wheel-box');
+  lastMeters = m;
+  rainEndsAt = m.rainLeft > 0 ? Date.now() + m.rainLeft : 0;
   $('g-wheel-t').textContent = `${fmt(m.wheel)}/${fmt(m.wheelGoal)}`;
   $('g-wheel').style.width = `${Math.min(100, (m.wheel / m.wheelGoal) * 100)}%`;
+  $('g-wheel-s').textContent = `còn ${fmt(Math.max(0, m.wheelGoal - m.wheel))} tim nữa là quay món mới`;
+  $('g-total').textContent = fmt(m.total ?? 0);
+  $('g-pm').textContent = fmt(m.perMinute ?? 0);
+  $('g-rains').textContent = fmt(m.rains ?? 0);
+  $('g-wheels').textContent = fmt(m.wheels ?? 0);
+  showLikes();
+  showRain();
 }
+/** The rain part ticks every second on its own, so the countdown runs even when no likes come in */
+function showRain() {
+  const m = lastMeters;
+  if (!m) return;
+  const left = Math.max(0, rainEndsAt - Date.now());
+  const raining = left > 0;
+  $('g-rain-box').classList.toggle('raining', raining);
+  $('g-rain-t').textContent = raining ? `🍺 đang mưa · ${Math.ceil(left / 1000)}s` : `${fmt(m.likes)}/${fmt(m.likeGoal)}`;
+  $('g-rain').style.width = `${raining ? 100 : Math.min(100, (m.likes / m.likeGoal) * 100)}%`;
+  $('g-rain-s').textContent = raining ? `thả thêm tim là mưa lâu hơn (${fmt(m.likes)}/${fmt(m.likeGoal)} cho trận sau)` : `còn ${fmt(Math.max(0, m.likeGoal - m.likes))} tim nữa là mưa bọt bia`;
+}
+setInterval(showRain, 1000);
 
 function renderRank(/** @type {any[]} */ top) {
   const ol = $('rank');
