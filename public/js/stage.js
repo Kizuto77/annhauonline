@@ -1003,7 +1003,7 @@ function applySettings(/** @type {any} */ s) {
   if (custom) customBg.src = settings.background;
   bgLayer.hidden = counter.hidden = host.hidden = custom;
   if (voiceChanged) host.innerHTML = hostSVG(String(settings.voice).startsWith('male') ? 'male' : 'female') + '<div class="host-tag">Chủ quán</div>';
-  sound?.apply({ voice: settings.voice, rate: settings.rate, music: settings.music, musicVolume: settings.musicVolume, ambience: settings.ambience });
+  sound?.apply({ voice: settings.voice, rate: settings.rate, music: settings.music, musicVolume: settings.musicVolume, musicTrack: settings.musicTrack, ambience: settings.ambience });
 }
 
 // -------------------------------------------------------------------------------------------- dashboard commands
@@ -1242,7 +1242,7 @@ listen({
 }, PREVIEW ? 'preview' : 'stage');
 
 // For quick checks in the browser console: window.__xb.wave()
-/** @type {any} */ (window).__xb = { wave, smash, spinWheel, startRain, seats, spotlight, onGift, onFollow };
+/** @type {any} */ (window).__xb = { wave, smash, spinWheel, startRain, seats, spotlight, onGift, onFollow, sound };
 
 // Dòng nhắc trách nhiệm: đổi câu theo vòng, mỗi câu vừa khít khung
 {

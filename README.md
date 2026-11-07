@@ -90,7 +90,8 @@ Kiểm tra kiểu: `npm run check`.
 
 ## Tài nguyên
 
-- `public/assets/audio/chill_relax.mp3`: nhạc nền, lấy từ dự án gốc (tạo bằng mô hình AI ACE-Step). Muốn đổi thì thay file, giữ nguyên tên.
+- `public/assets/audio/quan_nhau.mp3`: nhạc nền quán nhậu (mặc định), tự tổng hợp bằng `tools/nhac-nhau.py` (đàn tranh, đàn bầu, mõ, nhịp remix, không dùng bài hát có sẵn). Chạy lại script để tạo bản khác.
+- `public/assets/audio/chill_relax.mp3`: nhạc chill cũ, lấy từ dự án gốc (tạo bằng mô hình AI ACE-Step). Chọn bài trong admin, tab Giọng & Âm thanh.
 - Mọi hình ảnh (quán, nhân vật, bàn ghế, hiệu ứng) đều vẽ bằng code trong repo này.
 
 ## Giấy phép

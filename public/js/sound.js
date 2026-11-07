@@ -2,7 +2,10 @@
 // Âm thanh của trang stage: hàng chờ giọng đọc (TTS từ server), tiếng cụng ly, mở nắp, chuông vòng quay,
 // tiếng quán ồn ào và nhạc nền. Chỉ trang ?view=stage tạo SoundEngine; dashboard và bản xem trước im lặng.
 
-/** @typedef {{ voice: string; rate: number; music: boolean; musicVolume: number; ambience: boolean }} SoundSettings */
+/** @typedef {{ voice: string; rate: number; music: boolean; musicVolume: number; musicTrack: string; ambience: boolean }} SoundSettings */
+
+/** Background tracks: the quán nhậu one (made for this pub) and the old chill one */
+const TRACKS = /** @type {Record<string, string>} */ ({ nhau: '/assets/audio/quan_nhau.mp3', chill: '/assets/audio/chill_relax.mp3' });
 
 export class SoundEngine {
   /** @type {AudioContext | null} */
@@ -21,8 +24,8 @@ export class SoundEngine {
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   watchdog;
   /** @type {SoundSettings} */
-  settings = { voice: 'female', rate: 1.05, music: true, musicVolume: 0.22, ambience: true };
-  music = new Audio('/assets/audio/chill_relax.mp3');
+  settings = { voice: 'female', rate: 1.05, music: true, musicVolume: 0.22, musicTrack: 'nhau', ambience: true };
+  music = new Audio(TRACKS.nhau);
   /** @type {{ gain: GainNode; stop: () => void } | null} */
   ambienceNodes = null;
   /** @type {(speaking: boolean) => void} */
@@ -71,6 +74,12 @@ export class SoundEngine {
 
   /** @param {Partial<SoundSettings>} s */
   apply(s) {
+    const src = TRACKS[s.musicTrack ?? this.settings.musicTrack] ?? TRACKS.nhau;
+    if (!this.music.src.endsWith(src)) {
+      // new track: start it from the top, the play below picks it up
+      this.music.pause();
+      this.music.src = src;
+    }
     Object.assign(this.settings, s);
     this.applyMusic();
     this.applyAmbience();

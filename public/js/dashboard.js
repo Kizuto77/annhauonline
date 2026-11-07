@@ -175,8 +175,13 @@ app.innerHTML = `
     <div class="card">
       <h3>🎵 Nhạc &amp; không khí</h3>
       <div class="grid2">
-        <label class="field switch"><input type="checkbox" id="s-music" /><span>Nhạc nền chill</span></label>
+        <label class="field switch"><input type="checkbox" id="s-music" /><span>Bật nhạc nền</span></label>
         <label class="field switch"><input type="checkbox" id="s-ambience" /><span>Tiếng quán ồn ào, ly chạm lách cách</span></label>
+      </div>
+      <span class="lbl">Bài nhạc (bấm ▶ để nghe thử ở đây):</span>
+      <div class="voices tracks">
+        <div class="voice" data-track="nhau"><button class="pick" data-pick-track="nhau"><i>🍻</i><span><b>Quán nhậu Việt</b><small>Đàn tranh, đàn bầu, mõ, nhịp remix quán</small></span></button><button class="play" data-play-track="/assets/audio/quan_nhau.mp3" title="Nghe thử">▶</button></div>
+        <div class="voice" data-track="chill"><button class="pick" data-pick-track="chill"><i>🌙</i><span><b>Chill nhẹ nhàng</b><small>Nhạc chill êm, nói chuyện dễ nghe</small></span></button><button class="play" data-play-track="/assets/audio/chill_relax.mp3" title="Nghe thử">▶</button></div>
       </div>
       <label class="field"><span>Âm lượng nhạc nền: <b id="vol-val"></b></span><input type="range" id="s-musicVolume" min="0" max="1" step="0.05" /></label>
     </div>
@@ -323,6 +328,18 @@ const VOICE_LIST = [
 ];
 $('voices').innerHTML = VOICE_LIST.map(([id, ic, name, desc]) => `<div class="voice" data-v="${id}"><button class="pick" data-voice="${id}"><i>${ic}</i><span><b>${name}</b><small>${desc}</small></span></button><button class="play" data-play="${id}" title="Nghe thử">▶</button></div>`).join('');
 for (const b of document.querySelectorAll('[data-voice]')) /** @type {HTMLElement} */ (b).onclick = () => saveSetting('voice', /** @type {HTMLElement} */ (b).dataset.voice);
+for (const b of document.querySelectorAll('[data-pick-track]')) /** @type {HTMLElement} */ (b).onclick = () => saveSetting('musicTrack', /** @type {HTMLElement} */ (b).dataset.pickTrack);
+for (const b of document.querySelectorAll('[data-play-track]')) {
+  /** @type {HTMLElement} */ (b).onclick = () => {
+    const src = /** @type {HTMLElement} */ (b).dataset.playTrack || '';
+    // a second click on the same track stops it
+    if (sample && !sample.paused && sample.src.endsWith(src)) return sample.pause();
+    sample?.pause();
+    sample = new Audio(src);
+    sample.volume = 0.6;
+    sample.play().catch(() => toast('Không phát được, thử lại sau', false));
+  };
+}
 for (const b of document.querySelectorAll('[data-play]')) /** @type {HTMLElement} */ (b).onclick = () => playSample(/** @type {HTMLElement} */ (b).dataset.play || 'female');
 
 const showRanges = (/** @type {number} */ rate, /** @type {number} */ vol) => {
@@ -347,7 +364,8 @@ if (document.activeElement !== foodBox) foodBox.value = s.giftFoods ?? '';
   $('s-storyEvery').value = s.storyEvery;
   $('story-val').textContent = `${s.storyEvery} phút`;
   showRanges(s.rate, s.musicVolume);
-  for (const b of document.querySelectorAll('.voice')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.v === s.voice);
+  for (const b of document.querySelectorAll('.voice[data-v]')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.v === s.voice);
+  for (const b of document.querySelectorAll('.voice[data-track]')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.track === (s.musicTrack || 'nhau'));
   $('bg-state').textContent = s.background ? 'Đang dùng ảnh của bạn' : 'Đang dùng cảnh quán vẽ sẵn';
   $('bg-reset').disabled = !s.background;
 }

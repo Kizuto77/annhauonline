@@ -62,6 +62,7 @@ const DEFAULTS = {
   idleTalk: true, // live im lâu thì chủ quán tự nói chuyện + nhắc chia sẻ
   music: true,
   musicVolume: 0.22,
+  musicTrack: 'nhau', // nhau = nhạc quán nhậu (đàn tranh, đàn bầu, mõ, nhịp remix); chill = nhạc chill cũ
   ambience: true, // tiếng quán ồn ào, ly chạm lách cách
   stories: true, // chủ quán tự kể chuyện, chuyện cười, đố vui, nhắc thả tim / chia sẻ
   storyEvery: 4, // phút giữa hai lần kể
@@ -97,6 +98,7 @@ const VALIDATE = {
   idleTalk: bool,
   music: bool,
   musicVolume: num(0, 1),
+  musicTrack: (v) => (v === 'nhau' || v === 'chill' ? v : undefined),
   ambience: bool,
   stories: bool,
   storyEvery: num(1, 30),
