@@ -10,6 +10,7 @@ import { lines } from './lines.js';
 import { tellNext } from './stories.js';
 import { detectTopic, detectCity, mayAnswer } from './chat.js';
 import { DISHES } from './dishes.js';
+import { ambient, beams, fireworks, flyArc, floatUp, hearts, reveal, ring, sparkles, splash } from './effects.js';
 
 const params = new URLSearchParams(location.search);
 const PREVIEW = params.get('preview') === '1';
@@ -53,7 +54,8 @@ const floor = el('div', 'layer floor');
 // The neon sign hangs on the building, so it moves with the camera
 const sign = el('div', 'neon-wrap');
 sign.innerHTML = '<div class="neon"></div><div class="neon-sub">QUÁN NHẬU ONLINE</div>';
-world.append(bgLayer, customBg, sign, host, counter, floor);
+const wfx = el('div', 'layer wfx'); // effects that live in the room and follow the camera
+world.append(bgLayer, customBg, sign, host, counter, floor, wfx);
 stage.appendChild(world);
 
 const fx = el('div', 'layer fx'); // rain, confetti, foam: over the world, under the boards
@@ -76,6 +78,19 @@ ui.innerHTML = `
   <div class="wave-banner" id="wave-banner" hidden><span>MỘT</span><span>HAI</span><span>BA</span><b>DZÔ!!!</b></div>
   <button class="unlock" id="unlock" hidden>🔊 Bấm vào đây để bật tiếng quán</button>
 `;
+ambient(fx, sign);
+/** Soft bump of the whole room */
+const bumpRoom = () => {
+  world.classList.remove('bump');
+  void world.offsetWidth;
+  world.classList.add('bump');
+  setTimeout(() => world.classList.remove('bump'), 700);
+};
+/** Head of a seated person, in room % (for effects) */
+const headOf = (/** @type {number} */ seatId) => {
+  const st = SEATS[seatId];
+  return { x: st.x, y: st.y - personWidth(st.s) * 0.85 };
+};
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (ui.querySelector(`#${id}`));
 
 // Fit the 430 x 764 stage to the window (1080 x 1920 in LIVE Studio)
@@ -175,6 +190,10 @@ function makePerson(/** @type {number} */ seatId, /** @type {User | undefined} *
     anim.onfinish = () => {
       e.classList.remove('walking');
       e.style.zIndex = String(Math.round(seat.y * 10));
+      e.classList.add('arrived');
+      setTimeout(() => e.classList.remove('arrived'), 900);
+      ring(wfx, seat.x, seat.y - 1, seat.vip ? '#ffd166' : '#8ef0c8', seat.vip ? 52 : 34);
+      sparkles(wfx, seat.x, seat.y - personWidth(seat.s) * 0.9, seat.vip ? 8 : 4, 16);
     };
   }
   return e;
@@ -372,6 +391,8 @@ function serve(/** @type {number} */ tableId, /** @type {string} */ item, /** @t
     w.classList.remove('walking');
     /** @type {HTMLElement} */ (w.querySelector('.tray-load'))?.classList.add('gone');
     putOnTable(tableId, item);
+    ring(wfx, t.x, t.y, '#ffd166', 40);
+    sparkles(wfx, t.x, t.y - 1.5, 5, 18);
     onServed();
     setTimeout(() => {
       w.classList.add('walking');
@@ -421,7 +442,10 @@ function runSpotlight() {
   const nm = el('span');
   nm.textContent = next.user.name;
   card.append(nm);
-  card.hidden = false;
+  // a big-gift reveal is on screen: show the name card once it has gone
+  const showCard = () => (card.hidden = world.style.transform === '');
+  if (fx.querySelector('.fx-reveal')) setTimeout(showCard, 3000);
+  else card.hidden = false;
   setTimeout(() => {
     world.style.transform = '';
     card.hidden = true;
@@ -497,8 +521,15 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user
   const occ = seatUser(user, dzo);
   if (occ) {
     bubble(occ, dzo && text.length > 30 ? 'Dzô! 🍻' : text);
+    const head = headOf(occ.seat);
+    const emojis = text.match(/\p{Extended_Pictographic}/gu);
+    if (emojis && !dzo) floatUp(wfx, head.x, head.y, [...new Set(emojis)].slice(0, 3), 12);
     if (dzo) {
       cheer(occ);
+      setTimeout(() => {
+        splash(wfx, head.x + 1.5, head.y + 2, 8);
+        floatUp(wfx, head.x, head.y - 1, ['🍻'], 13);
+      }, 500);
       occ.dzo++;
       if (occ.dzo >= 3) occ.el.classList.add('tipsy');
       if ([5, 10, 20, 50, 100].includes(occ.dzo) && sound && sound.waiting() < 2) auto(say().dzoMilestone(user.name, occ.dzo));
@@ -581,6 +612,9 @@ function foodFor(/** @type {string} */ giftName) {
   return undefined;
 }
 
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let bigWave;
+
 function onGift(/** @type {{ id: string; user: User; giftName: string; coins: number; count: number }} */ g) {
   const { user } = g;
   noteActive(user);
@@ -595,6 +629,17 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
 
   const occ = seatUser(user, true);
   showBanner(user, g.giftName, combo.count);
+  const food = foodFor(g.giftName);
+  if (occ) {
+    const hd = headOf(occ.seat);
+    const icon = food?.icon ?? (tier >= 4 ? '💎' : tier >= 3 ? '🍺' : '🎁');
+    for (let i = 0; i < Math.min(g.count, 3); i++) {
+      setTimeout(() => flyArc(wfx, { x: 14, y: 28.5 }, hd, icon, 900, () => {
+        ring(wfx, hd.x, hd.y + 2, tier >= 3 ? '#ffd166' : '#ff8fc7', 30 + tier * 6);
+        sparkles(wfx, hd.x, hd.y, 4 + tier * 2, 16 + tier * 3);
+      }), i * 180);
+    }
+  }
   sound?.pop(0.55);
   if (occ) {
     occ.el.classList.add('glow');
@@ -602,7 +647,6 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
     const seat = SEATS[occ.seat];
     const tableId = seat.table;
     // One waiter trip per combo (and again if the combo grows into a bigger tier)
-    const food = foodFor(g.giftName);
     if (food) {
       // A mapped gift: every unit brings one plate of its dish to the giver's table (a few trips at a time)
       const plates = Math.min(g.count, 8);
@@ -642,7 +686,12 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
   if (tier >= 3 && grew) {
     flash();
     confetti(tier >= 4 ? 120 : 60);
-    if (tier >= 4) wave(false);
+    reveal(fx, tier >= 4 ? '💎' : '🍺', user.name, `đã gửi ${g.giftName}${combo.count > 1 ? ` x${combo.count}` : ''}`, tier);
+    beams(fx, tier >= 4 ? 5000 : 3500);
+    bumpRoom();
+    fireworks(fx, tier >= 4 ? 7 : 3);
+    // the whole quán cheers once the big reveal has gone
+    if (tier >= 4) bigWave = setTimeout(() => wave(false), 4300);
   }
 
   // Thanks by name: once per person every 30 s, again when the combo grows into a big gift; small ones are
@@ -681,7 +730,10 @@ function showBanner(/** @type {User} */ user, /** @type {string} */ giftName, /*
   const cnt = el('div', 'count');
   cnt.textContent = `x${count}`;
   b.append(av, txt, el('div', 'ico'), cnt);
-  /** @type {HTMLElement} */ (b.querySelector('.ico')).textContent = '🍺';
+  if (!b.hidden) {
+    cnt.classList.add('bump');
+  }
+  /** @type {HTMLElement} */ (b.querySelector('.ico')).textContent = foodFor(giftName)?.icon ?? '🍺';
   b.hidden = false;
   b.classList.remove('pulse');
   void b.offsetWidth;
@@ -693,7 +745,17 @@ function showBanner(/** @type {User} */ user, /** @type {string} */ giftName, /*
 const followed = new Set();
 function onFollow(/** @type {{ user: User }} */ { user }) {
   const occ = seatUser(user, false);
-  if (occ) bubble(occ, '❤️ Đã theo dõi quán');
+  if (occ) {
+    bubble(occ, '❤️ Đã theo dõi quán');
+    const hd = headOf(occ.seat);
+    setTimeout(() => {
+      floatUp(wfx, hd.x, hd.y, ['❤️', '💖', '💕'], 14);
+      ring(wfx, hd.x, hd.y + 2, '#ff4d8d', 36);
+      sparkles(wfx, hd.x, hd.y, 6, 18, '#ffb3d1');
+      occ.el.classList.add('followed');
+      setTimeout(() => occ.el.classList.remove('followed'), 6000);
+    }, occ.el.classList.contains('walking') ? 3000 : 400); // just walking in: wait until they sit
+  }
   if (followed.has(user.id)) return;
   followed.add(user.id);
   auto(say().follow(user.name));
@@ -701,6 +763,7 @@ function onFollow(/** @type {{ user: User }} */ { user }) {
 
 /** "Một, hai, ba, dzô!": the whole quán raises their glasses */
 function wave(withVoice = true) {
+  if (smashing) return;
   const b = $('wave-banner');
   b.hidden = false;
   b.classList.remove('go');
@@ -710,6 +773,14 @@ function wave(withVoice = true) {
   const all = everyone();
   all.forEach((o, i) => cheer(o, 1500 + (i % 12) * 60 + Math.random() * 250));
   setTimeout(() => sound?.cheers(0.7), 1700);
+  // at "DZÔ!": foam splashes on every busy table, lights sweep, fireworks
+  setTimeout(() => {
+    bumpRoom();
+    beams(fx, 3600);
+    fireworks(fx, 3, [6, 24]);
+    for (const t of TABLES) if (occupantsAt(t.id).length) splash(wfx, t.x, t.y - 2, 7);
+    sparkles(fx, 50, 37, 10, 90);
+  }, 1500);
   if (withVoice) auto(say().wave(), true);
 }
 
@@ -736,6 +807,8 @@ function startRain(/** @type {number} */ leftMs, announce = true) {
   rainTimer = setTimeout(stopRain, leftMs);
   updateMeters();
   if (announce) {
+    fireworks(fx, 5);
+    beams(fx, 4000, ['rgba(255, 214, 120, 0.34)', 'rgba(255, 236, 170, 0.28)']);
     sound?.ding(0.5);
     auto(say().rain());
   }
@@ -778,6 +851,8 @@ function spinWheel(/** @type {{ id: string; index: number }} */ w) {
     card.classList.remove('pop');
     void card.offsetWidth;
     card.classList.add('pop');
+    sparkles(fx, 50, 36, 12, 110);
+    confetti(30);
     setTimeout(() => (card.hidden = true), 9000);
     // The dish lands on a few busy tables
     const busy = TABLES.filter((t) => occupantsAt(t.id).length > 0).sort(() => Math.random() - 0.5).slice(0, 4);
@@ -916,6 +991,9 @@ function debris(/** @type {number} */ n, /** @type {number} */ keep) {
 function smash(/** @type {{ user: User; ms?: number }} */ { user }) {
   if (smashing) return;
   smashing = true;
+  // the smash is the show: drop a big-gift reveal and its wave
+  clearTimeout(bigWave);
+  fx.querySelector('.fx-reveal')?.remove();
   const total = 14_000;
   const t = (/** @type {number} */ ms, /** @type {() => void} */ fn) => setTimeout(fn, ms);
   const all = everyone();
@@ -1087,6 +1165,8 @@ listen({
   settings: applySettings,
   board: renderBoard,
   meters: (m) => {
+    const more = Math.max(m.likes - meters.likes, m.wheel - meters.wheel);
+    if (more > 0) hearts(fx, Math.ceil(Math.min(more, 30) / 3));
     meters = m;
     updateMeters();
   },
@@ -1102,7 +1182,7 @@ listen({
 }, PREVIEW ? 'preview' : 'stage');
 
 // For quick checks in the browser console: window.__xb.wave()
-/** @type {any} */ (window).__xb = { wave, smash, spinWheel, startRain, seats, spotlight };
+/** @type {any} */ (window).__xb = { wave, smash, spinWheel, startRain, seats, spotlight, onGift, onFollow };
 
 // Dòng nhắc trách nhiệm: đổi câu theo vòng, mỗi câu vừa khít khung
 {

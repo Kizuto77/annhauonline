@@ -303,3 +303,65 @@
 .story-tag { position: absolute; left: 50%; top: 27.5%; transform: translateX(-50%); max-width: 88%; padding: 3px 12px; border-radius: 99px; background: rgba(20, 10, 4, 0.82); border: 1px solid #f2a516; color: #ffe08a; font: 700 10px/16px 'Be Vietnam Pro', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px #000; }
 .story-tag.go { animation: story-in 9s both; }
 @keyframes story-in { 0% { opacity: 0; translate: 0 -6px; } 6% { opacity: 1; translate: 0 0; } 92% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------------------------------------------------------------- hiệu ứng xịn (effects.js) */
+.wfx { z-index: 1500; pointer-events: none; }
+.fx-ring { position: absolute; border-radius: 50%; translate: -50% -50%; border: 2.5px solid var(--c); box-shadow: 0 0 10px var(--c), inset 0 0 8px var(--c); animation: fx-ring 1s ease-out both; }
+@keyframes fx-ring { from { scale: 0.1; opacity: 1; } to { scale: 1; opacity: 0; } }
+.fx-star { position: absolute; width: 9px; height: 9px; margin: -4.5px; background: var(--c); clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); filter: drop-shadow(0 0 3px var(--c)); animation: fx-star 1s ease-out both; }
+@keyframes fx-star { 0% { transform: translate(0, 0) scale(0) rotate(0); opacity: 0; } 30% { opacity: 1; transform: translate(calc(var(--dx) * 0.6), calc(var(--dy) * 0.6)) scale(1.2) rotate(60deg); } 100% { transform: translate(var(--dx), var(--dy)) scale(0) rotate(160deg); opacity: 0; } }
+.fx-float { position: absolute; translate: -50% -50%; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); animation: fx-float 2.2s ease-out both; }
+@keyframes fx-float { 0% { transform: translate(0, 0) scale(0.2); opacity: 0; } 15% { transform: translate(calc(var(--dx) * 0.2), -8px) scale(1.25); opacity: 1; } 50% { transform: translate(calc(var(--dx) * -0.4), calc(var(--h) * -0.55)) scale(1); } 100% { transform: translate(var(--dx), calc(var(--h) * -1)) scale(0.8); opacity: 0; } }
+.fx-fly { position: absolute; translate: -50% -50%; font-size: 18px; line-height: 1; filter: drop-shadow(0 0 6px #ffd166) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)); }
+.fx-rocket { position: absolute; width: 3px; height: 14px; margin-left: -1.5px; border-radius: 2px; background: linear-gradient(var(--c), transparent); box-shadow: 0 0 6px var(--c); animation: fx-rocket 0.62s cubic-bezier(0.2, 0.6, 0.4, 1) both; }
+@keyframes fx-rocket { from { transform: translateY(260px); opacity: 0.2; } 85% { opacity: 1; } to { transform: translateY(0); opacity: 0; } }
+.fx-boom { position: absolute; width: 60px; height: 60px; margin: -30px; border-radius: 50%; background: radial-gradient(circle, #fff, var(--c) 25%, transparent 70%); mix-blend-mode: screen; animation: fx-boom 0.6s ease-out both; }
+@keyframes fx-boom { from { scale: 0.2; opacity: 1; } to { scale: 1.4; opacity: 0; } }
+.fx-spark { position: absolute; width: 4px; height: 4px; margin: -2px; border-radius: 50%; }
+.fx-heart { position: absolute; line-height: 1; translate: -50% 0; animation: fx-heart 2.9s ease-out both; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45)); }
+@keyframes fx-heart { 0% { transform: translate(0, 0) scale(0.2); opacity: 0; } 10% { transform: translate(0, -10px) scale(1.15); opacity: 1; } 35% { transform: translate(var(--w), -80px) scale(1); } 65% { transform: translate(calc(var(--w) * -1), -160px) scale(0.95); opacity: 0.9; } 100% { transform: translate(var(--dx), -250px) scale(0.7); opacity: 0; } }
+.fx-drop { position: absolute; width: 5px; height: 5px; margin: -2.5px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, #fff2c2 60%, #f2c14e); box-shadow: 0 0 3px rgba(255, 255, 255, 0.8); }
+.fx-firefly { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff3b0; box-shadow: 0 0 6px 2px rgba(255, 214, 110, 0.75); opacity: 0.8; animation: fx-drift 10s ease-in-out infinite alternate, fx-blink 2.4s ease-in-out infinite; }
+@keyframes fx-drift { from { transform: translate(0, 0); } to { transform: translate(var(--dx), var(--dy)); } }
+@keyframes fx-blink { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.9; } }
+.fx-shoot { position: absolute; width: 70px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), transparent); transform-origin: 0 50%; rotate: 155deg; animation: fx-shoot 1.2s ease-in both; }
+@keyframes fx-shoot { 0% { transform: translateX(0) scaleX(0.2); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateX(160px) scaleX(1); opacity: 0; } }
+.fx-beam { position: absolute; top: -10%; width: 34%; height: 120%; background: linear-gradient(to bottom, var(--c), transparent 85%); clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); mix-blend-mode: screen; filter: blur(2px); animation: fx-beam 4s ease-in-out both; transform-origin: 50% 0; }
+.fx-beam.l { left: 4%; --from: -28deg; --to: 26deg; }
+.fx-beam.r { right: 4%; --from: 28deg; --to: -26deg; }
+@keyframes fx-beam { 0% { rotate: var(--from); opacity: 0; } 12% { opacity: 1; } 50% { rotate: var(--to); } 88% { opacity: 1; } 100% { rotate: var(--from); opacity: 0; } }
+
+.fx-reveal { position: absolute; left: 50%; top: 31%; width: 0; height: 0; z-index: 3; }
+.fx-reveal .rays { position: absolute; width: 300px; height: 300px; margin: -150px; border-radius: 50%; background: repeating-conic-gradient(rgba(255, 214, 110, 0.5) 0 10deg, transparent 10deg 22deg); mask: radial-gradient(circle, #000 18%, transparent 68%); -webkit-mask: radial-gradient(circle, #000 18%, transparent 68%); animation: fx-spin 7s linear infinite, fx-pop-in 0.5s ease-out both; }
+.fx-reveal .halo { position: absolute; width: 130px; height: 130px; margin: -65px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 246, 201, 0.95), rgba(255, 183, 3, 0.45) 40%, transparent 70%); animation: fx-pulse 1.1s ease-in-out infinite alternate, fx-pop-in 0.4s ease-out both; }
+.fx-reveal .ico { position: absolute; width: 120px; margin-left: -60px; top: -38px; text-align: center; font-size: 62px; line-height: 1; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6)); animation: fx-ico 0.8s cubic-bezier(0.3, 1.8, 0.5, 1) both, fx-hover 1.6s 0.8s ease-in-out infinite alternate; }
+.fx-reveal .ttl { position: absolute; width: 330px; margin-left: -165px; top: 36px; display: flex; flex-direction: column; align-items: center; font-family: 'Baloo 2', sans-serif; text-align: center; animation: fx-pop-in 0.5s 0.35s ease-out both; }
+.fx-reveal .ttl b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 22px; line-height: 1.1; color: #fff; text-shadow: 0 0 10px #f2a516, 0 3px 0 #a0522d, 0 4px 10px #000; }
+.fx-reveal .ttl span { font-size: 13px; font-weight: 800; color: #ffd166; text-shadow: 0 2px 4px #000; background: rgba(32, 16, 8, 0.8); border: 1px solid #f2a516; border-radius: 99px; padding: 1px 10px 0; margin-top: 2px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.fx-reveal.t4 .rays { background: repeating-conic-gradient(rgba(255, 120, 190, 0.45) 0 8deg, rgba(255, 214, 110, 0.5) 8deg 16deg, transparent 16deg 26deg); width: 380px; height: 380px; margin: -190px; }
+.fx-reveal.out { transition: opacity 0.6s, scale 0.6s; opacity: 0; scale: 0.7; }
+@keyframes fx-spin { to { rotate: 360deg; } }
+@keyframes fx-pop-in { from { opacity: 0; scale: 0.3; } to { opacity: 1; scale: 1; } }
+@keyframes fx-pulse { from { scale: 0.9; opacity: 0.8; } to { scale: 1.15; opacity: 1; } }
+@keyframes fx-ico { from { transform: scale(0) rotate(-30deg); } to { transform: scale(1) rotate(0); } }
+@keyframes fx-hover { from { translate: 0 0; } to { translate: 0 -6px; } }
+
+/* gift banner: a light sweeps across it, the count bumps on each combo */
+.gift-banner { overflow: hidden; }
+.gift-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 246, 201, 0.55) 50%, transparent 70%); translate: -120% 0; animation: fx-shine 2.2s 0.3s ease-in-out infinite; pointer-events: none; }
+@keyframes fx-shine { 0% { translate: -120% 0; } 60%, 100% { translate: 120% 0; } }
+.gift-banner .count.bump { animation: fx-bump 0.4s cubic-bezier(0.3, 1.8, 0.5, 1); }
+@keyframes fx-bump { from { scale: 1.9; } to { scale: 1; } }
+.gift-banner .ico { animation: fx-hover 0.8s ease-in-out infinite alternate; }
+
+/* someone just sat down: their name tag pops with a shine */
+.person.arrived .name-tag { animation: fx-tag 0.7s cubic-bezier(0.3, 1.8, 0.5, 1); }
+@keyframes fx-tag { 0% { scale: 0.3; box-shadow: 0 0 0 #ffd166; } 60% { box-shadow: 0 0 12px #ffd166; } 100% { scale: 1; } }
+.person.followed .name-tag { border-color: #ff4d8d; box-shadow: 0 0 8px #ff4d8d; transition: box-shadow 0.6s, border-color 0.6s; }
+
+/* soft bump of the whole room (wave, big gift) */
+.world.bump { animation: fx-room 0.6s ease-out; }
+@keyframes fx-room { 0%, 100% { translate: 0 0; } 20% { translate: 0 -5px; } 45% { translate: 0 3px; } 70% { translate: 0 -1px; } }
+
+/* meters glow while filling */
+.meter.tick { box-shadow: 0 0 10px #ff4d8d; transition: box-shadow 0.3s; }
