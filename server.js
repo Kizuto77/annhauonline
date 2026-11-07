@@ -58,7 +58,9 @@ const DEFAULTS = {
   rate: 1.05,
   autoVoice: true, // tắt là giọng đọc im hẳn (trừ "Đọc ngay")
   greet: true, // chào khách mới vào
-  chatReply: true, // đáp comment (sinh nhật, buồn, say, đòi mồi, chào về)
+  chatReply: true,
+  readChat: true, // đọc to từng comment (lọc từ tục, link, số điện thoại) rồi đáp
+  replyStyle: 'bua', // bua = hài hước lầy lội, hien = lịch sự // đáp comment (sinh nhật, buồn, say, đòi mồi, chào về)
   idleTalk: true, // live im lâu thì chủ quán tự nói chuyện + nhắc chia sẻ
   music: true,
   musicVolume: 0.22,
@@ -95,6 +97,8 @@ const VALIDATE = {
   autoVoice: bool,
   greet: bool,
   chatReply: bool,
+  readChat: bool,
+  replyStyle: (v) => (v === 'bua' || v === 'hien' ? v : undefined),
   idleTalk: bool,
   music: bool,
   musicVolume: num(0, 1),

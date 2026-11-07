@@ -2,6 +2,7 @@
 // Mọi câu chủ quán nói. {q} = tên quán (dashboard "Tên quán"), {ban} = "bạn Lan", {list} = "bạn A, bạn B và bạn C".
 // Quán ảo cho vui: không giục ai uống thật, thỉnh thoảng nhắc uống có chừng và không lái xe.
 import { ban, listNames } from './names.js';
+import { BUA_ACK, BUA_REPLIES, PLAIN_SAY, READ_ASK, READ_SAY } from './bua.js';
 
 /** Random line from a list, never the same as last time for that list */
 const lastPick = new WeakMap();
@@ -237,7 +238,9 @@ const REPLIES = {
   question: ['{ban} hỏi hay ghê! Chủ quán nghe rồi, câu này để cả nhà trả lời giùm nha.', 'Câu hỏi của {ban} hay quá, nhưng quán ảo nên chủ quán chỉ biết một điều: ngồi lại là vui. Cả nhà ai biết thì giúp {ban} nha.', '{ban} hỏi chi vậy? Cả nhà ơi, ai trả lời giùm {ban} nào.'],
 };
 
-/** @param {{ q: string; kw: string }} ctx */
+const cap = (/** @type {string} */ s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** @param {{ q: string; kw: string; style?: string }} ctx style: 'bua' (hài hước, lầy) or 'hien' (lịch sự) */
 export const lines = (ctx) => ({
   greet: (/** @type {string[]} */ names) => {
     const v = { q: ctx.q, kw: ctx.kw, list: listNames(names), ban: ban(names[0] || '') };
@@ -271,9 +274,23 @@ export const lines = (ctx) => ({
   smashDone: () => pick([`Xong rồi! ${ctx.q} sạch bóng, lần sau đập nhẹ tay nha!`, `Dọn xong, ${ctx.q} mở cửa lại! Nhẹ tay giùm tôi nha!`]),
   wheel: (/** @type {{ ten: string; loi: string }} */ dish) => [`Cả nhà thả đủ chín mươi chín tim rồi! Vòng quay mồi ra món ${dish.ten}.`, dish.loi],
   rain: () => pick(['Sáu trăm sáu mươi sáu tim! Quán mưa bọt bia một phút, cả nhà cụng ly nào!', 'Đủ tim rồi! Mưa bọt bia khắp quán, cảm ơn cả nhà nha!']),
-  reply: (/** @type {import('./chat.js').Topic} */ topic, /** @type {string} */ name, /** @type {string} */ city = '') => fill(pick(REPLIES[topic]), { q: ctx.q, kw: ctx.kw, ban: ban(name), city }),
+  reply: (/** @type {import('./chat.js').Topic} */ topic, /** @type {string} */ name, /** @type {string} */ city = '') =>
+    fill(pick((ctx.style === 'hien' ? REPLIES : BUA_REPLIES)[topic]), { q: ctx.q, kw: ctx.kw, ban: ban(name), city }),
   /** A comment that matched nothing: a short friendly acknowledgement */
-  ack: (/** @type {string} */ name) => fill(pick(ACK), { q: ctx.q, kw: ctx.kw, ban: ban(name) }),
+  ack: (/** @type {string} */ name) => fill(pick(ctx.style === 'hien' ? ACK : BUA_ACK), { q: ctx.q, kw: ctx.kw, ban: ban(name) }),
+  /**
+   * Read a comment aloud, then answer it: "Bạn Lan hỏi: quán ở đâu vậy? Ngay trong điện thoại của bạn đó…".
+   * `text` must already be cleaned by readableComment(). The answer says "bạn" since the name was just read.
+   */
+  readComment: (/** @type {string} */ name, /** @type {string} */ text, /** @type {import('./chat.js').Topic | null} */ topic, /** @type {string} */ city = '') => {
+    const hien = ctx.style === 'hien';
+    const asking = topic === 'question' || text.endsWith('?');
+    const intro = cap(fill(pick(hien ? PLAIN_SAY : asking ? READ_ASK : READ_SAY), { name: ban(name), text: asking && !/[?!.…]$/.test(text) ? `${text}?` : text }).replace(/\?\.$/, '?'));
+    const list = topic ? (hien ? REPLIES : BUA_REPLIES)[topic] : hien ? ACK : BUA_ACK;
+    const answer = fill(pick(list), { q: ctx.q, kw: ctx.kw, ban: 'bạn', city });
+    // "…run. bạn ngồi đây" -> "…run. Bạn ngồi đây"
+    return `${intro} ${cap(answer).replace(/([.!?…]\s+)(\p{Ll})/gu, (_, p, c) => p + c.toUpperCase())}`;
+  },
   /** Several people chatting at once: thank them together */
   shoutout: (/** @type {string[]} */ names) => fill(pick(SHOUT), { q: ctx.q, kw: ctx.kw, list: listNames(names) }),
   fastChat: () => fill(pick(FAST), { q: ctx.q, kw: ctx.kw }),

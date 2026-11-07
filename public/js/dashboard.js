@@ -155,11 +155,17 @@ app.innerHTML = `
         <label class="field switch"><input type="checkbox" id="s-autoVoice" /><span><b>Tự động đọc</b> (tắt là chủ quán im, trừ “Đọc ngay”)</span></label>
         <label class="field switch"><input type="checkbox" id="s-greet" /><span>Chào khách mới vào</span></label>
         <label class="field switch"><input type="checkbox" id="s-chatReply" /><span>Đáp comment (sinh nhật, buồn, say, đòi mồi, chào về)</span></label>
+        <label class="field switch"><input type="checkbox" id="s-readChat" /><span><b>Đọc to từng comment</b> rồi đáp (bỏ qua từ tục, link, số điện thoại; chat nhanh quá thì đọc những câu mới nhất)</span></label>
         <label class="field switch"><input type="checkbox" id="s-idleTalk" /><span>Live im lâu thì tự nói chuyện, nhắc chia sẻ</span></label>
         <label class="field switch"><input type="checkbox" id="s-stories" /><span><b>Tự kể chuyện</b> (chuyện quán, chuyện cười, đố vui, nhắc thả tim / chia sẻ / quà)</span></label>
       </div>
       <label class="field"><span>Cứ bao nhiêu phút kể một lần: <b id="story-val"></b></span><input type="range" id="s-storyEvery" min="1" max="15" step="1" /></label>
       <div class="row wrap"><button class="btn primary" data-control="story">📖 Kể chuyện ngay</button></div>
+      <div class="row wrap">
+        <span class="lbl">Kiểu trả lời comment:</span>
+        <button class="btn seg" data-style="bua">😜 Bựa, lầy lội</button>
+        <button class="btn seg" data-style="hien">😊 Hiền, lịch sự</button>
+      </div>
       <span class="lbl">Chọn giọng (bấm ▶ để nghe thử ở đây, bấm tên để dùng):</span>
       <div class="voices" id="voices"></div>
       <label class="field"><span>Tốc độ đọc: <b id="rate-val"></b></span><input type="range" id="s-rate" min="0.7" max="1.3" step="0.05" /></label>
@@ -303,7 +309,8 @@ for (const b of document.querySelectorAll('[data-save]')) {
 }
 $('menu-names').textContent = `Món có sẵn: ${DISHES.map((d) => d.ten).join(', ')}.`;
 $('save-giftFoods').onclick = () => saveSetting('giftFoods', $('s-giftFoods').value);
-const SWITCHES = ['showBoard', 'autoVoice', 'greet', 'chatReply', 'idleTalk', 'music', 'ambience', 'smashEnabled', 'stories'];
+for (const b of document.querySelectorAll('[data-style]')) /** @type {HTMLElement} */ (b).onclick = () => saveSetting('replyStyle', /** @type {HTMLElement} */ (b).dataset.style);
+const SWITCHES = ['showBoard', 'autoVoice', 'greet', 'chatReply', 'readChat', 'idleTalk', 'music', 'ambience', 'smashEnabled', 'stories'];
 for (const key of SWITCHES) $(`s-${key}`).onchange = (/** @type {Event} */ e) => saveSetting(key, /** @type {HTMLInputElement} */ (e.target).checked);
 for (const key of ['rate', 'musicVolume', 'storyEvery']) {
   const input = $(`s-${key}`);
@@ -358,7 +365,8 @@ if (document.activeElement !== foodBox) foodBox.value = s.giftFoods ?? '';
     if (document.activeElement !== input) input.value = s[key];
   }
   for (const key of SWITCHES) $(`s-${key}`).checked = Boolean(s[key]);
-  for (const key of ['greet', 'chatReply', 'idleTalk']) $(`s-${key}`).closest('label').classList.toggle('dim', !s.autoVoice);
+  for (const key of ['greet', 'chatReply', 'idleTalk', 'readChat']) $(`s-${key}`).closest('label').classList.toggle('dim', !s.autoVoice);
+  for (const b of document.querySelectorAll('[data-style]')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.style === (s.replyStyle || 'bua'));
   $('s-rate').value = s.rate;
   $('s-musicVolume').value = s.musicVolume;
   $('s-storyEvery').value = s.storyEvery;

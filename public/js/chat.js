@@ -1,7 +1,8 @@
 // @ts-check
 // Spots what a comment is about, so the host can answer with a line written for it. Matching uses the
 // accented words ("thì" is not "thi", "ôm" is not "ốm"), plus a few no-accent spellings that can't mean anything
-// else. The comment itself is never read aloud, so nobody can make the voice say what they typed.
+// else. With "Đọc to từng comment" on, the comment is also read, after bua.js readableComment() has dropped
+// banned words, links and phone numbers.
 import { tokensOf } from './text.js';
 
 /** @typedef {'birthday' | 'drunk' | 'sad' | 'hungry' | 'bye' | 'tired' | 'thanks' | 'hello' | 'first' | 'praise' | 'praiseHost' | 'love' | 'laugh' | 'music' | 'seat' | 'gift' | 'like' | 'follow' | 'share' | 'money' | 'work' | 'weekend' | 'weather' | 'sleepy' | 'lovelife' | 'about' | 'food' | 'critic' | 'city' | 'question'} Topic */

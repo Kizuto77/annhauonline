@@ -10,6 +10,8 @@ import { lines } from './lines.js';
 import { tellNext } from './stories.js';
 import { detectTopic, detectCity, mayAnswer } from './chat.js';
 import { DISHES } from './dishes.js';
+import { readableComment } from './bua.js';
+import { tokensOf } from './text.js';
 import { ambient, beams, fireworks, flyArc, floatUp, hearts, reveal, ring, sparkles, splash } from './effects.js';
 
 const params = new URLSearchParams(location.search);
@@ -25,8 +27,8 @@ const COMBO_MS = 4500;
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
-let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', background: '' };
-const say = () => lines({ q: settings.channelName, kw: lettersKeyword() });
+let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', readChat: true, replyStyle: 'bua', background: '' };
+const say = () => lines({ q: settings.channelName, kw: lettersKeyword(), style: settings.replyStyle });
 /** The first cheers keyword, the one shown and said */
 const firstKeyword = () => String(settings.keyword || 'dzô').split(',')[0].trim() || 'dzô';
 const lettersKeyword = () => (firstKeyword() === 'dzo' ? 'dzô' : firstKeyword());
@@ -545,6 +547,11 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user
   noteChatter(user, dzo);
   if (!settings.chatReply) return;
   const topic = detectTopic(text);
+  if (settings.readChat) {
+    // "Đọc to comment": every comment is read and answered in turn (a lone "dzô" is cheered, not read)
+    if (!(dzo && tokensOf(text).length <= 3)) queueRead(user, text, topic);
+    return;
+  }
   if (topic) {
     // too many lines waiting already: skip, a late answer is worse than none
     if (sound && sound.waiting() >= 4) return;
@@ -557,6 +564,45 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user
     auto(say().ack(user.name));
   }
 }
+
+/** Comments waiting to be read aloud: newest kept when the chat runs faster than the voice */
+/** @type {Array<{ user: User; text: string; topic: import('./chat.js').Topic | null; at: number }>} */
+const toRead = [];
+/** @type {Map<string, string>} last comment read per person, so spam ("alo alo alo") is read once */
+const lastRead = new Map();
+let skipped = 0;
+function queueRead(/** @type {User} */ user, /** @type {string} */ raw, /** @type {import('./chat.js').Topic | null} */ topic) {
+  const text = readableComment(raw);
+  if (!text || lastRead.get(user.id) === text.toLowerCase()) return;
+  lastRead.set(user.id, text.toLowerCase());
+  if (lastRead.size > 3000) lastRead.delete(lastRead.keys().next().value ?? '');
+  chatters.delete(user.id);
+  toRead.push({ user, text, topic, at: Date.now() });
+  if (toRead.length > 6) {
+    toRead.shift();
+    skipped++;
+  }
+}
+setInterval(() => {
+  if (!sound || !settings.autoVoice || !settings.chatReply || !settings.readChat || smashing) return;
+  // greetings and thanks go first; one comment at a time behind them
+  if (sound.waiting() >= 1) return;
+  const now = Date.now();
+  while (toRead.length && now - toRead[0].at > 45_000) {
+    toRead.shift();
+    skipped++;
+  }
+  if (skipped >= 8 && now - lastFastNote > 90_000) {
+    lastFastNote = now;
+    skipped = 0;
+    auto(say().fastChat());
+    return;
+  }
+  const next = toRead.shift();
+  if (!next) return;
+  const city = next.topic === 'city' ? detectCity(next.text) : '';
+  auto(say().readComment(next.user.name, next.text, next.topic, city));
+}, 500);
 
 /** People who commented and were not answered by name; thanked together while the chat is busy */
 /** @type {Map<string, string>} */
@@ -582,7 +628,7 @@ function mayAck(/** @type {string} */ id) {
   return true;
 }
 setInterval(() => {
-  if (!sound || !settings.autoVoice || !settings.chatReply || smashing) return;
+  if (!sound || !settings.autoVoice || !settings.chatReply || smashing || settings.readChat) return;
   const now = Date.now();
   if (chatTimes.length >= 12 && now - lastFastNote > 90_000 && sound.waiting() < 2) {
     lastFastNote = now;
@@ -1156,7 +1202,7 @@ function onControl(/** @type {{ action: string; text: string }} */ { action, tex
   if (action === 'testGift') sound.say(say().gift('Minh An', 'Rose', 1), true);
   if (action === 'testGreet') sound.say(say().greet(['Minh An', 'Thu Hà', 'Quốc Bảo']), true);
   if (action === 'testFollow') sound.say(say().follow('Minh An'), true);
-  if (action === 'testChat') sound.say(say().reply('birthday', 'Minh An'), true);
+  if (action === 'testChat') sound.say(say().readComment('Minh An', 'hôm nay sinh nhật mình nè mọi người ơi', 'birthday'), true);
 }
 
 const recentNames = () =>
