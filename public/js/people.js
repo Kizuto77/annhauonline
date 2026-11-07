@@ -199,24 +199,53 @@ export function stoolSVG(/** @type {number} */ seed) {
 }
 
 /**
- * Low steel table (bàn inox) seen from the front, slightly from above. viewBox `vbw` x 50: a regular table is
- * 100 wide; a long table (VIP) is wider, and its top is stretched while the things on it keep their shape.
+ * Low red plastic table (bàn nhựa đỏ) seen from the front, slightly from above, with its number plate (BÀN 3).
+ * viewBox `vbw` x 50.
  */
-export function tableSVG(/** @type {number} */ seed, /** @type {boolean} */ vip, vbw = 100) {
-  const top = vip ? '#e7c46a' : '#cfd5dc';
-  const rim = vip ? '#a8822c' : '#8f98a3';
+export function tableSVG(/** @type {number} */ seed, /** @type {boolean} */ _vip, vbw = 100, no = 0) {
   const k = vbw / 100;
-  // clutter is laid out for a 100-wide table: spread it over the long one
-  const clutter = [0, 1, 2].slice(0, Math.max(1, Math.round(k))).map((i, _, all) => `<g transform="translate(${(i * vbw) / all.length + (vbw / all.length - 100) / 2} 0)">${tableClutter(seed * 3 + i)}</g>`).join('');
   return `<svg viewBox="0 0 ${vbw} 50" class="table-svg" aria-hidden="true">
   <g transform="scale(${k} 1)">
-    <g fill="${rim}"><rect x="9" y="30" width="${4 / k}" height="20" rx="1"/><rect x="${91 - 4 / k}" y="30" width="${4 / k}" height="20" rx="1"/><rect x="22" y="30" width="${3 / k}" height="17" rx="1" opacity="0.7"/><rect x="${78 - 3 / k}" y="30" width="${3 / k}" height="17" rx="1" opacity="0.7"/></g>
-    <path d="M5 13 Q5 10 9 10 H91 Q95 10 95 13 L97 28 Q97 31 93 31 H7 Q3 31 3 28 Z" fill="${top}"/>
-    <path d="M3 28 Q3 31 7 31 H93 Q97 31 97 28 V33 Q97 35 93 35 H7 Q3 35 3 33 Z" fill="${rim}"/>
-    <path d="M12 13 H60 L56 17 H11 Z" fill="#fff" opacity="0.35"/>
+    <g fill="#a3161c"><path d="M8 30 L12 30 L10 50 H6 Z"/><path d="M88 30 L92 30 L94 50 H90 Z"/><path d="M24 30 H28 L27 46 H24 Z" opacity="0.7"/><path d="M72 30 H76 L76 46 H73 Z" opacity="0.7"/></g>
+    <path d="M5 13 Q5 10 9 10 H91 Q95 10 95 13 L97 28 Q97 31 93 31 H7 Q3 31 3 28 Z" fill="#d62828"/>
+    <path d="M3 28 Q3 31 7 31 H93 Q97 31 97 28 V34 Q97 36 93 36 H7 Q3 36 3 34 Z" fill="#a3161c"/>
+    <path d="M12 13 H58 L54 16.5 H11 Z" fill="#fff" opacity="0.3"/>
+    <g stroke="#b81d22" stroke-width="0.6" opacity="0.6"><line x1="20" y1="12" x2="17" y2="29"/><line x1="40" y1="12" x2="39" y2="29"/><line x1="60" y1="12" x2="61" y2="29"/><line x1="80" y1="12" x2="83" y2="29"/></g>
   </g>
-  <g class="items" data-w="${vbw}">${clutter}</g>
+  <g class="items" data-w="${vbw}">${tableClutter(seed)}</g>
+  ${no ? `<g transform="translate(${vbw / 2} 40)"><rect x="-11" y="-5" width="22" height="10" rx="2.5" fill="#ffd166" stroke="#7a4a00" stroke-width="0.8"/><text y="2.6" text-anchor="middle" font-size="7.4" font-weight="900" fill="#5a1d00" font-family="Baloo 2, sans-serif">BÀN ${no}</text></g>` : ''}
 </svg>`;
+}
+
+/** The host walking out with a dish (full body, apron), `load` drawn on the tray like waiterSVG */
+export function hostWalkerSVG(/** @type {'female' | 'male'} */ kind, /** @type {string} */ load) {
+  const female = kind === 'female';
+  const shirt = female ? '#e05a7a' : '#3a7bd5';
+  const hair = female
+    ? '<path d="M12 24 C10 13 15 10 20 10 C25 10 30 13 28 24 C27 19 24 17.6 20 17.8 C16 17.6 13 19 12 24 Z" fill="#20140c"/><circle cx="20" cy="9.6" r="3.6" fill="#20140c"/>'
+    : '<path d="M12.6 22.6 C12 15.6 16.4 13.6 20 13.6 C24.2 13.6 28 15.8 27.4 22.6 C26.4 19.6 24 18.6 20 18.8 C16 18.6 13.8 19.6 12.6 22.6 Z" fill="#17110c"/>';
+  return `<svg viewBox="0 0 44 78" class="waiter-svg host-walker" aria-hidden="true">
+  <g class="tray-load">${load}</g>
+  <rect x="15" y="12" width="22" height="2.4" rx="1.2" fill="#c9ced6" stroke="#8a919c" stroke-width="0.5"/>
+  <path d="M30 14.4 C31 18 31.4 22 30 28" fill="none" stroke="${shirt}" stroke-width="3.4" stroke-linecap="round"/>
+  <circle cx="20" cy="24" r="7.6" fill="#efc196"/>${hair}
+  <g fill="#1b1b1b"><circle cx="17.4" cy="24.4" r="0.9"/><circle cx="22.6" cy="24.4" r="0.9"/></g>
+  <path d="M17.8 27.6 q2.2 1.6 4.4 0" fill="none" stroke="#7a2b1e" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M11 35 C12.6 32.4 15.6 31.6 20 31.6 C24.4 31.6 27.4 32.4 29 35 L28 54 H12 Z" fill="${shirt}"/>
+  <path d="M13.4 36 H26.6 L27.6 58 H12.4 Z" fill="#fff2d8"/><path d="M16 36 L20 33 L24 36" fill="none" stroke="#e6d6b8" stroke-width="1"/>
+  <rect x="16.4" y="44" width="7.2" height="5" rx="1" fill="#e6d6b8"/>
+  <path d="M11.4 35.6 C9.4 40 9.6 45 11.4 48" fill="none" stroke="${shirt}" stroke-width="3.2" stroke-linecap="round"/>
+  <g class="legs"><path class="leg-a" d="M14 55 H19.4 L19 75 H14.4 Z" fill="#2b2d42"/><path class="leg-b" d="M20.6 55 H26 L25.6 75 H21 Z" fill="#2b2d42"/></g>
+  <path d="M13.4 75 H19.6 L20 77.6 H13 Z M20.4 75 H26.6 L27 77.6 H20 Z" fill="#141414"/>
+</svg>`;
+}
+
+/** A served dish on the table: a plate with the dish, a steaming hotpot (lẩu), or drinks */
+export function dishItem(/** @type {'plate' | 'hotpot' | 'drink'} */ kind, /** @type {string} */ icon = '🍢') {
+  if (kind === 'hotpot')
+    return `<g class="gift-item steam" transform="translate(50 22)"><rect x="-4" y="1" width="8" height="5" fill="#3a3f46"/><ellipse cy="6" rx="9" ry="2.4" fill="#2a2e34"/><circle cy="3" r="3" fill="#2f7cff" opacity="0.7"/><ellipse rx="13" ry="4.4" fill="#5c5f66"/><path d="M-12 -6 H12 L11 1 H-11 Z" fill="#8b9099"/><ellipse cy="-6" rx="12" ry="3.6" fill="#d9472b"/><circle cx="-4" cy="-6.4" r="1.4" fill="#ffd166"/><circle cx="3" cy="-6" r="1.6" fill="#90be6d"/><circle cx="7" cy="-6.6" r="1.2" fill="#f7f1e3"/><path class="steam-a" d="M-5 -10 c-2 -3 2 -5 0 -8" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1.2"/><path class="steam-b" d="M4 -10 c-2 -3 2 -5 0 -8" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1.2"/></g>`;
+  if (kind === 'drink') return `<g class="gift-item"><g transform="translate(44 22)">${mug(0, -4)}</g><g transform="translate(56 23)">${mug(0, -4)}</g></g>`;
+  return `<g class="gift-item" transform="translate(50 23)"><ellipse rx="11" ry="3.6" fill="#fbfaf6" stroke="#cfc8b8" stroke-width="0.5"/><text y="-0.6" font-size="10" text-anchor="middle" dominant-baseline="middle">${icon}</text></g>`;
 }
 
 export function giftItem(/** @type {number} */ tier, /** @type {string} */ dishIcon = '🍢') {

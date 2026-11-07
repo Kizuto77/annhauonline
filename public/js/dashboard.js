@@ -128,10 +128,20 @@ app.innerHTML = `
       <div class="row wrap"><button class="btn smash" data-control="smash">💥 Thử đập quán ngay</button></div>
     </div>
     <div class="card">
-      <h3>🍢 Quà lên mồi</h3>
-      <p class="note">Quà nào cũng được, miễn <b>đủ số xu</b> (giá mỗi cái) là một dĩa mồi ngẫu nhiên trong 30 món ra bàn người tặng; tặng 5 cái thì 5 dĩa (tối đa 8). Quà đủ giá đập quán thì chỉ đập quán, không ra mồi. Bảng thực đơn trên tường tự ghi theo số xu này.</p>
-      <label class="field"><span>Quà có giá từ bao nhiêu xu trở lên thì có mồi (0 = tắt)</span><div class="row"><input id="s-foodMinCoins" type="number" min="0" max="1000000" /><button class="btn" data-save="foodMinCoins">Lưu</button></div></label>
-      <div class="row wrap"><button class="btn" data-demo="giftFood">🍢 Thử quà lên mồi</button></div>
+      <h3>🍲 Tặng quà ra món</h3>
+      <p class="note">Quà nào cũng được, tính theo <b>giá mỗi cái</b>. Chủ quán nấu ở bếp rồi tự bưng ra bàn người tặng. Mốc cao hơn thắng: 99 xu là bao cả quán chứ không đập quán. Bảng gỗ bên trái sân khấu tự ghi theo các mốc này (0 = tắt mốc đó).</p>
+      <div class="grid2">
+        <label class="field"><span>🍗 Món ngon ngẫu nhiên (gà nướng, mực, ốc…) từ</span><div class="row"><input id="s-foodMinCoins" type="number" min="0" max="1000000" /><button class="btn" data-save="foodMinCoins">Lưu</button></div></label>
+        <label class="field"><span>🍲 Lẩu ngẫu nhiên từ</span><div class="row"><input id="s-hotpotMinCoins" type="number" min="0" max="1000000" /><button class="btn" data-save="hotpotMinCoins">Lưu</button></div></label>
+        <label class="field"><span>🎉 Bao cả quán (mỗi bàn một nồi lẩu) từ</span><div class="row"><input id="s-treatMinCoins" type="number" min="0" max="1000000" /><button class="btn" data-save="treatMinCoins">Lưu</button></div></label>
+      </div>
+      <div class="row wrap"><button class="btn" data-demo="giftFood">🍗 Thử quà 1 xu</button><button class="btn" data-demo="hotpot">🍲 Thử quà 5 xu</button><button class="btn" data-demo="treat">🎉 Thử bao cả quán</button></div>
+    </div>
+    <div class="card">
+      <h3>🪑 Vào bàn, đổi bàn, rời bàn</h3>
+      <p class="note">Khách vào live chỉ hiện lời mời ở trên. Muốn có ghế thì <b>follow</b>, chat <b>“nhậu”</b>, gọi món hoặc tặng quà. Gõ <b>“bàn 3”</b> (hay “sang bàn 3”) để đổi bàn. TikTok không báo ai rời live, nên ai im lặng quá lâu sẽ tự đứng dậy về.</p>
+      <label class="field"><span>Im lặng bao nhiêu phút thì rời bàn</span><div class="row"><input id="s-seatIdleMin" type="number" min="2" max="120" /><button class="btn" data-save="seatIdleMin">Lưu</button></div></label>
+      <div class="row wrap"><button class="btn" data-demo="nhau">🍻 Thử chat “nhậu”</button><button class="btn" data-demo="table">🪑 Thử “bàn 3”</button><button class="btn" data-demo="free">🥜 Thử gọi món miễn phí</button></div>
     </div>
     <div class="card">
       <h3>🔑 Từ khóa cụng ly</h3>
@@ -211,7 +221,7 @@ app.innerHTML = `
   <div class="tab" data-pane="club" hidden>
     <div class="card">
       <h3>🍽 Gọi món &amp; bếp</h3>
-      <p class="note">Khách comment như <b>“cho 1 dĩa ốc len”</b>, <b>“gọi lẩu thái”</b>, <b>“lên 2 dĩa khô mực”</b> là phiếu order treo lên dây, bếp nấu có thanh tiến độ rồi phục vụ bưng ra tận bàn. Khách đã tặng quà được làm trước ⭐. Gõ <b>“tính tiền”</b> ra hóa đơn ảo (0đ).</p>
+      <p class="note">Món bình dân gọi bằng comment, miễn phí: <b>đậu lạc, đậu tẩm hành, dưa chuột, khô cá, nem chua, khoai chiên, ngô chiên, rau muống, trứng lộn, bánh đa, bia hơi, trà đá, nước ngọt, nước lọc</b>. Phiếu order treo dưới mép bạt, chủ quán nấu (bếp bùng lửa) rồi tự bưng ra bàn. Khách đã tặng quà được làm trước ⭐. Gọi món ngon hay lẩu thì chủ quán nhắc tặng quà. Gõ <b>“tính tiền”</b> ra hóa đơn ảo (0đ).</p>
       <label class="field switch big"><input type="checkbox" id="s-orders" /><span><b>Bật gọi món &amp; hóa đơn</b></span></label>
     </div>
     <div class="card">
@@ -267,6 +277,11 @@ app.innerHTML = `
         <button class="tile" data-demo="bigGift"><i>💎</i><b>Quà lớn</b></button>
         <button class="tile" data-demo="follow"><i>❤️</i><b>Follow</b></button>
         <button class="tile red" data-demo="smash"><i>💥</i><b>Đập quán</b></button>
+        <button class="tile" data-demo="nhau"><i>🍻</i><b>Chat “nhậu”</b><small>vào bàn</small></button>
+        <button class="tile" data-demo="free"><i>🥜</i><b>Gọi món miễn phí</b></button>
+        <button class="tile" data-demo="hotpot"><i>🍲</i><b>Quà 5 xu</b><small>ra lẩu</small></button>
+        <button class="tile" data-demo="treat"><i>🎉</i><b>Bao cả quán</b></button>
+        <button class="tile" data-demo="table"><i>🪑</i><b>Đổi bàn</b></button>
         <button class="tile" data-demo="order"><i>🍽</i><b>Gọi món</b></button>
         <button class="tile" data-demo="bill"><i>🧾</i><b>Tính tiền</b></button>
         <button class="tile" data-demo="rps"><i>✌️</i><b>Oẳn tù tì</b></button>
@@ -411,7 +426,7 @@ function applySettings(/** @type {any} */ s) {
   settings = s;
   $('title').textContent = s.channelName;
   document.title = `${s.channelName} · Admin`;
-  for (const key of ['channelName', 'keyword', 'boardTitle', 'foodMinCoins', 'smashMinCoins', 'likeGoal', 'rainSeconds', 'wheelGoal']) {
+  for (const key of ['channelName', 'keyword', 'boardTitle', 'foodMinCoins', 'hotpotMinCoins', 'treatMinCoins', 'seatIdleMin', 'smashMinCoins', 'likeGoal', 'rainSeconds', 'wheelGoal']) {
     const input = $(`s-${key}`);
     if (document.activeElement !== input) input.value = s[key];
   }

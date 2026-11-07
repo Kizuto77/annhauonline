@@ -72,7 +72,10 @@ const DEFAULTS = {
   storyEvery: 4, // phút giữa hai lần kể
   smashEnabled: true, // quà đặc biệt = đập quán
   smashGifts: 'Doughnut, Cheese Donuts, Bubble Tea, Bouquet Flower', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
-  foodMinCoins: 1, // quà có giá từ số xu này (mỗi cái) là có một dĩa mồi; 0 = tắt
+  foodMinCoins: 1, // quà từ số xu này (mỗi cái): bếp làm một món ngon ngẫu nhiên; 0 = tắt
+  hotpotMinCoins: 5, // quà từ số xu này: một nồi lẩu ngẫu nhiên
+  treatMinCoins: 99, // quà từ số xu này: bao cả quán (mỗi bàn một nồi lẩu)
+  seatIdleMin: 10, // im lặng bao nhiêu phút thì rời bàn (TikTok không báo ai rời live)
   smashMinCoins: 30, // >0: mọi quà có giá từ số xu này trở lên (mỗi cái) cũng đập quán; 0 = tắt
   giftFoods: 'Rose, Bông hoa = Gỏi gà xé phay\nFinger Heart, Bắn Tim = Nem chua rán\nRosa = Khô mực nướng\nLucky Pig, Chú Heo May Mắn = Chân gà sả tắc\nIce Cream Cone, Kem Ốc Quế = Ốc len xào dừa', // mỗi dòng: tên quà (cách nhau dấu phẩy) = tên món mồi
   orders: true, // khách comment gọi món theo thực đơn, bếp nấu rồi bưng ra; gõ "tính tiền" ra hóa đơn ảo
@@ -121,6 +124,9 @@ const VALIDATE = {
   smashGifts: (v) => (typeof v === 'string' ? cleanText(v, 160) : undefined),
   smashMinCoins: num(0, 1_000_000),
   foodMinCoins: num(0, 1_000_000),
+  hotpotMinCoins: num(0, 1_000_000),
+  treatMinCoins: num(0, 1_000_000),
+  seatIdleMin: num(2, 120),
   orders: bool,
   levels: bool,
   autoEvents: bool,
@@ -347,7 +353,10 @@ function onGift(user, giftName, coinsEach, count) {
   addPoints(user, coins * POINTS_PER_COIN, coins);
   club.onGift(user, coins);
   broadcast('gift', { id: uid(), user: show(user), giftName: cleanText(giftName, 40) || 'Quà', coins, count });
-  if (shouldSmash(giftName, coinsEach)) triggerSmash(user);
+  // theo số xu mỗi cái: bao cả quán > đập quán > lẩu > món ngon
+  if (settings.treatMinCoins > 0 && coinsEach >= settings.treatMinCoins) broadcast('treat', { id: uid(), user: show(user) });
+  else if (shouldSmash(giftName, coinsEach)) triggerSmash(user);
+  else club.giftOrder(user, coinsEach, count);
 }
 
 // "Đập quán": quà đặc biệt làm khách đập phá, chủ quán khóc rồi dọn lại. Một đợt kéo dài ~15 giây, quà trong lúc đó bỏ qua.
@@ -679,11 +688,19 @@ function demo(type) {
   else if (type === 'dzo') onChat(demoUser(), pick(['Dzô!', 'dzo dzo', 'Một hai ba dzô', 'zô 100%']));
   else if (type === 'gift') onGift(demoUser(), pick(['Rose', 'Finger Heart', 'TikTok', 'GG']), 1, 1);
   else if (type === 'giftFood') {
-    onGift(demoUser(), pick(['Rose', 'Finger Heart', 'Rosa', 'Ice Cream Cone']), Math.max(1, settings.foodMinCoins), pick([1, 1, 3]));
+    onGift(demoUser(), pick(['Rose', 'Finger Heart', 'Rosa', 'Ice Cream Cone']), Math.max(1, settings.foodMinCoins), pick([1, 1, 2]));
+  } else if (type === 'hotpot') onGift(demoUser(), pick(['Doughnut', 'Bubble Tea', 'Perfume']), Math.max(1, settings.hotpotMinCoins), 1);
+  else if (type === 'treat') onGift(demoUser(), pick(['Galaxy', 'Money Gun']), Math.max(1, settings.treatMinCoins), 1);
+  else if (type === 'nhau') onChat(demoUser(), pick(['nhậu', 'Nhậu nào', 'cho ngồi với', 'vào bàn']));
+  else if (type === 'table') onChat(demoUser(), `bàn ${Math.ceil(Math.random() * 8)}`);
+  else if (type === 'free') {
+    const u = demoUser();
+    onChat(u, 'nhậu');
+    setTimeout(() => onChat(u, pick(['đậu lạc', 'cho dĩa nem chua', 'bia', 'trà đá', 'gọi khoai tây chiên', 'lên dưa chuột', 'trứng vịt lộn'])), 1200);
   } else if (type === 'bigGift') onGift(demoUser(), pick(['Perfume', 'Galaxy', 'Money Gun']), pick([99, 199, 500, 1000]), 1);
   else if (type === 'smash') triggerSmash(demoUser());
   else if (type === 'follow') onFollow(demoUser());
-  else if (type === 'order') onChat(demoUser(), pick(['Cho 1 dĩa ốc len xào dừa', 'Gọi lẩu thái đi chủ quán', 'Lên 2 dĩa khô mực', 'cho dĩa mồi nha', 'Thêm một phần bò lá lốt', 'order khoai tây chiên']));
+  else if (type === 'order') onChat(demoUser(), pick(['Cho 1 dĩa đậu lạc', 'gọi nem chua', 'Lên 2 ly trà đá', 'bia hơi', 'Thêm một dĩa khoai tây chiên', 'gọi mực nướng']));
   else if (type === 'bill') onChat(demoUser(), 'Tính tiền chủ quán ơi');
   else if (type === 'rps') onChat(demoUser(), pick(['kéo', 'búa', 'bao', 'oẳn tù tì ra búa']));
   else if (type === 'play') {

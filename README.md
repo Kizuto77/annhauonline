@@ -6,23 +6,15 @@ Sân khấu tương tác dọc 9:16 chạy cùng TikTok LIVE Studio. Bối cản
 
 ## Tính năng
 
-- **Khách vào ngồi bàn.** Người mới vào live tự đi vào và kéo ghế ngồi. Ai comment hoặc gõ từ khóa mà quán đã đầy thì được ngồi thế chỗ người im lâu nhất.
-- **Cụng ly.** Gõ `dzo` (hoặc "Dzô", "zô"...; từ khóa đổi được) là nhân vật nâng ly, cả bàn cụng theo, có tiếng ly chạm. Từ 4 người cùng gõ trong 15 giây thì **cả quán "Một, hai, ba, DZÔ!"**.
-- **Tặng quà.**
-  - Quà nhỏ: thêm một vòng ly.
-  - Từ 10 xu: một đĩa mồi.
-  - Từ 99 xu: tháp bia, pháo giấy và chớp vàng.
-  - Từ 500 xu: lẩu, tháp bia, và cả quán đứng dậy dzô.
-
-  Nhân viên bưng mâm tận bàn, máy quay áp sát người tặng 6 giây, chủ quán đọc tên cảm ơn kèm một câu chúc. Một combo chỉ cảm ơn một lần.
-- **Bàn VIP.** 6 người đứng đầu bảng **TOP CHIẾN HỮU** ngồi bàn VIP trên bục đỏ, có số thứ hạng. Điểm: 1 comment = 1 điểm, 1 xu quà = 10 điểm. Điểm lưu ở server nên tải lại trang không bị mất.
-- **Thanh tim.**
-  - Đủ 666 tim: **mưa bọt bia** 1 phút.
-  - Đủ 99 tim: **vòng quay mồi** quay ra một món nhậu (30 món), món đó được dọn lên các bàn và chủ quán đọc tên món.
+- **Quán vỉa hè phố cổ ban đêm:** dãy nhà ống có ban công và cửa chớp xanh, cột điện chằng chịt dây, cây sấu, biển hiệu sơn đỏ viền bóng đèn, quán dưới mái bạt cam có bàn thờ ông Địa, vỉa hè lát gạch tàu, xe máy chạy ngang ngoài đường.
+- **Bếp ngoài trời, chủ quán nấu và tự bưng món:** bếp than với chảo xào (lửa bùng khi đang nấu), vỉ nướng, nồi nước dùng, thùng đá. Món nấu xong chủ quán đi ra tận bàn đặt món rồi quay về bếp; đông đơn thì phụ quán bưng giúp.
+- **8 bàn nhựa đỏ đánh số (BÀN 1–8), 32 ghế.** Vào live chưa có ghế: **follow, chat "nhậu", gọi món hoặc tặng quà** mới được vào bàn. Gõ **"bàn 3"** / "sang bàn 3" để đổi bàn. TikTok không báo ai rời live, nên ai im lặng quá lâu (mặc định 10 phút) sẽ tự đứng dậy về.
+- **Gọi món miễn phí bằng comment:** đậu lạc, đậu tẩm hành, dưa chuột, khô cá, nem chua, khoai chiên, ngô chiên, rau muống, trứng lộn, bánh đa, bia hơi, trà đá, nước ngọt, nước lọc. Phiếu order treo dưới mép bạt, có thanh tiến độ.
+- **Tặng quà theo số xu (giá mỗi cái):** 1 xu món ngon ngẫu nhiên (gà nướng, mực, ốc, tôm…), 5 xu một nồi lẩu ngẫu nhiên, 30 xu đập quán, 99 xu **bao cả quán** (mỗi bàn một nồi lẩu). Mốc đổi trong admin, bảng gỗ bên trái sân khấu tự ghi theo.
 - **Chủ quán đọc to từng comment rồi đáp kiểu bựa** (hoặc kiểu hiền, chọn trong admin). Comment có từ tục, link, số điện thoại, @tag thì bỏ qua; teencode được đọc thành chữ. Khi quán im, chủ quán tự gọi tên người vừa chat để bắt chuyện hoặc hỏi cả quán.
 - **Giọng đọc 8 kiểu** (Hoài My, Nam Minh với nhiều cao độ/tốc độ, giọng Google), lỗi mạng thì thử lại cùng giọng chứ không đổi giọng.
-- **Gọi món & bếp:** khách gõ "cho 1 dĩa ốc len", "gọi lẩu thái"... là phiếu order treo trên dây, bếp nấu có thanh tiến độ, phục vụ bưng tận bàn; khách đã tặng quà được làm trước. Gõ "tính tiền" ra hóa đơn ảo 0đ.
-- **Quà theo số xu, không cần tên quà:** quà từ 1 xu (mỗi cái) ra một dĩa mồi ngẫu nhiên, quà từ 30 xu đập quán; hai mốc đổi trong admin, bảng thực đơn trên tường tự ghi. Khách đòi "3 em đào" thì tặng quà xong ra… 3 ly trà đào.
+- **Hóa đơn ảo:** gõ "tính tiền" ra hóa đơn 0đ (bình luận, cụng ly, món đã ăn, quà, cấp).
+- **Gọi đào:** khách đòi "3 em đào" thì tặng quà xong ra… 3 ly trà đào.
 - **Khách quen & cấp bậc** (lưu trong `viewers.json` qua nhiều buổi live): 🍺 Khách mới → 🥂 Khách quen → 🍻 Chiến hữu → 😎 Dân chơi → 💰 Đại gia → 👑 Trùm quán → 🐉 Huyền thoại. Huy hiệu cạnh tên, lên cấp có ăn mừng.
 - **Sự kiện trong quán** (tự động hoặc bấm trong admin): giờ vàng x2 điểm, mất điện, mưa bão sấm chớp, người bán dạo, bàn bên hát karaoke.
 - **Mini game:** oẳn tù tì với chủ quán (gõ kéo/búa/bao), đoán số 1–50, kéo co đội Ốc (gõ 1) với đội Mực (gõ 2).
@@ -97,6 +89,7 @@ Giữ cửa sổ đen (BAT) mở suốt buổi live; đóng nó là tắt quán.
 | `public/js/bua.js` | Đọc comment an toàn, câu đáp bựa, câu bắt chuyện |
 | `public/js/effects.js`, `living.js` | Hiệu ứng (quà bay, pháo hoa, tim) và cảnh quán sống động |
 | `public/js/levels.js` | Bảng cấp bậc khách quen |
+| `public/js/menu.js` | Thực đơn: món miễn phí, món ngon 1 xu, lẩu 5 xu |
 
 Kiểm tra kiểu: `npm run check`.
 

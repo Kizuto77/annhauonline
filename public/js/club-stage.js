@@ -3,10 +3,10 @@
 // lên cấp khách quen, sự kiện (giờ vàng, mất điện, mưa bão, người bán dạo, karaoke) và mini game (đoán số, kéo co,
 // oẳn tù tì). Server quyết định mọi thứ; file này chỉ vẽ và nói.
 import { el } from './api.js';
-import { DISHES } from './dishes.js';
+
 import { LEVELS } from './levels.js';
 import { clubLines as L } from './club-lines.js';
-import { customerSVG, giftItem, hash } from './people.js';
+import { customerSVG, dishItem, hash } from './people.js';
 import { personWidth, scaleAt } from './layout.js';
 
 /** @typedef {{ id: string; name: string; avatar: string; lv?: number }} User */
@@ -19,7 +19,7 @@ import { personWidth, scaleAt } from './layout.js';
  *   headOf: (seat: number) => { x: number; y: number };
  *   bubble: (occ: any, text: string, ms?: number) => void; cheer: (occ: any, delay?: number) => void;
  *   occupantsAt: (table: number) => any[]; everyone: () => any[];
- *   serve: (table: number, item: string, done: () => void) => void;
+ *   serve: (table: number, item: string, done: () => void) => void; occOf: (u: User) => any; setCooking: (on: boolean) => void;
  *   fxs: { ring: Function; sparkles: Function; floatUp: Function; fireworks: Function; beams: Function; splash: Function; confetti: (n?: number) => void; flash: () => void };
  *   sound: any; say: (text: string | string[], first?: boolean) => void; smashing: () => boolean;
  * }} c
@@ -29,7 +29,7 @@ export function setupClub(c) {
   const $ = (/** @type {string} */ s) => /** @type {HTMLElement} */ (ui.querySelector(s));
   const quiet = () => !c.sound || c.sound.waiting() < 2;
   const short = (/** @type {string} */ name) => (name.length > 12 ? `${name.slice(0, 11)}…` : name);
-  const dishShort = (/** @type {number} */ i) => DISHES[i].ten.split(' ').slice(0, 3).join(' ');
+/** @typedef {{ id: string; ten: string; short: string; icon: string; kind: 'plate' | 'hotpot' | 'drink' }} Item */
 
   // ---------------------------------------------------------------------------------------------- order rail
   const rail = el('div', 'order-rail');
@@ -39,7 +39,7 @@ export function setupClub(c) {
   const tickets = /** @type {HTMLElement} */ (rail.querySelector('.rail-tickets'));
   /** @type {Map<string, HTMLElement>} */
   const ticketEls = new Map();
-  /** @param {Array<{ id: string; user: User; dish: number; qty: number; state: string; vip: boolean; left: number; ms: number }>} list */
+  /** @param {Array<{ id: string; user: User; item: Item; qty: number; state: string; vip: boolean; left: number; ms: number }>} list */
   function renderOrders(list) {
     const shown = list.slice(0, 3);
     for (const [id, t] of ticketEls) {
@@ -52,8 +52,9 @@ export function setupClub(c) {
       let t = ticketEls.get(o.id);
       if (!t) {
         t = el('div', `ticket${o.vip ? ' vip' : ''}`);
-        t.innerHTML = `<i class="pin"></i><div class="t-ico">${DISHES[o.dish].icon}</div><div class="t-name"></div><div class="t-who"></div><div class="t-bar"><b></b></div><div class="t-state"></div>`;
-        /** @type {HTMLElement} */ (t.querySelector('.t-name')).textContent = `${o.qty > 1 ? `${o.qty}× ` : ''}${dishShort(o.dish)}`;
+        t.innerHTML = `<i class="pin"></i><div class="t-ico"></div><div class="t-name"></div><div class="t-who"></div><div class="t-bar"><b></b></div><div class="t-state"></div>`;
+        /** @type {HTMLElement} */ (t.querySelector('.t-ico')).textContent = o.item.icon;
+        /** @type {HTMLElement} */ (t.querySelector('.t-name')).textContent = `${o.qty > 1 ? `${o.qty}× ` : ''}${o.item.short}`;
         /** @type {HTMLElement} */ (t.querySelector('.t-who')).textContent = `${o.vip ? '⭐ ' : ''}${short(o.user.name)}`;
         tickets.appendChild(t);
         ticketEls.set(o.id, t);
@@ -73,10 +74,12 @@ export function setupClub(c) {
     const more = list.length - shown.length;
     /** @type {HTMLElement} */ (rail.querySelector('.rail-more')).textContent = more > 0 ? `+${more} đơn chờ` : '';
     rail.hidden = !list.length && !tickets.children.length;
+    // fire up the stove while something is cooking
+    c.setCooking(list.some((o) => o.state === 'cook'));
   }
 
   /** The waiter brings `dish` to wherever `user` sits (seating them first if needed) */
-  function bringDish(/** @type {User} */ user, /** @type {number} */ dish, /** @type {number} */ qty) {
+  function bringDish(/** @type {User} */ user, /** @type {Item} */ item, /** @type {number} */ qty) {
     const occ = c.seatUser(user, false);
     if (!occ) return;
     for (let i = 0; i < Math.min(qty, 3); i++) {
@@ -84,7 +87,7 @@ export function setupClub(c) {
         const at = c.seatOf.get(user.id);
         if (at === undefined) return;
         const t = c.SEATS[at].table;
-        c.serve(t, giftItem(2, DISHES[dish].icon), () => {
+        c.serve(t, dishItem(item.kind, item.icon), () => {
           c.sound?.clink(0.35);
           c.fxs.ring(wfx, c.TABLES[t].x, c.TABLES[t].y, '#ffd166', 40);
           for (const o of c.occupantsAt(t)) c.cheer(o, Math.random() * 300);
@@ -132,7 +135,7 @@ export function setupClub(c) {
 
   // ---------------------------------------------------------------------------------------------- level up
   function levelUp(/** @type {{ user: User; lv: number; name: string; icon: string }} */ e) {
-    const occ = c.seatUser(e.user, false);
+    const occ = c.occOf(e.user);
     if (occ) {
       const badge = occ.el.querySelector('.lvb');
       if (badge) badge.textContent = e.icon;
@@ -335,7 +338,7 @@ export function setupClub(c) {
       text = e.winner ? `🎉 ${short(e.winner.name)} đoán trúng số ${e.secret}! +50 điểm` : `⌛ Hết giờ! Số bí mật là ${e.secret}`;
       c.say(e.winner ? L.guessWin(e.winner.name, e.secret) : L.guessNone(e.secret), true);
       if (e.winner) {
-        const occ = c.seatUser(e.winner, false);
+        const occ = c.occOf(e.winner);
         if (occ) {
           const hd = c.headOf(occ.seat);
           c.fxs.ring(wfx, hd.x, hd.y, '#ffd166', 60);
@@ -357,7 +360,7 @@ export function setupClub(c) {
 
   const HAND = /** @type {Record<string, string>} */ ({ kéo: '✌️', búa: '✊', bao: '✋' });
   function rps(/** @type {{ user: User; you: string; host: string; result: string }} */ e) {
-    const occ = c.seatUser(e.user, false);
+    const occ = c.occOf(e.user);
     const mark = e.result === 'win' ? '🎉' : e.result === 'lose' ? '😵' : '🤝';
     if (occ) {
       c.bubble(occ, `${HAND[e.you]} vs ${HAND[e.host]} ${mark}`, 4000);
@@ -368,15 +371,17 @@ export function setupClub(c) {
   }
 
   return {
-    order(/** @type {{ order: { user: User; dish: number; qty: number; vip: boolean } }} */ e) {
+    order(/** @type {{ order: { user: User; item: Item; qty: number; vip: boolean; gift: boolean } }} */ e) {
       const o = e.order;
-      const occ = c.seatUser(o.user, false);
-      if (occ) c.bubble(occ, `🧾 ${DISHES[o.dish].icon} ${DISHES[o.dish].ten}`, 4000);
+      // ordering is sitting down: whoever orders gets a stool
+      const occ = c.seatUser(o.user, true);
+      if (occ) c.bubble(occ, `🧾 ${o.item.icon} ${o.item.ten}`, 4000);
       c.sound?.pop(0.35);
-      if (quiet() || o.vip) c.say(L.order(o.user.name, DISHES[o.dish].ten, o.qty, o.vip), o.vip);
+      if (o.gift) c.say(L.giftOrder(o.user.name, o.item.ten, o.qty, o.item.kind === 'hotpot'), true);
+      else if (quiet() || o.vip) c.say(L.order(o.user.name, o.item.ten, o.qty, o.vip), o.vip);
     },
     orders: renderOrders,
-    orderDone(/** @type {{ order: { id: string; user: User; dish: number; qty: number }; orders: any[] }} */ e) {
+    orderDone(/** @type {{ order: { id: string; user: User; item: Item; qty: number }; orders: any[] }} */ e) {
       const t = ticketEls.get(e.order.id);
       if (t) {
         t.classList.add('done');
@@ -389,11 +394,16 @@ export function setupClub(c) {
       }
       renderOrders(e.orders);
       c.sound?.ding(0.3);
-      bringDish(e.order.user, e.order.dish, e.order.qty);
-      if (quiet()) c.say(L.orderDone(e.order.user.name, DISHES[e.order.dish].ten));
+      bringDish(e.order.user, e.order.item, e.order.qty);
+      if (quiet()) c.say(L.orderDone(e.order.user.name, e.order.item.ten));
     },
-    orderNote(/** @type {{ kind: string; user: User }} */ e) {
-      const occ = c.seatUser(e.user, false);
+    orderNote(/** @type {{ kind: string; user: User; item?: Item; price?: number }} */ e) {
+      const occ = c.occOf(e.user);
+      if (e.kind === 'paid') {
+        if (occ) c.bubble(occ, `${e.item?.icon ?? '🍽'} ${e.item?.short ?? ''} · ${e.price} xu`, 3500);
+        if (quiet()) c.say(L.orderPaid(e.user.name, e.item?.ten ?? 'món đó', e.price ?? 1, e.item?.kind === 'hotpot'));
+        return;
+      }
       if (occ) c.bubble(occ, e.kind === 'busy' ? '⏳ Món đang nấu…' : '🔥 Bếp cháy đơn!', 3000);
       if (quiet()) c.say(e.kind === 'busy' ? L.orderBusy(e.user.name) : L.orderFull());
     },

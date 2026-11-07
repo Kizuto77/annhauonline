@@ -18,6 +18,20 @@ const ORDER_VIP = [
   'Khách tặng quà gọi món là được ưu tiên! {qty} {mon} cho {ban}, bếp làm trước liền!',
   '{ban} là khách VIP nè, {mon} lên trước, ai chờ thì ráng chờ nha!',
 ];
+const GIFT_ORDER = [
+  'Cảm ơn {ban} tặng quà! Bếp làm ngay {qty} {mon} cho {ban}, chờ xíu là bưng ra tận bàn!',
+  'Quà tới rồi! {ban} được {qty} {mon}, chủ quán vô bếp liền đây!',
+  '{ban} chịu chơi ghê! {mon} lên lửa liền, nóng hổi ra bàn trong một nốt nhạc!',
+];
+const GIFT_HOTPOT = [
+  'Ôi {ban} tặng quà to, quán lên ngay {qty} {mon}! Nước lẩu đang sôi sùng sục đây!',
+  'Có lẩu cho {ban}! {mon}, nồi to nóng hổi, cả bàn ngồi sát vô ăn chung nha!',
+];
+const PAID_NOTE = [
+  '{mon} là món ngon, tặng quà {price} xu là bếp làm liền cho {ban} nha!',
+  '{ban} sành ăn ghê, {mon} phải tặng quà {price} xu mới có. Đậu lạc, nem chua thì miễn phí nè!',
+];
+const PAID_HOTPOT = ['Lẩu thì tặng quà {price} xu là có nồi nóng hổi {ban} ơi, quán chọn ngẫu nhiên vị cho bất ngờ!'];
 const ORDER_DONE = [
   '{mon} của {ban} ra lò rồi! Nóng hổi vừa thổi vừa ăn nha!',
   'Ting ting! {mon} cho {ban} tới bàn. Ăn ngon thì thả tim cho bếp nha!',
@@ -69,6 +83,10 @@ export const clubLines = {
     fill(pick(vip ? ORDER_VIP : ORDER), { ban: ban(name), mon: dish, qty: `${NUM[qty] ?? qty} phần` }),
   orderDone: (/** @type {string} */ name, /** @type {string} */ dish) => fill(pick(ORDER_DONE), { ban: ban(name), mon: dish }),
   orderBusy: (/** @type {string} */ name) => fill(pick(ORDER_BUSY), { ban: ban(name) }),
+  giftOrder: (/** @type {string} */ name, /** @type {string} */ dish, /** @type {number} */ qty, /** @type {boolean} */ hotpot) =>
+    fill(pick(hotpot ? GIFT_HOTPOT : GIFT_ORDER), { ban: ban(name), mon: dish, qty: `${NUM[qty] ?? qty} phần` }),
+  orderPaid: (/** @type {string} */ name, /** @type {string} */ dish, /** @type {number} */ price, /** @type {boolean} */ hotpot) =>
+    fill(pick(hotpot ? PAID_HOTPOT : PAID_NOTE), { ban: ban(name), mon: dish, price: String(price) }),
   orderFull: () => pick(ORDER_FULL),
   bill: (/** @type {string} */ name) => fill(pick(BILL), { ban: ban(name) }),
   levelUp: (/** @type {string} */ name, /** @type {string} */ level) => fill(pick(LEVEL_UP), { ban: ban(name), lv: level }),

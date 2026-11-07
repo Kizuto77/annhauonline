@@ -86,16 +86,15 @@ export function livingScene(layer, sceneSvg) {
     <g class="lv-clouds">${cloud(22, 1, 150, 10)}${cloud(38, 0.7, 120, 70)}${cloud(12, 0.55, 180, 120)}</g>
     <!-- warm light breathing inside the shop -->
     <ellipse class="lv-breathe" cx="215" cy="360" rx="230" ry="120" fill="url(#lvWarm)"/>
-    <!-- street lamp light cone and moths -->
-    <path class="lv-cone" d="M378 172 L340 300 L432 300 L394 172 Z" fill="url(#lvLamp)"/>
-    <g class="lv-moths">${[0, 1, 2].map((i) => `<g class="lv-moth" style="transform-origin:386px 176px;animation-delay:-${i * 0.9}s;animation-duration:${2.2 + i * 0.7}s"><circle cx="${394 + i * 3}" cy="${171 - i * 2}" r="0.9" fill="#fff8dc"/></g>`).join('')}</g>
-    ${lantern(104, 226, 0)}${lantern(326, 226, 1.7)}
-    ${fan(108, 300)}
-    <g class="lv-cat" transform="translate(-40 221)">${CAT}</g>
+    <!-- moths around the bulbs over the sidewalk -->
+    <g class="lv-moths">${[0, 1, 2, 3].map((i) => `<g class="lv-moth" style="transform-origin:${150 + i * 50}px ${438 + (i % 2) * 6}px;animation-delay:-${i * 0.9}s;animation-duration:${2.2 + i * 0.6}s"><circle cx="${158 + i * 50}" cy="${434 + (i % 2) * 6}" r="0.9" fill="#fff8dc"/></g>`).join('')}</g>
+    ${lantern(112, 268, 0)}${lantern(322, 268, 1.7)}
+    <g class="lv-cat" transform="translate(-40 236)">${CAT}</g>
+    <g class="lv-bikes"></g>
   </svg>`;
 
   // city windows: a light goes off here, another comes on there
-  const wins = sceneSvg ? [...sceneSvg.querySelectorAll('rect[width="4"][height="5"]')] : [];
+  const wins = sceneSvg ? [...sceneSvg.querySelectorAll('.win')] : [];
   setInterval(() => {
     if (!wins.length || document.hidden) return;
     const w = /** @type {SVGRectElement} */ (wins[Math.floor(Math.random() * wins.length)]);
@@ -113,7 +112,7 @@ export function livingScene(layer, sceneSvg) {
     const flip = rightward ? '' : ' scale(-1 1)';
     const sit = Math.random() < 0.55;
     const walk = (/** @type {number} */ a, /** @type {number} */ b, /** @type {number} */ ms) =>
-      cat.animate([{ transform: `translate(${a}px, 221px)${flip}` }, { transform: `translate(${b}px, 221px)${flip}` }], { duration: ms, easing: 'linear', fill: 'forwards' }).finished;
+      cat.animate([{ transform: `translate(${a}px, 236px)${flip}` }, { transform: `translate(${b}px, 236px)${flip}` }], { duration: ms, easing: 'linear', fill: 'forwards' }).finished;
     cat.classList.add('walking');
     (async () => {
       if (sit) {
@@ -130,4 +129,30 @@ export function livingScene(layer, sceneSvg) {
     setTimeout(stroll, 45_000 + Math.random() * 40_000);
   };
   setTimeout(stroll, 8000);
+
+  // motorbikes going by on the street, headlight first
+  const bikes = /** @type {SVGGElement} */ (layer.querySelector('.lv-bikes'));
+  const colors = ['#c0392b', '#2b74c9', '#f2a516', '#2f2f2f', '#7b4bb3', '#1b8a3a'];
+  const ride = () => {
+    if (!document.hidden) {
+      const rightward = Math.random() < 0.5;
+      const y = rightward ? 742 : 718;
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const c = colors[Math.floor(Math.random() * colors.length)];
+      const two = Math.random() < 0.4;
+      g.innerHTML = `<g transform="${rightward ? '' : 'scale(-1 1)'}">
+        <path d="M30 -6 L110 -14 L110 10 Z" fill="#fff6c4" opacity="0.18"/>
+        <circle cx="-14" cy="0" r="7" fill="#111"/><circle cx="20" cy="0" r="7" fill="#111"/><circle cx="-14" cy="0" r="3" fill="#666"/><circle cx="20" cy="0" r="3" fill="#666"/>
+        <path d="M-20 -6 H12 L22 -16 H26 L20 -4 H-22 Z" fill="${c}"/><circle cx="27" cy="-14" r="2.4" fill="#fff6c4"/>
+        <path d="M-8 -12 L2 -12 L4 -30 L-6 -30 Z" fill="#26324a"/><circle cx="-1" cy="-35" r="6" fill="${c}"/><path d="M-7 -36 a6 6 0 0 1 12 0 Z" fill="#111" opacity="0.5"/><path d="M2 -26 L18 -18" stroke="#26324a" stroke-width="3" stroke-linecap="round"/>
+        ${two ? '<path d="M-18 -12 L-10 -12 L-9 -28 L-18 -28 Z" fill="#7a3b3b"/><circle cx="-13" cy="-33" r="5.4" fill="#ddd"/>' : ''}
+      </g>`;
+      bikes.appendChild(g);
+      const from = rightward ? -60 : W + 60;
+      const to = rightward ? W + 60 : -60;
+      g.animate([{ transform: `translate(${from}px, ${y}px)` }, { transform: `translate(${to}px, ${y}px)` }], { duration: 4200 + Math.random() * 2500, easing: 'linear' }).onfinish = () => g.remove();
+    }
+    setTimeout(ride, 7000 + Math.random() * 12000);
+  };
+  setTimeout(ride, 3000);
 }

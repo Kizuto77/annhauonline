@@ -206,6 +206,8 @@ export const TALK_ROOM = [
   'Ai mai phải dậy sớm mà giờ còn ngồi đây thì gõ chữ liều. Quán đếm coi!',
   'Kể nhanh một chuyện xui nhất tuần này đi cả nhà, kể xong là hết xui, quán bảo đảm!',
   'Cả nhà đi nhậu thích quán vỉa hè hay nhà hàng máy lạnh? Comment đi!',
+  'Ai đang đứng ngoài thì chat chữ nhậu là có ghế liền nha, bàn nào cũng còn chỗ, muốn bàn nào thì gõ bàn mấy!',
+  'Quán có đậu lạc, nem chua, trà đá miễn phí nè, comment tên món là chủ quán làm liền!',
   'Ai muốn gọi đào thì comment số em đi, quán ghi sổ hết, tặng quà là đào ra bàn liền!',
 ];
 

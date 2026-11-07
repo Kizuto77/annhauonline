@@ -2,9 +2,10 @@
 // Sân khấu quán nhậu (trang ?view=stage, nguồn Link trong TikTok LIVE Studio). Mọi sự kiện đến từ server qua SSE;
 // trang này chỉ vẽ và nói. Với &preview=1 (khung xem trước trong dashboard) thì im lặng hoàn toàn.
 import { listen, el } from './api.js';
-import { backSVG, counterSVG } from './scene.js';
-import { customerSVG, waiterSVG, hostSVG, stoolSVG, tableSVG, giftItem, hash } from './people.js';
-import { TABLES, SEATS, VIP_SEATS, SEAT_ORDER, NPC_SEATS, personWidth, scaleAt } from './layout.js';
+import { backSVG, kitchenSVG } from './scene.js';
+import { customerSVG, waiterSVG, hostSVG, hostWalkerSVG, dishItem, stoolSVG, tableSVG, giftItem, hash } from './people.js';
+import { FREE } from './menu.js';
+import { TABLES, SEATS, VIP_SEATS, SEAT_ORDER, NPC_SEATS, personWidth, scaleAt, seatsOfTable } from './layout.js';
 import { SoundEngine } from './sound.js';
 import { lines } from './lines.js';
 import { tellNext } from './stories.js';
@@ -32,7 +33,7 @@ const COMBO_MS = 4500;
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
-let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: false, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, foodMinCoins: 1, smashMinCoins: 30, smashEnabled: true, readChat: true, replyStyle: 'bua', background: '' };
+let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: false, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, foodMinCoins: 1, hotpotMinCoins: 5, smashMinCoins: 30, treatMinCoins: 99, smashEnabled: true, orders: true, seatIdleMin: 10, readChat: true, replyStyle: 'bua', background: '' };
 const say = () => lines({ q: settings.channelName, kw: lettersKeyword(), style: settings.replyStyle });
 /** The first cheers keyword, the one shown and said */
 const firstKeyword = () => String(settings.keyword || 'dzô').split(',')[0].trim() || 'dzô';
@@ -57,18 +58,15 @@ bgLayer.innerHTML = backSVG();
 const customBg = /** @type {HTMLImageElement} */ (el('img', 'layer custom-bg', { alt: '' }));
 customBg.hidden = true;
 const host = el('div', 'host');
-const counter = el('div', 'layer counter');
-counter.innerHTML = counterSVG();
+const counter = el('div', 'layer counter kitchen');
+counter.innerHTML = kitchenSVG();
 const floor = el('div', 'layer floor');
 const living = el('div', 'layer living');
 // The neon sign hangs on the building, so it moves with the camera
 const sign = el('div', 'neon-wrap');
 sign.innerHTML = '<div class="neon"></div><div class="neon-sub">QUÁN NHẬU ONLINE</div>';
 const wfx = el('div', 'layer wfx'); // effects that live in the room and follow the camera
-// The wall menu board shows what each gift does (gift -> dish, gifts that smash the quán), page by page
-const menuBoard = el('div', 'menu-board');
-menuBoard.hidden = true;
-world.append(bgLayer, living, customBg, sign, menuBoard, host, counter, floor, wfx);
+world.append(bgLayer, living, customBg, sign, host, counter, floor, wfx);
 livingScene(living, bgLayer.querySelector('svg'));
 stage.appendChild(world);
 
@@ -80,7 +78,9 @@ ui.innerHTML = `
   <div class="meter meter-rain"><div class="fill"></div><div class="label"></div></div>
   <div class="meter meter-wheel"><div class="fill"></div><div class="label"></div></div>
   <div class="ticker"><div class="ticker-text" id="ticker"></div></div>
-  <div class="hint-sign"><span>Gõ <b id="kw"></b></span><small>để cụng ly 🍻</small></div>
+  <div class="stats" id="stats"></div>
+  <div class="arrive" id="arrive" hidden></div>
+  <div class="menu-panel" id="menu-panel"></div>
   <div class="chalkboard" id="board"><div class="chalk-title" id="board-title"></div><ol id="board-list"></ol></div>
   <div class="wheel-box"><div class="wheel-pointer"></div><div class="wheel" id="wheel"></div><div class="wheel-label">VÒNG QUAY MỒI</div></div>
   <div class="gift-banner" id="gift-banner" hidden></div>
@@ -128,7 +128,7 @@ for (const t of TABLES) {
   e.style.height = `${hPct}%`;
   e.style.zIndex = String(Math.round(t.y * 10));
   const vbw = Math.round(50 * ((t.w * 4.3) / (hPct * 7.64)));
-  e.innerHTML = tableSVG(t.id + 1, Boolean(t.vip), vbw);
+  e.innerHTML = tableSVG(t.id + 1, Boolean(t.vip), vbw, t.no);
   if (t.vip) e.insertAdjacentHTML('beforeend', '<div class="vip-riser"></div><div class="vip-tag">★ BÀN VIP ★</div>');
   floor.appendChild(e);
   tableEls.set(t.id, e);
@@ -274,6 +274,96 @@ function seatUser(user, evict = false) {
   return occupy(seatId, user);
 }
 
+/** "🪑 6/32 ghế · 👀 7 đang xem · 🍺 118 ly" under the sign */
+let viewersNow = 0;
+let cups = 0;
+setInterval(() => {
+  const seated = everyone().filter((o) => o.user).length;
+  $('stats').textContent = `🪑 ${seated}/${SEATS.length} ghế · 👀 ${viewersNow} đang xem · 🍺 ${cups} ly`;
+}, 1000);
+
+/** The viewer's occupant if they sit somewhere (and mark them active), else null: does not seat them */
+function occOf(/** @type {User} */ user) {
+  const at = seatOf.get(user.id);
+  const occ = at === undefined ? null : seats.get(at);
+  if (occ) occ.lastActive = Date.now();
+  return occ ?? null;
+}
+
+/**
+ * "bàn 3": move to table 3 (or sit there if not seated yet). A free stool first, then a background customer's;
+ * a table full of viewers says so.
+ */
+function moveToTable(/** @type {User} */ user, /** @type {number} */ no) {
+  const table = TABLES.find((t) => t.no === no);
+  if (!table) return null;
+  const here = seatOf.get(user.id);
+  if (here !== undefined && SEATS[here].table === table.id) {
+    const occ = seats.get(here);
+    if (occ) bubble(occ, `Đang ngồi bàn ${no} rồi mà 😆`, 3000);
+    return occ ?? null;
+  }
+  const spots = seatsOfTable(table.id);
+  const seat = spots.find((st) => !seats.get(st.id)) ?? spots.find((st) => seats.get(st.id)?.npc);
+  if (!seat) {
+    const occ = here === undefined ? null : seats.get(here);
+    if (occ) bubble(occ, `Bàn ${no} hết chỗ rồi 😅`, 3500);
+    auto(say().tableFull(user.name, no));
+    return null;
+  }
+  if (here !== undefined) {
+    leaveSeat(here);
+    showStool(here, true);
+  }
+  const occ = occupy(seat.id, user);
+  bubble(occ, `🪑 Qua bàn ${no}!`, 3500);
+  auto(say().tableMove(user.name, no));
+  return occ;
+}
+
+/** Nobody tells us who left the live: whoever has been quiet a long time gets up and goes home */
+setInterval(() => {
+  const limit = (Number(settings.seatIdleMin) || 10) * 60_000;
+  const now = Date.now();
+  for (const occ of everyone()) {
+    if (!occ.user || now - occ.lastActive < limit || smashing) continue;
+    bubble(occ, '👋 Về nha cả quán!', 2500);
+    const seatId = occ.seat;
+    setTimeout(() => {
+      if (seats.get(seatId) !== occ) return;
+      leaveSeat(seatId);
+      showStool(seatId, true);
+    }, 2600);
+  }
+}, 30_000);
+
+/** "Lan vừa tới quán · follow hoặc chat nhậu để vào bàn", one at a time at the top */
+/** @type {User[]} */
+let arrivals = [];
+let arriveBusy = false;
+function showArrival(/** @type {User} */ user) {
+  if (seatOf.has(user.id) || arrivals.some((a) => a.id === user.id)) return;
+  arrivals = [...arrivals, user].slice(-12);
+  if (!arriveBusy) nextArrival();
+}
+function nextArrival() {
+  const box = $('arrive');
+  const batch = arrivals.splice(0, arrivals.length > 3 ? 3 : 1);
+  if (!batch.length) {
+    arriveBusy = false;
+    box.hidden = true;
+    return;
+  }
+  arriveBusy = true;
+  box.innerHTML = '<b></b><span>❤️ follow hoặc chat “nhậu” để vào bàn</span>';
+  /** @type {HTMLElement} */ (box.querySelector('b')).textContent = `👋 ${batch.map((u) => u.name).join(', ')} vừa tới quán`;
+  box.hidden = false;
+  box.classList.remove('in');
+  void box.offsetWidth;
+  box.classList.add('in');
+  setTimeout(nextArrival, 3400);
+}
+
 /** VIP table: the top 6 of the board, in rank order (middle of the table first) */
 const VIP_ORDER = [VIP_SEATS[1], VIP_SEATS[2], VIP_SEATS[0], VIP_SEATS[3], VIP_SEATS[4], VIP_SEATS[5]].filter(Boolean).map((s) => s.id);
 function seatVips(/** @type {Array<{ id: string; name: string; avatar: string }>} */ top) {
@@ -387,18 +477,31 @@ function putOnTable(/** @type {number} */ tableId, /** @type {string} */ svgFrag
 
 let waiters = 0;
 /** The waiter walks from the counter to a table with `item` on the tray, sets it down and walks back */
+/** The host is out on the sidewalk bringing a dish (only one trip at a time: the helpers take the rest) */
+let hostOut = false;
+const hostKind = () => (String(settings.voice).startsWith('male') ? 'male' : 'female');
+/** Kitchen fire up / down, the host stirring the wok */
+function setCooking(/** @type {boolean} */ on) {
+  counter.classList.toggle('cooking', on);
+  host.classList.toggle('cooking', on);
+}
 function serve(/** @type {number} */ tableId, /** @type {string} */ item, /** @type {() => void} */ onServed) {
   const t = TABLES[tableId];
-  if (waiters >= 3) {
+  // the host brings it herself when she is free, like a real quán; helpers carry the rest
+  const byHost = !hostOut && !smashing;
+  if (!byHost && waiters >= 3) {
     putOnTable(tableId, item);
     onServed();
     return;
   }
-  waiters++;
-  const w = el('div', 'waiter walking');
-  w.innerHTML = waiterSVG(`<g transform="translate(-24 -13) scale(0.5)">${item}</g>`);
+  if (byHost) hostOut = true;
+  else waiters++;
+  const w = el('div', `waiter walking${byHost ? ' host-walk' : ''}`);
+  const load = `<g transform="translate(-24 -13) scale(0.5)">${item}</g>`;
+  w.innerHTML = byHost ? hostWalkerSVG(hostKind(), load) : waiterSVG(load);
+  if (byHost) host.classList.add('away');
   const sideX = t.x < 50 ? t.x + t.w / 2 + 2 : t.x - t.w / 2 - 2;
-  const start = { left: '50%', top: '58%' };
+  const start = { left: '50%', top: '56%' };
   const path = [start, { left: '50%', top: `${t.y + 1.5}%`, offset: 0.65 }, { left: `${sideX}%`, top: `${t.y + 2}%` }];
   w.style.width = `${7.4 * scaleAt(t.y)}%`;
   w.style.left = start.left;
@@ -417,7 +520,10 @@ function serve(/** @type {number} */ tableId, /** @type {string} */ item, /** @t
       w.classList.add('walking');
       w.animate([...path].reverse(), { duration: dur, easing: 'ease-in-out', fill: 'forwards' }).onfinish = () => {
         w.remove();
-        waiters--;
+        if (byHost) {
+          hostOut = false;
+          host.classList.remove('away');
+        } else waiters--;
       };
     }, 700);
   };
@@ -511,7 +617,8 @@ const rememberViewer = (/** @type {string} */ id) => {
 let topIds = /** @type {string[]} */ ([]);
 
 function onJoin(/** @type {{ user: User }} */ { user }) {
-  seatUser(user, false);
+  // coming in is not sitting down: follow or chat "nhậu" for a seat
+  showArrival(user);
   if (greeted.has(user.id) || joiners.some((j) => j.id === user.id)) return;
   joiners = [...joiners, user].slice(-30);
 }
@@ -537,7 +644,8 @@ setInterval(() => {
 
 function onChat(/** @type {{ user: User; text: string; dzo: boolean; kind?: string }} */ { user, text, dzo, kind }) {
   noteActive(user);
-  const occ = seatUser(user, dzo);
+  // "nhậu" anywhere in a comment is asking for a seat; everyone else keeps standing until they do
+  const occ = tokensOf(text).includes('nhậu') ? seatUser(user, true) : occOf(user);
   if (occ) {
     // oẳn tù tì, gọi món, tính tiền put up their own bubble (it arrives just before this chat)
     if (!kind || kind === 'game') bubble(occ, dzo && text.length > 30 ? 'Dzô! 🍻' : text);
@@ -545,6 +653,7 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean; kind?: stri
     const emojis = text.match(/\p{Extended_Pictographic}/gu);
     if (emojis && !dzo) floatUp(wfx, head.x, head.y, [...new Set(emojis)].slice(0, 3), 12);
     if (dzo) {
+      cups++;
       cheer(occ);
       setTimeout(() => {
         splash(wfx, head.x + 1.5, head.y + 2, 8);
@@ -710,7 +819,7 @@ setInterval(() => {
   } else if (chatters.size > 40) chatters.clear();
 }, 15_000);
 
-/** @type {Map<string, { at: number; coins: number; count: number; giftName: string; served: number; food?: import('./dishes.js').Dish }>} */
+/** @type {Map<string, { at: number; coins: number; count: number; giftName: string; served: number }>} */
 const combos = new Map();
 /** @type {Map<string, number>} */
 const lastThanks = new Map();
@@ -720,13 +829,18 @@ let bannerTimer;
 
 
 const foldName = (/** @type {string} */ s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
-/** A gift that smashes the quán: by coins each, as the server decides */
-const smashes = (/** @type {number} */ each) => settings.smashEnabled !== false && settings.smashMinCoins > 0 && each >= settings.smashMinCoins;
-/** A gift worth at least "foodMinCoins" coins each (and not a smash) brings a dish: picked at random from the menu */
-function foodFor(/** @type {{ coins: number; count: number }} */ g) {
-  const each = g.coins / Math.max(1, g.count);
-  if (!(settings.foodMinCoins > 0) || each < settings.foodMinCoins || smashes(each)) return undefined;
-  return DISHES[Math.floor(Math.random() * DISHES.length)];
+/**
+ * What a gift does, by its price (coins each), the same way the server decides:
+ * bao cả quán > đập quán > một nồi lẩu > một món ngon > just thanks
+ * @returns {'treat' | 'smash' | 'hotpot' | 'food' | ''}
+ */
+function giftKind(/** @type {number} */ each) {
+  if (settings.treatMinCoins > 0 && each >= settings.treatMinCoins) return 'treat';
+  if (settings.smashEnabled !== false && settings.smashMinCoins > 0 && each >= settings.smashMinCoins) return 'smash';
+  if (settings.orders === false) return '';
+  if (settings.hotpotMinCoins > 0 && each >= settings.hotpotMinCoins) return 'hotpot';
+  if (settings.foodMinCoins > 0 && each >= settings.foodMinCoins) return 'food';
+  return '';
 }
 
 /** @type {ReturnType<typeof setTimeout> | undefined} */
@@ -745,91 +859,81 @@ function onGift(/** @type {{ id: string; user: User; giftName: string; coins: nu
   const tier = tierOf(combo.coins);
 
   const occ = seatUser(user, true);
-  const food = foodFor(g);
-  combo.food = food ?? combo.food;
-  showBanner(user, g.giftName, combo.count, food?.icon);
+  const kind = giftKind(g.coins / Math.max(1, g.count));
+  const icon = { treat: '🎉', smash: '💥', hotpot: '🍲', food: '🍗', '': '🎁' }[kind];
+  showBanner(user, g.giftName, combo.count, icon);
   // they asked for "đào" earlier: here they come… as glasses of trà đào
   const wish = daoWish.get(user.id);
   if (wish && now - wish.at < DAO_WISH_MS) {
     daoWish.delete(user.id);
     setTimeout(() => serveDao(user, wish.n), 2600);
   }
+  sound?.pop(0.55);
   if (occ) {
     const hd = headOf(occ.seat);
-    const icon = food?.icon ?? (tier >= 4 ? '💎' : tier >= 3 ? '🍺' : '🎁');
     for (let i = 0; i < Math.min(g.count, 3); i++) {
-      setTimeout(() => flyArc(wfx, { x: 14, y: 28.5 }, hd, icon, 900, () => {
+      setTimeout(() => flyArc(wfx, { x: 50, y: 36 }, hd, icon, 900, () => {
         ring(wfx, hd.x, hd.y + 2, tier >= 3 ? '#ffd166' : '#ff8fc7', 30 + tier * 6);
         sparkles(wfx, hd.x, hd.y, 4 + tier * 2, 16 + tier * 3);
       }), i * 180);
     }
-  }
-  sound?.pop(0.55);
-  if (occ) {
     occ.el.classList.add('glow');
     setTimeout(() => occ.el.classList.remove('glow'), 5000);
-    const seat = SEATS[occ.seat];
-    const tableId = seat.table;
-    // One waiter trip per combo (and again if the combo grows into a bigger tier)
-    if (food) {
-      // A mapped gift: every unit brings one plate of its dish to the giver's table (a few trips at a time)
-      const plates = Math.min(g.count, 8);
-      for (let i = 0; i < plates; i++) {
-        setTimeout(() => {
-          const at = seatOf.get(user.id);
-          const t = at === undefined ? tableId : SEATS[at].table;
-          serve(t, giftItem(2, food.icon), () => {
-            sound?.clink(0.4);
-            burst(TABLES[t].x, TABLES[t].y - 4, 'foam', 8);
-            for (const o of occupantsAt(t)) cheer(o, Math.random() * 400);
-          });
-          if (i === 0) spotlight(user, at ?? occ.seat);
-        }, 700 + i * 1100);
-      }
-      bubble(occ, `🎁 ${g.giftName} → ${food.icon} ${food.ten}`);
-    } else if (combo.served < tier && !smashes(g.coins / Math.max(1, g.count))) {
-      combo.served = tier;
-      const dish = DISHES[Math.floor(Math.random() * DISHES.length)];
-      // A big gift can move the giver up to the VIP table a moment later: serve wherever they sit by then
-      setTimeout(() => {
-        const at = seatOf.get(user.id);
-        const t = at === undefined ? tableId : SEATS[at].table;
-        serve(t, giftItem(tier, dish.icon), () => {
-          sound?.clink(0.5);
-          burst(TABLES[t].x, TABLES[t].y - 4, tier >= 3 ? 'gold' : 'foam', 10 + tier * 6);
-          for (const o of occupantsAt(t)) cheer(o, Math.random() * 400);
-        });
-        spotlight(user, at ?? occ.seat);
-      }, 700);
-    }
-    if (!food) bubble(occ, `🎁 ${g.giftName}${combo.count > 1 ? ` x${combo.count}` : ''}`);
+    bubble(occ, `🎁 ${g.giftName}${combo.count > 1 ? ` x${combo.count}` : ''}`);
+    if (kind === 'food' || kind === 'hotpot') setTimeout(() => spotlight(user, seatOf.get(user.id) ?? occ.seat), 600);
   }
-  // A gift (or a combo adding up) that reaches a bigger tier: gold flash and confetti, the whole quán for the biggest
+  // A big gift (or a combo adding up to one): gold flash and confetti. "Bao cả quán" and "đập quán" have their own show.
   const before = tierOf(combo.coins - g.coins);
   const grew = tier > before;
-  if (tier >= 3 && grew) {
+  if (tier >= 3 && grew && (kind === 'food' || kind === 'hotpot' || kind === '')) {
     flash();
     confetti(tier >= 4 ? 120 : 60);
     reveal(fx, tier >= 4 ? '💎' : '🍺', user.name, `đã gửi ${g.giftName}${combo.count > 1 ? ` x${combo.count}` : ''}`, tier);
     beams(fx, tier >= 4 ? 5000 : 3500);
     bumpRoom();
     fireworks(fx, tier >= 4 ? 7 : 3);
-    // the whole quán cheers once the big reveal has gone
-    if (tier >= 4) bigWave = setTimeout(() => wave(false), 4300);
   }
 
-  // Thanks by name: once per person every 30 s, again when the combo grows into a big gift; small ones are
-  // skipped when the line of thanks is already long
+  // A gift that orders a dish is thanked when the kitchen takes the order; others are thanked here, once per
+  // person every 30 s
+  if (kind) return;
   const last = lastThanks.get(user.id) ?? 0;
-  if (sound && (now - last > GIFT_THANKS_GAP_MS || (tier >= 3 && grew)) && !(tier === 1 && sound.priority.length >= 4)) {
+  if (sound && now - last > GIFT_THANKS_GAP_MS && !(tier === 1 && sound.priority.length >= 4)) {
     lastThanks.set(user.id, now);
-    // wait a moment so a combo is thanked once, at its size
     setTimeout(() => {
       const c = combos.get(user.id);
-      const f = c?.food ?? food;
-      auto(f ? say().giftFood(user.name, c?.giftName ?? g.giftName, f.ten, Math.min(c?.count ?? g.count, 8)) : say().gift(user.name, c?.giftName ?? g.giftName, tierOf(c?.coins ?? g.coins)), true);
+      auto(say().gift(user.name, c?.giftName ?? g.giftName, tierOf(c?.coins ?? g.coins)), true);
     }, 1500);
   }
+}
+
+/** "Bao cả quán": a big gift, and every busy table gets a hotpot */
+function treat(/** @type {User} */ user) {
+  if (smashing) return;
+  const occ = seatUser(user, true);
+  flash();
+  confetti(140);
+  reveal(fx, '🎉', user.name, 'BAO CẢ QUÁN! Mỗi bàn một nồi lẩu', 4);
+  beams(fx, 6000);
+  fireworks(fx, 8);
+  bumpRoom();
+  if (occ) spotlight(user, occ.seat);
+  auto(say().treat(user.name), true);
+  setCooking(true);
+  setTimeout(() => {
+    const busy = TABLES.filter((t) => occupantsAt(t.id).length > 0);
+    busy.forEach((t, i) =>
+      setTimeout(() => {
+        serve(t.id, dishItem('hotpot'), () => {
+          sound?.clink(0.4);
+          for (const o of occupantsAt(t.id)) cheer(o, Math.random() * 300);
+        });
+        if (i === busy.length - 1) setCooking(false);
+      }, i * 450)
+    );
+    if (!busy.length) setCooking(false);
+    setTimeout(() => wave(false), busy.length * 450 + 3500);
+  }, 4500);
 }
 
 /** n glasses of trà đào to the giver's table, a few waiter trips, and the punchline */
@@ -984,6 +1088,9 @@ function spinWheel(/** @type {{ id: string; index: number }} */ w) {
   seenWheel.add(w.id);
   const dish = DISHES[w.index % DISHES.length];
   wheelTurn += 1440 + Math.floor(Math.random() * 360);
+  const box = /** @type {HTMLElement} */ (ui.querySelector('.wheel-box'));
+  box.classList.add('spinning');
+  setTimeout(() => box.classList.remove('spinning'), 5200);
   wheelEl.style.transform = `rotate(${wheelTurn}deg)`;
   sound?.wheelTicks(3.2);
   setTimeout(() => {
@@ -1050,52 +1157,37 @@ function renderBoard(/** @type {Array<{ id: string; name: string; avatar: string
   seatVips(top);
 }
 
-/** Menu board on the wall: "gift -> dish" and the gifts that smash the quán, turning page every few seconds */
-/** @type {ReturnType<typeof setInterval> | undefined} */
-let menuTimer;
+/** The board on the left: dishes to order by comment, what each gift price brings, how to sit and change table */
 let menuKey = '';
 function renderGiftMenu() {
-  const foodCoins = Number(settings.foodMinCoins) || 0;
-  const coins = settings.smashEnabled !== false ? Number(settings.smashMinCoins) || 0 : 0;
-  const smashOn = coins > 0;
-  const key = JSON.stringify([foodCoins, coins]);
+  const tiers = /** @type {Array<[number, string, string]>} */ ([
+    [settings.orders !== false ? settings.foodMinCoins : 0, 'Món ngon', 'gà nướng, mực, ốc…'],
+    [settings.orders !== false ? settings.hotpotMinCoins : 0, 'Lẩu ngẫu nhiên', '🍲 nồi lẩu nóng hổi'],
+    [settings.smashEnabled !== false ? settings.smashMinCoins : 0, 'Đập quán', '💥 chủ quán khóc'],
+    [settings.treatMinCoins, 'Bao cả quán', '🎉 mỗi bàn một nồi lẩu'],
+  ]).filter(([c]) => c > 0);
+  const key = JSON.stringify([tiers, settings.orders, lettersKeyword()]);
   if (key === menuKey) return;
   menuKey = key;
-
-  /** @type {HTMLElement[]} */
-  const pages = [];
-  if (foodCoins > 0) {
-    const p = el('div', 'mb-page simple');
-    p.innerHTML = '<div class="mb-title">🎁 TẶNG QUÀ LÊN MỒI</div><div class="mb-big"></div><div class="mb-line">→ 1 dĩa mồi ra bàn</div><div class="mb-line dim">tặng 5 cái = 5 dĩa 🍢🦑🐚</div>';
-    // below the smash price, so nobody thinks a smash gift also brings food
-    /** @type {HTMLElement} */ (p.querySelector('.mb-big')).textContent = smashOn && coins - 1 > foodCoins ? `Quà ${foodCoins.toLocaleString('vi-VN')} – ${(coins - 1).toLocaleString('vi-VN')} xu` : `Quà từ ${foodCoins.toLocaleString('vi-VN')} xu`;
-    pages.push(p);
+  const box = $('menu-panel');
+  const free = settings.orders !== false ? FREE : [];
+  box.innerHTML = `${free.length ? '<div class="mp-title">🍺 GỌI MÓN · bình luận</div><div class="mp-grid"></div>' : ''}<div class="mp-title gift">🎁 TẶNG QUÀ</div><div class="mp-tiers"></div><div class="mp-foot"><span>❤️ Follow / chat <b>“nhậu”</b> để vào bàn</span><span>🪑 <b>“bàn 3”</b> đổi bàn · <b id="kw"></b> cụng ly</span></div>`;
+  const grid = box.querySelector('.mp-grid');
+  for (const m of free) {
+    const d = el('div', 'mp-item');
+    d.textContent = `${m.icon} ${m.short}`;
+    grid?.appendChild(d);
   }
-  if (smashOn) {
-    const p = el('div', 'mb-page simple smash');
-    p.innerHTML = '<div class="mb-title">💥 QUÀ ĐẬP QUÁN</div><div class="mb-big"></div><div class="mb-line">→ cả quán bị đập 😭</div><div class="mb-line dim">chủ quán khóc rồi dọn lại</div>';
-    /** @type {HTMLElement} */ (p.querySelector('.mb-big')).textContent = `Quà từ ${coins.toLocaleString('vi-VN')} xu`;
-    pages.push(p);
-  }
-  clearInterval(menuTimer);
-  menuBoard.replaceChildren(...pages);
-  menuBoard.hidden = !pages.length;
-  if (!pages.length) return;
-  const dots = el('div', 'mb-dots');
-  if (pages.length > 1) for (let i = 0; i < pages.length; i++) dots.appendChild(el('i'));
-  menuBoard.appendChild(dots);
-  let at = 0;
-  const show = () => {
-    pages.forEach((p, i) => p.classList.toggle('on', i === at));
-    [...dots.children].forEach((d, i) => d.classList.toggle('on', i === at));
-  };
-  show();
-  if (pages.length > 1) {
-    menuTimer = setInterval(() => {
-      at = (at + 1) % pages.length;
-      show();
-    }, 5500);
-  }
+  const list = /** @type {HTMLElement} */ (box.querySelector('.mp-tiers'));
+  tiers.forEach(([coins, name, note], i) => {
+    const r = el('div', `mp-tier t${i}`);
+    r.innerHTML = '<b></b><span><i></i><small></small></span>';
+    /** @type {HTMLElement} */ (r.querySelector('b')).textContent = `${coins.toLocaleString('vi-VN')} xu`;
+    /** @type {HTMLElement} */ (r.querySelector('i')).textContent = name;
+    /** @type {HTMLElement} */ (r.querySelector('small')).textContent = note;
+    list.appendChild(r);
+  });
+  $('kw').textContent = `“${lettersKeyword()}”`;
 }
 
 function applySettings(/** @type {any} */ s) {
@@ -1104,7 +1196,6 @@ function applySettings(/** @type {any} */ s) {
   const neon = /** @type {HTMLElement} */ (sign.querySelector('.neon'));
   neon.textContent = settings.channelName;
   neon.style.fontSize = `${Math.max(26, Math.min(52, 470 / Math.max(6, [...settings.channelName].length)))}px`;
-  $('kw').textContent = `“${lettersKeyword()}”`;
   $('board-title').textContent = settings.boardTitle;
   $('board').hidden = !settings.showBoard;
   renderGiftMenu();
@@ -1340,7 +1431,7 @@ if (sound) {
 
 const club = setupClub({
   stage, world, ui, fx, wfx, floor, sign,
-  seatUser, seatOf, seats, SEATS, TABLES, headOf, bubble, cheer, occupantsAt, everyone, serve,
+  seatUser, seatOf, seats, SEATS, TABLES, headOf, bubble, cheer, occupantsAt, everyone, serve, occOf, setCooking,
   fxs: { ring, sparkles, floatUp, fireworks, beams, splash, confetti, flash },
   sound,
   say: (text, first = false) => auto(text, first),
@@ -1350,13 +1441,28 @@ const club = setupClub({
 // -------------------------------------------------------------------------------------------- go
 
 listen({
+  status: (st) => {
+    viewersNow = Number(st?.viewers) || 0;
+  },
   hello: (snap) => {
+    viewersNow = Number(snap.status?.viewers) || 0;
     applySettings(snap.settings);
     meters = snap.meters;
     if (snap.meters.rainLeft > 0) startRain(snap.meters.rainLeft, false);
     updateMeters();
     renderBoard(snap.board);
     club.restore(snap.club);
+  },
+  treat: (e) => treat(e.user),
+  seat: (e) => {
+    if (e.table) return void moveToTable(e.user, e.table);
+    const was = seatOf.has(e.user.id);
+    const occ = seatUser(e.user, true);
+    if (!occ || was) return;
+    bubble(occ, '🍻 Nhậu!', 3000);
+    putOnTable(SEATS[occ.seat].table, dishItem('drink'), 90_000);
+    cups += 2;
+    auto(say().sitDown(e.user.name, TABLES[SEATS[occ.seat].table].no));
   },
   order: (e) => club.order(e),
   orders: (e) => club.orders(e),

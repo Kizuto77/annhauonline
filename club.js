@@ -3,7 +3,7 @@
 // sự kiện trong quán (giờ vàng, mất điện, mưa bão, người bán dạo, karaoke) và mini game (oẳn tù tì, đoán số, kéo co).
 // Server giữ trạng thái để sân khấu, khung xem trước và trang admin luôn khớp nhau.
 import fs from 'node:fs';
-import { DISHES } from './public/js/dishes.js';
+import { FREE, HOTPOT, PAID } from './public/js/menu.js';
 import { tokensOf } from './public/js/text.js';
 import { levelFor } from './public/js/levels.js';
 
@@ -14,44 +14,35 @@ const fold = (/** @type {string} */ s) => s.normalize('NFD').replace(/[̀-ͯ]/g,
 const rnd = (/** @type {number} */ a, /** @type {number} */ b) => a + Math.floor(Math.random() * (b - a + 1));
 
 // ------------------------------------------------------------------------------------------------ menu matching
-/** [phrase, dish index], longest first: "ốc len xào dừa", "ốc len", "ốc" */
-const ALIASES = (() => {
-  /** @type {Array<[string, number, boolean]>} [phrase, dish, also without accents] */
-  const out = [];
-  DISHES.forEach((d, i) => {
-    const w = tokensOf(d.ten);
-    out.push([w.join(' '), i, true]);
-    if (w.length > 2) out.push([w.slice(0, 2).join(' '), i, true]);
-  });
-  const by = (/** @type {string} */ name) => DISHES.findIndex((d) => d.ten.startsWith(name));
-  for (const [word, name] of /** @type {Array<[string, string]>} */ ([
-    ['lẩu', 'Lẩu thái'], ['ốc', 'Ốc len'], ['mực', 'Khô mực'], ['ếch', 'Ếch'], ['nghêu', 'Nghêu'], ['hàu', 'Hàu'], ['sò', 'Sò điệp'],
-    ['tôm', 'Tôm'], ['khoai', 'Khoai tây'], ['bắp', 'Bắp'], ['xoài', 'Xoài'], ['nem', 'Nem chua'], ['lòng', 'Lòng nướng'], ['đậu', 'Đậu phộng'],
-    ['gỏi', 'Gỏi gà'], ['khô', 'Khô mực'], ['sụn', 'Sụn gà'], ['trái cây', 'Trái cây'], ['cánh gà', 'Cánh gà'], ['bò', 'Bò lá lốt'],
-  ])) {
-    const i = by(name);
-    if (i >= 0) out.push([word, i, false]);
-  }
-  return out.sort((a, b) => b[0].length - a[0].length);
-})();
-const ORDER_VERBS = new Set(['gọi', 'cho', 'lên', 'order', 'thêm', 'làm', 'kêu', 'xin', 'đặt', 'mang', 'bưng', 'dọn', 'muốn', 'ăn']);
-const PORTIONS = new Set(['dĩa', 'đĩa', 'phần', 'nồi', 'tô', 'chén', 'xiên', 'suất']);
+/** @typedef {import('./public/js/menu.js').MenuItem} MenuItem */
+/** [phrase, item, free], longest first: "đậu tẩm hành" before "đậu" */
+const ALIASES = /** @type {Array<[string, MenuItem, boolean]>} */ ([
+  ...FREE.flatMap((m) => m.alias.map((a) => /** @type {[string, MenuItem, boolean]} */ ([a, m, true]))),
+  ...[...PAID, ...HOTPOT].flatMap((m) => m.alias.map((a) => /** @type {[string, MenuItem, boolean]} */ ([a, m, false]))),
+]).sort((a, b) => b[0].length - a[0].length);
+const ORDER_VERBS = new Set(['gọi', 'cho', 'lên', 'order', 'thêm', 'làm', 'kêu', 'xin', 'đặt', 'mang', 'bưng', 'dọn', 'muốn', 'ăn', 'uống', 'nhậu']);
+const PORTIONS = new Set(['dĩa', 'đĩa', 'phần', 'nồi', 'tô', 'chén', 'xiên', 'suất', 'ly', 'cốc', 'chai', 'lon', 'cốc', 'bát']);
 const NUMBER_WORDS = ['một', 'hai', 'ba', 'bốn', 'năm'];
 
-/** Dish index a comment orders, or -1 */
-function orderedDish(/** @type {string} */ text) {
+/**
+ * What a comment orders: a free dish ("đậu lạc", "cho dĩa nem chua"), or a paid one it names ("gọi mực nướng").
+ * A short comment that is just the name counts; a longer one needs "gọi / cho / lên…" or "dĩa / ly…".
+ * @returns {{ item: MenuItem; free: boolean } | null}
+ */
+function orderedItem(/** @type {string} */ text) {
   const words = tokensOf(text);
-  if (words.length > 14) return -1;
+  if (!words.length || words.length > 14) return null;
   const asked = words.some((w) => ORDER_VERBS.has(w) || PORTIONS.has(w));
-  if (!asked) return -1;
+  if (!asked && words.length > 4) return null;
   const joined = ` ${words.join(' ')} `;
   const plain = fold(joined);
-  for (const [phrase, i, loose] of ALIASES) {
-    if (joined.includes(` ${phrase} `) || (loose && phrase.includes(' ') && plain.includes(` ${fold(phrase)} `))) return i;
+  for (const [phrase, item, free] of ALIASES) {
+    const multi = phrase.includes(' ');
+    // one-word names ("bia", "lạc", "ốc") only with an order word or alone, to leave ordinary chat alone
+    if (!multi && !asked && words.length > 2) continue;
+    if (joined.includes(` ${phrase} `) || (multi && plain.includes(` ${fold(phrase)} `))) return { item, free };
   }
-  // "cho dĩa mồi", "lên mồi đi": the kitchen picks
-  if (words.includes('mồi') && words.some((w) => PORTIONS.has(w) || ['lên', 'cho', 'thêm', 'gọi'].includes(w))) return Math.floor(Math.random() * DISHES.length);
-  return -1;
+  return null;
 }
 /** "2 dĩa", "hai phần": 1 to 5 */
 function portions(/** @type {string} */ text) {
@@ -155,13 +146,13 @@ export function createClub(o) {
   const visitsOf = (/** @type {string} */ id) => viewers.get(id)?.visits ?? 0;
 
   // ---------------------------------------------------------------------------------------------- kitchen
-  /** @typedef {{ id: string; user: Record<string, unknown>; uid: string; dish: number; qty: number; state: 'wait' | 'cook'; start: number; ms: number; vip: boolean }} Order */
+  /** @typedef {{ id: string; user: Record<string, unknown>; uid: string; item: MenuItem; qty: number; state: 'wait' | 'cook'; start: number; ms: number; vip: boolean; gift: boolean }} Order */
   /** @type {Order[]} */
   let orders = [];
   /** @type {Map<string, number>} */
   const lastOrderAt = new Map();
   const orderList = () =>
-    orders.map((x) => ({ id: x.id, user: x.user, dish: x.dish, qty: x.qty, state: x.state, vip: x.vip, left: x.state === 'cook' ? Math.max(0, x.ms - (Date.now() - x.start)) : x.ms, ms: x.ms }));
+    orders.map((x) => ({ id: x.id, user: x.user, item: x.item, qty: x.qty, state: x.state, vip: x.vip, left: x.state === 'cook' ? Math.max(0, x.ms - (Date.now() - x.start)) : x.ms, ms: x.ms }));
   function pump() {
     while (orders.filter((x) => x.state === 'cook').length < 3) {
       const next = orders.find((x) => x.state === 'wait');
@@ -170,40 +161,79 @@ export function createClub(o) {
       next.start = Date.now();
       setTimeout(() => {
         orders = orders.filter((x) => x !== next);
-        stats(next.uid).orders.push(DISHES[next.dish].ten);
-        broadcast('orderDone', { order: { id: next.id, user: next.user, dish: next.dish, qty: next.qty }, orders: orderList() });
+        stats(next.uid).orders.push(next.item.short);
+        broadcast('orderDone', { order: { id: next.id, user: next.user, item: next.item, qty: next.qty }, orders: orderList() });
         pump();
       }, next.ms);
     }
     broadcast('orders', orderList());
   }
-  function tryOrder(/** @type {User} */ u, /** @type {string} */ text) {
-    if (!o.settings().orders) return false;
-    const dish = orderedDish(text);
-    if (dish < 0) return false;
-    const now = Date.now();
-    const mine = orders.find((x) => x.uid === u.id);
-    if (mine) {
-      broadcast('orderNote', { kind: 'busy', user: show(u), dish: mine.dish });
-      return true;
-    }
-    if (now - (lastOrderAt.get(u.id) ?? 0) < 45_000) return true; // just ate: the comment is still about food, no new order
-    if (orders.length >= 10) {
-      broadcast('orderNote', { kind: 'full', user: show(u), dish });
-      return true;
-    }
-    lastOrderAt.set(u.id, now);
-    const vip = gifters.has(u.id);
+  /** Put an order in the queue: gift orders (paid dishes, hotpots) go before the free ones still waiting */
+  function enqueue(/** @type {User} */ u, /** @type {MenuItem} */ item, /** @type {number} */ qty, /** @type {boolean} */ gift) {
+    const vip = gift || gifters.has(u.id);
+    const ms = (item.kind === 'drink' ? rnd(4, 6) : item.kind === 'hotpot' ? rnd(12, 16) : rnd(8, 12)) * 1000;
     /** @type {Order} */
-    const order = { id: uid(), user: show(u), uid: u.id, dish, qty: portions(text), state: 'wait', start: 0, ms: rnd(9, 16) * 1000, vip };
+    const order = { id: uid(), user: show(u), uid: u.id, item, qty, state: 'wait', start: 0, ms, vip, gift };
     if (vip) {
-      // gift givers go before the others who are still waiting
       const firstWaiting = orders.findIndex((x) => x.state === 'wait' && !x.vip);
       orders.splice(firstWaiting < 0 ? orders.length : firstWaiting, 0, order);
     } else orders.push(order);
-    broadcast('order', { order: { id: order.id, user: order.user, dish, qty: order.qty, vip } });
+    broadcast('order', { order: { id: order.id, user: order.user, item, qty, vip, gift } });
     pump();
+  }
+  function tryOrder(/** @type {User} */ u, /** @type {string} */ text) {
+    if (!o.settings().orders) return false;
+    const found = orderedItem(text);
+    if (!found) return false;
+    const s = o.settings();
+    if (!found.free) {
+      // "gọi mực nướng": that one comes with a gift
+      const price = found.item.kind === 'hotpot' ? s.hotpotMinCoins : s.foodMinCoins;
+      broadcast('orderNote', { kind: 'paid', user: show(u), item: found.item, price });
+      return true;
+    }
+    const now = Date.now();
+    const mine = orders.find((x) => x.uid === u.id && !x.gift);
+    if (mine) {
+      broadcast('orderNote', { kind: 'busy', user: show(u), item: mine.item });
+      return true;
+    }
+    if (now - (lastOrderAt.get(u.id) ?? 0) < 30_000) return true; // just ate: the comment is still about food
+    if (orders.filter((x) => !x.gift).length >= 10) {
+      broadcast('orderNote', { kind: 'full', user: show(u), item: found.item });
+      return true;
+    }
+    lastOrderAt.set(u.id, now);
+    enqueue(u, found.item, portions(text), false);
     return true;
+  }
+  /** A gift worth "foodMinCoins" brings a good dish, "hotpotMinCoins" a hotpot (picked at random); `count` portions */
+  function giftOrder(/** @type {User} */ u, /** @type {number} */ coinsEach, /** @type {number} */ count) {
+    const s = o.settings();
+    if (!s.orders) return false;
+    const hot = s.hotpotMinCoins > 0 && coinsEach >= s.hotpotMinCoins;
+    if (!hot && !(s.foodMinCoins > 0 && coinsEach >= s.foodMinCoins)) return false;
+    const list = hot ? HOTPOT : PAID;
+    enqueue(u, list[Math.floor(Math.random() * list.length)], Math.min(count, hot ? 3 : 5), true);
+    return true;
+  }
+  /** "bàn 3", "sang bàn 5", "qua bàn số 2": move to a table. "nhậu", "vào bàn", "cho ngồi": sit down */
+  function trySeat(/** @type {User} */ u, /** @type {string} */ text) {
+    const words = tokensOf(text);
+    if (words.length > 8) return '';
+    const at = words.indexOf('bàn');
+    if (at >= 0) {
+      const n = Number(words[at + 1] === 'số' ? words[at + 2] : words[at + 1]);
+      if (Number.isInteger(n) && n >= 1 && n <= 8) {
+        broadcast('seat', { user: show(u), table: n });
+        return 'table';
+      }
+    }
+    if (words.length <= 4 && (words.includes('nhậu') || (words.includes('vào') && words.includes('bàn')) || (words.includes('cho') && words.includes('ngồi')))) {
+      broadcast('seat', { user: show(u), table: 0 });
+      return 'sit';
+    }
+    return '';
   }
   /** @type {Map<string, number>} */
   const lastBill = new Map();
@@ -387,11 +417,14 @@ export function createClub(o) {
       if (dzo) s.dzo++;
       profile(u).comments++;
       if (tryGame(u, text)) return 'game';
+      const seat = trySeat(u, text);
+      if (seat) return seat;
       if (tryRps(u, text)) return 'rps';
       if (tryBill(u, text)) return 'bill';
       if (tryOrder(u, text)) return 'order';
       return '';
     },
+    giftOrder,
     onGift(/** @type {User} */ u, /** @type {number} */ coins) {
       gifters.add(u.id);
       const s = stats(u.id);

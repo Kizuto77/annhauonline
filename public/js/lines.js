@@ -241,6 +241,19 @@ const REPLIES = {
   question: ['{ban} hỏi hay ghê! Chủ quán nghe rồi, câu này để cả nhà trả lời giùm nha.', 'Câu hỏi của {ban} hay quá, nhưng quán ảo nên chủ quán chỉ biết một điều: ngồi lại là vui. Cả nhà ai biết thì giúp {ban} nha.', '{ban} hỏi chi vậy? Cả nhà ơi, ai trả lời giùm {ban} nào.'],
 };
 
+const TREAT = [
+  'Trời ơi {ban} bao cả quán! Bếp ơi, mỗi bàn một nồi lẩu! Cả quán cảm ơn {ban} đi nào!',
+  '{ban} chơi lớn quá, bao nguyên quán luôn! Lẩu lên từng bàn, ai cũng có phần, dzô cảm ơn {ban}!',
+];
+const SIT = [
+  'Mời {ban} vào bàn số {no}! Muốn ăn gì cứ comment tên món, đậu lạc, nem chua, bia hơi có liền.',
+  '{ban} ngồi bàn số {no} nha! Quán bình dân, gọi món miễn phí, tặng quà là có lẩu.',
+  'Có khách! {ban} vào bàn số {no}, kéo ghế nhựa ngồi đi, gõ {kw} cụng ly với cả bàn nào!',
+  'Bàn số {no} có thêm {ban} rồi! Ngồi sát vô cho ấm, ai chưa có chỗ thì chat nhậu nha.',
+];
+const MOVE = ['Mời {ban} qua bàn số {no}! Ngồi chỗ mới nhớ chào hàng xóm nha.', '{ban} chuyển sang bàn số {no} rồi, bàn cũ chắc buồn lắm đó.', 'Ok, {ban} qua bàn số {no}. Đổi bàn đổi vận, nhậu tiếp thôi!'];
+const FULL = ['Bàn số {no} hết chỗ rồi {ban} ơi, chọn bàn khác đi!', '{ban} ơi bàn số {no} đông quá, ngồi chen không nổi, thử bàn khác nha.'];
+
 const cap = (/** @type {string} */ s) => s.charAt(0).toUpperCase() + s.slice(1);
 /** Capital letter at the start of every sentence */
 const sentences = (/** @type {string} */ s) => cap(s).replace(/([.!?]\s+)(\p{Ll})/gu, (_, p, c) => p + c.toUpperCase());
@@ -281,6 +294,12 @@ export const lines = (ctx) => ({
   rain: () => pick(['Sáu trăm sáu mươi sáu tim! Quán mưa bọt bia một phút, cả nhà cụng ly nào!', 'Đủ tim rồi! Mưa bọt bia khắp quán, cảm ơn cả nhà nha!']),
   reply: (/** @type {import('./chat.js').Topic} */ topic, /** @type {string} */ name, /** @type {string} */ city = '', n = 1) =>
     fill(pick((ctx.style === 'hien' ? REPLIES : BUA_REPLIES)[topic]), { q: ctx.q, kw: ctx.kw, ban: ban(name), city, n: NUM[n] ?? String(n) }),
+  /** "nhậu": a seat at a numbered table */
+  sitDown: (/** @type {string} */ name, /** @type {number} */ no) =>
+    sentences(fill(pick(SIT), { ban: ban(name), no: NUM[no] ?? String(no), kw: ctx.kw })),
+  treat: (/** @type {string} */ name) => sentences(fill(pick(TREAT), { ban: ban(name) })),
+  tableMove: (/** @type {string} */ name, /** @type {number} */ no) => sentences(fill(pick(MOVE), { ban: ban(name), no: NUM[no] ?? String(no) })),
+  tableFull: (/** @type {string} */ name, /** @type {number} */ no) => sentences(fill(pick(FULL), { ban: ban(name), no: NUM[no] ?? String(no) })),
   /** Start a chat with someone who commented a little while ago */
   talkTo: (/** @type {string} */ name) => sentences(fill(pick(TALK_NAMED), { q: ctx.q, kw: ctx.kw, ban: ban(name) })),
   /** Ask the whole room something */
