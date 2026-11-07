@@ -25,7 +25,7 @@ const COMBO_MS = 4500;
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
-let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', background: '' };
+let settings = { channelName: 'Xỉn Bia', keyword: 'dzô', boardTitle: 'TOP CHIẾN HỮU', showBoard: true, voice: 'female_cute', rate: 1.05, autoVoice: true, greet: true, chatReply: true, idleTalk: true, stories: true, storyEvery: 4, music: true, musicVolume: 0.22, ambience: true, giftFoods: '', background: '' };
 const say = () => lines({ q: settings.channelName, kw: lettersKeyword() });
 /** The first cheers keyword, the one shown and said */
 const firstKeyword = () => String(settings.keyword || 'dzô').split(',')[0].trim() || 'dzô';

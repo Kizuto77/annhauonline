@@ -51,7 +51,7 @@ const DEFAULTS = {
   keyword: 'dzô, dzo, dô, zô, do, zo', // các từ cụng ly, cách nhau dấu phẩy; từ đầu tiên hiện trên bảng hiệu
   boardTitle: 'TOP CHIẾN HỮU',
   showBoard: true,
-  voice: 'female', // một trong VOICES bên dưới (Hoài My / Nam Minh với nhiều kiểu, hoặc giọng Google)
+  voice: 'female_cute', // một trong VOICES bên dưới (Hoài My / Nam Minh với nhiều kiểu, hoặc giọng Google)
   likeGoal: 666, // tim cả phòng cho một trận mưa bọt bia
   rainSeconds: 60, // mưa bọt bia kéo dài bao lâu
   wheelGoal: 99, // tim cả phòng cho một lần quay vòng mồi
@@ -118,6 +118,8 @@ try {
   }
   // older versions had a single keyword: move the default one to the full list
   if (settings.keyword === 'dzo') settings.keyword = DEFAULTS.keyword;
+  // chủ quán chọn dùng một giọng "Em gái nhí nhảnh": đổi giọng mặc định cũ sang giọng này (một lần)
+  if (!saved.voiceSet && settings.voice === 'female') settings.voice = DEFAULTS.voice;
   // the old smash setup that nobody changed: move to the new one
   if (settings.smashGifts === 'Galaxy, Lion, Universe' && settings.smashMinCoins === 0) {
     settings.smashGifts = DEFAULTS.smashGifts;
@@ -131,7 +133,8 @@ try {
 }
 const saveSettings = () => {
   try {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+    // voiceSet: the voice in this file is the owner's choice, not an old default to move on
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ ...settings, voiceSet: true }, null, 2));
   } catch (err) {
     console.error('Không lưu được settings.json:', err);
   }
@@ -503,7 +506,7 @@ const speakable = (/** @type {string} */ t) =>
     .trim();
 
 /** @param {string} text @param {number} rate @param {string} voice */
-async function edgeTts(text, rate, voice) {
+async function edgeTts(text, rate, voice, waitMs = 15_000) {
   /** @type {any} */
   const { MsEdgeTTS, OUTPUT_FORMAT } = await import('msedge-tts');
   const tts = new MsEdgeTTS();
@@ -519,7 +522,7 @@ async function edgeTts(text, rate, voice) {
       for await (const c of audioStream) chunks.push(/** @type {Buffer} */ (c));
     })();
     const timeout = new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error('Edge TTS quá thời gian')), 15_000);
+      timer = setTimeout(() => reject(new Error('Edge TTS quá thời gian')), waitMs);
     });
     await Promise.race([read, timeout]);
     if (!chunks.length) throw new Error('Edge TTS không trả âm thanh');
@@ -531,6 +534,31 @@ async function edgeTts(text, rate, voice) {
     } catch {
       // ignore
     }
+  }
+}
+
+/** Microsoft voices, at most 2 at a time (more in parallel makes the service drop some), tried up to 3 times */
+let edgeBusy = 0;
+/** @type {Array<() => void>} */
+const edgeWaiting = [];
+async function edgeWithRetry(/** @type {string} */ text, /** @type {number} */ rate, /** @type {string} */ voice) {
+  if (edgeBusy >= 2) await new Promise((ok) => edgeWaiting.push(() => ok(undefined)));
+  edgeBusy++;
+  try {
+    let last;
+    for (const [i, wait] of [15_000, 9_000, 9_000].entries()) {
+      try {
+        return await edgeTts(text, rate, voice, wait);
+      } catch (err) {
+        last = err;
+        console.warn(`Giọng ${voice} lỗi lần ${i + 1}, thử lại:`, err instanceof Error ? err.message : err);
+        await new Promise((ok) => setTimeout(ok, 400 + i * 800));
+      }
+    }
+    throw last;
+  } finally {
+    edgeBusy--;
+    edgeWaiting.shift()?.();
   }
 }
 
@@ -828,12 +856,9 @@ const routes = {
     const key = `${voice}|${rate}|${text}`;
     let audio = ttsCache.get(key);
     if (!audio) {
-      try {
-        audio = voice === 'google' ? await googleTts(speakable(text)) : await edgeTts(text, rate, voice);
-      } catch (err) {
-        console.warn(`Giọng ${voice} lỗi, chuyển giọng dự phòng:`, err instanceof Error ? err.message : err);
-        audio = voice === 'google' ? await edgeTts(text, rate, 'female') : await googleTts(speakable(text));
-      }
+      // Always the voice that was chosen: on a network hiccup try the same voice again instead of switching to
+      // another one (a line in a different voice sounds like a second person). Still failing: the stage skips it.
+      audio = voice === 'google' ? await googleTts(speakable(text)) : await edgeWithRetry(text, rate, voice);
       cacheTts(key, audio);
     }
     res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': audio.length, 'Cache-Control': 'private, max-age=86400' });

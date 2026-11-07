@@ -24,7 +24,7 @@ export class SoundEngine {
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   watchdog;
   /** @type {SoundSettings} */
-  settings = { voice: 'female', rate: 1.05, music: true, musicVolume: 0.22, musicTrack: 'nhau', ambience: true };
+  settings = { voice: 'female_cute', rate: 1.05, music: true, musicVolume: 0.22, musicTrack: 'nhau', ambience: true };
   music = new Audio(TRACKS.nhau);
   /** @type {{ gain: GainNode; stop: () => void } | null} */
   ambienceNodes = null;
