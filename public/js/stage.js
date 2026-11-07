@@ -8,7 +8,7 @@
 import { listen, el } from './api.js';
 import { backSVG, kitchenSVG, finishSVG } from './art/scene.js';
 import { peopleDefs, lookOf, seatedSVG, standingSVG, tableSVG, tableBaseSVG, dishSVG, hash } from './art/people.js';
-import { TABLES, SEATS, NPC_SEATS, KITCHEN, scaleAt, seatedSize, tableSize } from './art/layout.js';
+import { TABLES, SEATS, NPC_SEATS, KITCHEN, scaleAt, seatedSize, standingSize, tableSize } from './art/layout.js';
 import { FREE } from './menu.js';
 import { SoundEngine } from './sound.js';
 import { lines } from './lines.js';
@@ -92,10 +92,9 @@ ui.innerHTML = `
 `;
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (stage.querySelector(`#${id}`));
 
-// Fit the 430 x 764 stage to the window (1080 x 1920 in LIVE Studio). A transform scale (not CSS zoom) keeps the
-// whole scene on the GPU: zoom re-does layout for every moving thing and makes LIVE Studio stutter.
+// Fit the 430 x 764 stage to the window (1080 x 1920 in LIVE Studio)
 const fit = () => {
-  stage.style.transform = `scale(${Math.min(innerWidth / 430, innerHeight / 764)})`;
+  stage.style.zoom = String(Math.min(innerWidth / 430, innerHeight / 764));
 };
 addEventListener('resize', fit);
 fit();
@@ -180,60 +179,16 @@ const headOf = (/** @type {number} */ seatId) => {
 };
 const pct = (/** @type {{ x: number; y: number }} */ p) => ({ x: (p.x / 430) * 100, y: (p.y / 764) * 100 });
 
-/**
- * The name card over someone's head: their TikTok avatar and name. A viewer's card stays on all the time (the
- * owner wants to see who is at which table); a regular of the quán only gets one while they talk.
- * @param {User | undefined} user @param {string} npcLabel
- */
-function tagHTML(user, npcLabel = '') {
-  if (!user) return npcLabel ? `<div class="name-tag npc"><span></span></div>` : '';
-  return `<div class="name-tag on${user.avatar ? '' : ' noav'}"><i${user.avatar ? '' : ' class="letter"'}></i><span></span></div>`;
-}
-/** Fill in the card made by tagHTML (text through the DOM, never through innerHTML) */
-function fillTag(/** @type {HTMLElement} */ box, /** @type {User | undefined} */ user, /** @type {string} */ npcLabel = '') {
-  const tag = /** @type {HTMLElement | null} */ (box.querySelector('.name-tag'));
-  if (!tag) return;
-  const label = user ? user.name : npcLabel;
-  /** @type {HTMLElement} */ (tag.querySelector('span')).textContent = label;
-  const slot = /** @type {HTMLElement | null} */ (tag.querySelector('i'));
-  if (!slot) return;
-  if (user?.avatar) {
-    const img = /** @type {HTMLImageElement} */ (el('img', '', { alt: '', referrerpolicy: 'no-referrer', decoding: 'async' }));
-    // a broken avatar (link expired, no internet) falls back to the first letter
-    img.onerror = () => {
-      tag.classList.add('noav');
-      slot.classList.add('letter');
-      slot.textContent = label.slice(0, 1).toUpperCase();
-      img.remove();
-    };
-    img.src = user.avatar;
-    slot.appendChild(img);
-  } else slot.textContent = label.slice(0, 1).toUpperCase();
-}
-
-function seatedEl(/** @type {number} */ seatId, /** @type {import('./art/people.js').Look} */ look, /** @type {User | undefined} */ user, /** @type {string} */ npcLabel = '') {
+function seatedEl(/** @type {number} */ seatId, /** @type {import('./art/people.js').Look} */ look, /** @type {string} */ name) {
   const s = SEATS[seatId];
   const { w, h } = seatedSize(s.s);
   const e = el('div', `sitter${s.flip ? ' flip' : ''}`);
   place(e, s.x, s.y, w, h, s.z);
-  e.innerHTML = `<div class="pbody">${seatedSVG(look, s.pose)}</div>${tagHTML(user, npcLabel)}`;
-  // two people side by side at the same table: one card a notch higher so the names never sit on top of each other
-  if (TABLES[s.table].seats.indexOf(seatId) % 2 === 0) e.style.setProperty('--tagy', '-9px');
-  fillTag(e, user, npcLabel);
+  e.innerHTML = `${seatedSVG(look, s.pose)}<div class="name-tag"></div>`;
+  /** @type {HTMLElement} */ (e.querySelector('.name-tag')).textContent = name;
   e.style.setProperty('--sway', `${rnd(3.4, 5.6).toFixed(2)}s`);
   e.style.setProperty('--delay', `${-rnd(0, 5).toFixed(2)}s`);
   return e;
-}
-
-/**
- * Put a walking person at (x, y) = the ground under their feet, scaled by depth. Only `transform` changes, so a
- * step costs the browser nothing but a repaint — moving left/top/width/height every frame is what made walking,
- * serving and the whole scene feel jerky.
- */
-function placeWalker(/** @type {HTMLElement} */ e, /** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ s) {
-  e.style.transform = `translate3d(${(x - 26.8 * s).toFixed(2)}px, ${(y - 134 * s).toFixed(2)}px, 0) scale(${s.toFixed(3)})`;
-  const z = String(Math.round(y * 10) + 5);
-  if (e.style.zIndex !== z) e.style.zIndex = z;
 }
 
 /** Walk a standing person along points; their size and depth follow y. Resolves on arrival. */
@@ -249,7 +204,6 @@ function walk(/** @type {HTMLElement} */ e, /** @type {Array<{ x: number; y: num
     const start = performance.now();
     const ms = (total / speed) * 1000;
     e.classList.add('walking');
-    placeWalker(e, pts[0].x, pts[0].y, scaleAt(pts[0].y)); // đứng đúng chỗ ngay, không nhảy một khung hình
     const frame = (/** @type {number} */ now) => {
       let d = Math.min(1, (now - start) / Math.max(1, ms)) * total;
       let p = pts[pts.length - 1];
@@ -261,7 +215,8 @@ function walk(/** @type {HTMLElement} */ e, /** @type {Array<{ x: number; y: num
         }
         d -= sg.len;
       }
-      placeWalker(e, p.x, p.y, scaleAt(p.y));
+      const { w, h } = standingSize(scaleAt(p.y));
+      place(e, p.x, p.y, w, h, Math.round(p.y * 10) + 5);
       if (now - start < ms && e.isConnected) requestAnimationFrame(frame);
       else {
         e.classList.remove('walking');
@@ -277,10 +232,9 @@ const sideOf = (/** @type {number} */ x) => (x < 215 ? -40 : 470);
 function occupy(/** @type {number} */ seatId, /** @type {User | undefined} */ user, walkIn = true) {
   const s = SEATS[seatId];
   const look = lookOf(user ? user.id : `npc-${seatId}`);
-  const npcIndex = user ? -1 : NPC_SEATS.indexOf(seatId);
-  const e = seatedEl(seatId, look, user, user ? '' : `${regularName(npcIndex)} · khách quen`);
+  const e = seatedEl(seatId, look, user ? user.name : '');
   /** @type {Occupant} */
-  const occ = { seat: seatId, user, npc: !user, npcIndex, look, lastActive: Date.now(), dzo: 0, el: e };
+  const occ = { seat: seatId, user, npc: !user, npcIndex: user ? -1 : NPC_SEATS.indexOf(seatId), look, lastActive: Date.now(), dzo: 0, el: e };
   seats.set(seatId, occ);
   if (user) seatOf.set(user.id, seatId);
   if (!walkIn) {
@@ -288,8 +242,8 @@ function occupy(/** @type {number} */ seatId, /** @type {User | undefined} */ us
     return occ;
   }
   const walker = el('div', 'walker');
-  walker.innerHTML = `${standingSVG(look)}${tagHTML(user)}`;
-  fillTag(walker, user);
+  walker.innerHTML = `${standingSVG(look)}<div class="name-tag on"></div>`;
+  /** @type {HTMLElement} */ (walker.querySelector('.name-tag')).textContent = user?.name ?? '';
   floor.appendChild(walker);
   const from = sideOf(s.x);
   walk(walker, [{ x: from, y: s.y + 10 }, { x: s.x + (from < 0 ? -14 : 14), y: s.y + 8 }, { x: s.x, y: s.y + 2 }]).then(() => {
@@ -403,20 +357,18 @@ function bubble(/** @type {Occupant} */ occ, /** @type {string} */ text, ms = 45
   b.style.left = `${h.x}px`;
   b.style.top = `${h.y - 4}px`;
   wfx.appendChild(b);
-  // while the bubble is up it takes the place of the name card over the head
-  occ.el.classList.add('named', 'talking');
+  occ.el.classList.add('named');
   setTimeout(() => {
     b.classList.add('out');
     setTimeout(() => b.remove(), 400);
-    occ.el.classList.remove('named', 'talking');
+    occ.el.classList.remove('named');
   }, ms);
 }
-/** A regular's name, capitalised for display ("Chú Tư"); used while seating them, so it must be a hoisted function */
-function regularName(/** @type {number} */ k) {
-  const n = REGULARS[k] ?? '';
+/** A regular's name, capitalised for display ("Chú Tư") */
+const npcName = (/** @type {Occupant} */ o) => {
+  const n = REGULARS[o.npcIndex] ?? '';
   return n ? n.charAt(0).toUpperCase() + n.slice(1) : '';
-}
-const npcName = (/** @type {Occupant} */ o) => regularName(o.npcIndex);
+};
 /** The regular with this index, if they are sitting in their seat right now */
 const npcOcc = (/** @type {number} */ k) => everyone().find((o) => o.npc && o.npcIndex === k) ?? null;
 /** "chú Tư bàn 3" for the host's lines */
@@ -739,12 +691,6 @@ function onOrderDone({ order }) {
   });
 }
 function onOrderNote(/** @type {{ kind: string; user: User; item: Item; price?: number }} */ e) {
-  // "phải vào bàn mới gọi được món": nhắc riêng, kèm bóng chữ nếu họ đang đứng đâu đó trong quán
-  if (e.kind === 'seat') {
-    led(`🪑 ${e.user.name} ơi, chat "nhậu" để vào bàn rồi gọi món nha`, true);
-    if (sound && sound.waiting() < 3) auto(orderLines.orderNeedSeat(e.user.name, e.item.ten));
-    return;
-  }
   if (!sound || sound.waiting() >= 3) return;
   if (e.kind === 'paid') auto(orderLines.orderPaid(e.user.name, e.item.ten, e.price ?? 1, e.item.kind === 'hotpot'));
   else if (e.kind === 'busy') auto(orderLines.orderBusy(e.user.name));
@@ -1046,11 +992,9 @@ function motorbike() {
   b.style.top = `${y - 50 * sc}px`;
   b.style.width = `${80 * sc}px`;
   b.style.height = `${50 * sc}px`;
-  // transform, not left: a bike crossing on `left` re-lays out the street every frame
-  b.style.left = '0px';
   const from = ltr ? -120 : 470;
   const to = ltr ? 470 : -120;
-  b.animate([{ transform: `translate3d(${from}px, 0, 0)` }, { transform: `translate3d(${to}px, 0, 0)` }], { duration: rnd(3200, 5200), easing: 'linear' }).finished.then(() => b.remove());
+  b.animate([{ left: `${from}px` }, { left: `${to}px` }], { duration: rnd(3200, 5200), easing: 'linear' }).finished.then(() => b.remove());
   if (!document.hidden) setTimeout(() => sound?.ctx && Math.random() < 0.3 && sound.pop(0.05), 400);
 }
 setInterval(() => !document.hidden && Math.random() < 0.55 && motorbike(), 7000);

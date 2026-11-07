@@ -38,12 +38,6 @@ const ORDER_DONE = [
   '{ban} ơi, {mon} tới rồi nè. Mời {ban} nhâm nhi, à nhớ chia cho bàn bên một miếng.',
   'Món {mon} đã lên bàn {ban}. Bếp hôm nay tay nghề lên level luôn!',
 ];
-const NEED_SEAT = [
-  '{ban} ơi, chat "nhậu" vào bàn trước đã, ngồi xuống ghế là quán dọn {mon} ra liền!',
-  'Chưa có ghế mà gọi {mon} là bếp không biết bưng đi đâu {ban} ơi! Gõ "nhậu" một cái là có chỗ ngay.',
-  'Quán chỉ phục vụ khách đang ngồi bàn thôi {ban} nha. Gõ "nhậu" hoặc "bàn 3" vào bàn rồi gọi {mon} lại nhé!',
-  '{ban} đứng ngoài đường gọi món là mỏi chân lắm! Chat "nhậu" lấy ghế trước, rồi {mon} có ngay.',
-];
 const ORDER_BUSY = ['{ban} ơi, món của {ban} đang nấu mà, gọi thêm là bếp xỉu đó!', 'Từ từ {ban}, ăn hết dĩa này đã rồi gọi tiếp nha, bếp có hai tay thôi!'];
 const ORDER_FULL = ['Bếp đang cháy đơn rồi cả nhà ơi, đợi xíu rồi gọi tiếp nha!', 'Đơn chất đống luôn, bếp chạy không kịp! Ai tặng quà thì được làm trước nha.'];
 
@@ -52,7 +46,6 @@ export const orderLines = {
     fill(pick(vip ? ORDER_VIP : ORDER), { ban: ban(name), mon: dish, qty: `${NUM[qty] ?? qty} phần` }),
   orderDone: (/** @type {string} */ name, /** @type {string} */ dish) => fill(pick(ORDER_DONE), { ban: ban(name), mon: dish }),
   orderBusy: (/** @type {string} */ name) => fill(pick(ORDER_BUSY), { ban: ban(name) }),
-  orderNeedSeat: (/** @type {string} */ name, /** @type {string} */ dish) => fill(pick(NEED_SEAT), { ban: ban(name), mon: dish }),
   giftOrder: (/** @type {string} */ name, /** @type {string} */ dish, /** @type {number} */ qty, /** @type {boolean} */ hotpot) =>
     fill(pick(hotpot ? GIFT_HOTPOT : GIFT_ORDER), { ban: ban(name), mon: dish, qty: `${NUM[qty] ?? qty} phần` }),
   orderPaid: (/** @type {string} */ name, /** @type {string} */ dish, /** @type {number} */ price, /** @type {boolean} */ hotpot) =>

@@ -264,7 +264,6 @@ function onChat(user, text) {
   if (!clean) return;
   realChats.push(Date.now());
   addPoints(user, 1);
-  pub.touchSeat(user); // nói chuyện là ghế còn giữ, im lâu thì mất ghế như trên sân khấu
   const dzo = isKeyword(clean);
   // gọi món, xin ngồi, đổi bàn: the stage shows those its own way instead of reading the comment
   const kind = pub.onChat(user, clean);
@@ -308,10 +307,7 @@ function onGift(user, giftName, coinsEach, count) {
 /** @param {User} user */
 const onJoin = (user) => broadcast('join', { user: show(user) });
 /** @param {User} user */
-const onFollow = (user) => {
-  pub.noteSeated(user); // follow là có ghế (sân khấu cho ngồi), nên gọi món được luôn
-  broadcast('follow', { user: show(user) });
-};
+const onFollow = (user) => broadcast('follow', { user: show(user) });
 
 // The quán's own regulars (characters, never viewers) order and talk now and then, a bit less when the live chat
 // is busy, so the room keeps moving between comments. Only while a stage or preview page is open.
