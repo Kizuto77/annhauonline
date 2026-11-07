@@ -305,6 +305,31 @@ function onGift(user, giftName, coinsEach, count) {
   else if (tier === 'smash') triggerSmash(user);
   else if (tier === 'hotpot' || tier === 'food') pub.giftOrder(user, each, n);
 }
+// Hết phiên live (tắt live, mất kết nối hẳn, bấm Ngắt kết nối): cả quán đứng dậy khỏi bàn và đi ra đường.
+// Kết nối lại thì quán mở cửa, khách quen về chỗ.
+let hallClosed = false;
+/** @type {NodeJS.Timeout | undefined} */
+let closeTimer;
+function closeHall(/** @type {string} */ reason) {
+  clearTimeout(closeTimer);
+  if (hallClosed) return;
+  hallClosed = true;
+  pub.clearSeats();
+  broadcast('closing', { id: uid(), reason });
+  console.log(`[Quán] Dọn hàng (${reason}): khách đứng dậy ra về.`);
+}
+function openHall() {
+  clearTimeout(closeTimer);
+  if (!hallClosed) return;
+  hallClosed = false;
+  broadcast('opening', { id: uid() });
+}
+/** Mất kết nối có thể chỉ là chớp nhoáng: đợi một lúc, vẫn chưa nối lại thì mới dọn quán */
+const closeSoon = (/** @type {string} */ reason, ms = 25_000) => {
+  clearTimeout(closeTimer);
+  closeTimer = setTimeout(() => !status.connected && closeHall(reason), ms);
+};
+
 /** @param {User} user */
 const onJoin = (user) => broadcast('join', { user: show(user) });
 /** @param {User} user */
@@ -383,18 +408,21 @@ async function connectTikTok(username) {
     if (!live()) return;
     Object.assign(status, { connected: true, connecting: false, roomId: String(state?.roomId || ''), error: '' });
     sendStatus();
+    openHall();
     console.log(`[TikTok] Đã kết nối @${username}, phòng ${state?.roomId}`);
   });
   conn.on(ControlEvent.DISCONNECTED, () => {
     if (!live()) return;
     Object.assign(status, { connected: false, connecting: false });
     sendStatus();
+    closeSoon('mất kết nối'); // rớt mạng một chút thì thôi, mất hẳn mới dọn quán
     console.log(`[TikTok] Mất kết nối @${username}`);
   });
   conn.on(WebcastEvent.STREAM_END, () => {
     if (!live()) return;
     Object.assign(status, { connected: false, connecting: false, error: 'Phiên LIVE trên TikTok đã kết thúc' });
     sendStatus();
+    closeHall('phiên live kết thúc');
   });
   conn.on(ControlEvent.ERROR, (/** @type {unknown} */ err) => {
     if (!live()) return;
@@ -482,6 +510,7 @@ function disconnectTikTok(announce = true) {
   if (announce) {
     Object.assign(status, { connected: false, connecting: false, username: '', roomId: '', viewers: 0, totalLikes: 0, error: '' });
     sendStatus();
+    closeHall('ngắt kết nối'); // chủ quán bấm Ngắt kết nối: khách đứng dậy ra về
   }
 }
 
@@ -508,7 +537,7 @@ function demo(type) {
   else if (type === 'free') {
     const u = demoUser();
     onChat(u, 'nhậu');
-    setTimeout(() => onChat(u, pick(['đậu lạc', 'cho dĩa nem chua', 'bia hơi', 'trà đá', 'gọi khoai tây chiên', 'lên dưa chuột', 'đậu tẩm hành'])), 1200);
+    setTimeout(() => onChat(u, pick(['đậu lạc', 'cho dĩa nem chua', 'bia hơi', 'trà đá', 'gọi khoai tây chiên', 'lên dưa chuột', 'đậu tẩm hành', 'cho xin thêm đá', 'cho cái khăn lạnh', 'thêm chén đũa', 'cho xin tăm', 'cho chén nước mắm'])), 1200);
   } else if (type === 'gift') onGift(demoUser(), pick(['Rose', 'TikTok', 'GG']), 1, 1);
   else if (type === 'food') onGift(demoUser(), pick(['Rose', 'Finger Heart', 'Rosa']), Math.max(1, s.foodMinCoins), pick([1, 1, 2]));
   else if (type === 'hotpot') onGift(demoUser(), pick(['Doughnut', 'Bubble Tea', 'Perfume']), Math.max(1, s.hotpotMinCoins), 1);
@@ -614,7 +643,7 @@ function sendFile(res, file, cache) {
 
 const snapshot = () => ({ settings: publicSettings(), voices: voiceList(), status, board: topBoard(), stages: stagePages(), pub: pub.snapshot() });
 
-const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGreet', 'clearHall', 'unlockAudio', 'hush']);
+const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGreet', 'clearHall', 'closeUp', 'unlockAudio', 'hush']);
 
 /** @type {Record<string, (req: http.IncomingMessage, res: http.ServerResponse, url: URL) => Promise<void> | void>} */
 const routes = {
@@ -662,6 +691,10 @@ const routes = {
     if (action === 'wave') {
       triggerWave();
       return json(res, 200, { success: true });
+    }
+    if (action === 'closeUp') {
+      closeHall('chủ quán bấm dọn quán');
+      return json(res, 200, { success: true, stages: stagePages() });
     }
     if (!CONTROL_ACTIONS.has(action)) return json(res, 400, { success: false, error: 'Lệnh không hợp lệ' });
     const line = typeof text === 'string' ? cleanText(text, 500) : '';

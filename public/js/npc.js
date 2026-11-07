@@ -38,4 +38,4 @@ export const NPC_ORDER = ['{name} gọi thêm {mon} nè, bếp làm liền!', 'C
 export const NPC_SERVED = ['{mon} ra bàn {name} rồi đây, nóng hổi!', 'Mời {name} dùng {mon}, ăn ngon thì khen quán một câu nha!'];
 
 /** Free dishes a regular may order (menu ids) */
-export const NPC_DISHES = ['lac', 'dauhanh', 'nem', 'khoai', 'dua', 'bia', 'bia', 'trada', 'ngo', 'khoca', 'banhda'];
+export const NPC_DISHES = ['lac', 'dauhanh', 'nem', 'khoai', 'dua', 'bia', 'bia', 'trada', 'ngo', 'khoca', 'banhda', 'da', 'da', 'khanlanh', 'chendua', 'tamgiay', 'chanhot'];

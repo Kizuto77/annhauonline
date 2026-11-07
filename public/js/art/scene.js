@@ -239,12 +239,15 @@ export function kitchenSVG() {
 </svg>`;
 }
 
-/** Last layer, over everything in the room: soft vignette and a little grain, like a painting */
+/**
+ * Last layer, over everything in the room: only a soft vignette.
+ * Không còn lớp hạt (grain) phủ toàn màn hình: khung 430x764 phóng lên 1080x1920 làm hạt to ra thành màn sương,
+ * và nhiễu hạt chạy liên tục ăn hết bitrate của TikTok nên hình live nhìn mờ mờ. Vân tường, vân nền vỉa hè
+ * (filter "stain", tần số thấp) vẫn giữ nên cảnh vẫn ra chất tranh vẽ.
+ */
 export function finishSVG() {
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" class="scene-svg" aria-hidden="true">
-    <defs><radialGradient id="vg" cx="0.5" cy="0.5" r="0.75"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#05030a" stop-opacity="0.6"/></radialGradient>
-    <filter id="fg" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3"/><feColorMatrix type="matrix" values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 -1.6 1.1"/></filter></defs>
+    <defs><radialGradient id="vg" cx="0.5" cy="0.5" r="0.78"><stop offset="0.66" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#05030a" stop-opacity="0.45"/></radialGradient></defs>
     <rect width="${W}" height="${H}" fill="url(#vg)"/>
-    <rect width="${W}" height="${H}" filter="url(#fg)" opacity="0.07"/>
   </svg>`;
 }

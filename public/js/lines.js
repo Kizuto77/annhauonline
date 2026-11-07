@@ -288,6 +288,19 @@ export const lines = (ctx) => ({
     pick([`Trời ơi! ${ban(name)} đập quán tôi rồi!`, `Á á á! ${ban(name)} ơi, sao đập quán tôi vậy trời!`, `Chết rồi! ${ban(name)} đập quán tôi rồi!`]),
     pick(['Huhu, bàn ghế của tôi, ly chén của tôi, huhu!', 'Huhu, mới sắm bàn mới tuần trước mà, huhu!', 'Huhu, tôi biết ăn nói sao với chủ nhà bây giờ!']),
   ],
+  /** Phiên live kết thúc: cả quán đứng dậy ra về */
+  closeUp: () =>
+    pick([
+      `Thôi cả nhà ơi, ${ctx.q} dọn hàng rồi! Cảm ơn cả nhà đã ngồi với quán tối nay, về đường cẩn thận nha!`,
+      `Hết giờ rồi cả nhà ơi! Cảm ơn mọi người đã ghé ${ctx.q}, ai uống rồi thì đừng lái xe, gọi xe về cho an toàn nha!`,
+      `${ctx.q} xin phép dọn bàn đây! Cảm ơn cả nhà, mai ghé quán sớm giữ chỗ nha!`,
+    ]),
+  closeDone: () =>
+    pick([
+      'Bàn ghế xếp hết rồi, đèn tắt bớt rồi. Hẹn cả nhà buổi live sau nha!',
+      'Quán sạch bóng, chủ quán đi ngủ đây. Nhớ bấm follow để biết khi nào quán mở cửa lại nha!',
+      'Dọn xong rồi! Cảm ơn cả nhà, ngủ ngon, mai lại nhậu tiếp!',
+    ]),
   smashClean: () => pick(['Thôi, lau nước mắt, dọn lại quán nào!', 'Hức, không khóc nữa, để tôi quét dọn!']),
   smashDone: () => pick([`Xong rồi! ${ctx.q} sạch bóng, lần sau đập nhẹ tay nha!`, `Dọn xong, ${ctx.q} mở cửa lại! Nhẹ tay giùm tôi nha!`]),
   reply: (/** @type {import('./chat.js').Topic} */ topic, /** @type {string} */ name, /** @type {string} */ city = '', n = 1) =>

@@ -78,7 +78,7 @@ const RULES = [
   ],
   [
     ['có món gì', 'có gì ăn', 'thực đơn', 'menu', 'ăn gì ngon', 'gọi món sao', 'gọi món kiểu gì', 'làm sao gọi món', 'có món nào', 'quán có gì', 'có đồ ăn không', 'món gì ngon'],
-    (c) => `Món miễn phí thì cứ comment tên món: ${c.free.slice(0, 6).join(', ')}. Món ngon như mực nướng, ốc hương thì tặng quà ${c.tiers.food || 1} xu, lẩu thì ${c.tiers.hotpot || 5} xu nha!`,
+    (c) => `Món miễn phí thì cứ comment tên món: ${c.free.slice(0, 6).join(', ')}. Cần đá, khăn lạnh, chén đũa, tăm giấy hay chanh ớt thì cũng gọi một tiếng là chạy bàn mang ra. Món ngon như mực nướng, ốc hương thì tặng quà ${c.tiers.food || 1} xu, lẩu thì ${c.tiers.hotpot || 5} xu nha!`,
   ],
   [
     ['món của mình đâu', 'món của em đâu', 'món của tôi đâu', 'đồ ăn đâu', 'sao lâu vậy', 'sao chưa có món', 'chưa có món', 'mồi đâu', 'đồ ăn lâu', 'chờ lâu quá', 'nấu lâu'],

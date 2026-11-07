@@ -128,7 +128,8 @@ export function createPub(o) {
   /** Gift orders (good dishes, hotpots) go before the free ones still waiting */
   function enqueue(/** @type {User} */ u, /** @type {MenuItem} */ item, /** @type {number} */ qty, /** @type {boolean} */ gift) {
     const vip = gift || gifters.has(u.id);
-    const ms = (item.kind === 'drink' ? rnd(4, 6) : item.kind === 'hotpot' ? rnd(11, 15) : rnd(7, 11)) * 1000;
+    // đá, khăn lạnh, chén đũa: chạy bàn lấy là có, không phải chờ bếp
+    const ms = (item.kind === 'item' ? rnd(3, 5) : item.kind === 'drink' ? rnd(4, 6) : item.kind === 'hotpot' ? rnd(11, 15) : rnd(7, 11)) * 1000;
     /** @type {Order} */
     const order = { id: uid(), user: show(u), uid: u.id, item, qty, state: 'wait', start: 0, ms, vip, gift };
     if (vip) {
@@ -157,18 +158,21 @@ export function createPub(o) {
       return true;
     }
     const now = Date.now();
-    const mine = orders.find((x) => x.uid === u.id && !x.gift);
+    // Đá, khăn lạnh, chén đũa đi đường riêng với món ăn: đang chờ mồi vẫn xin thêm đá được, như quán thật
+    const small = found.item.kind === 'item';
+    const key = small ? `item:${u.id}` : u.id;
+    const mine = orders.find((x) => x.uid === u.id && !x.gift && (x.item.kind === 'item') === small);
     if (mine) {
       broadcast('orderNote', { kind: 'busy', user: show(u), item: mine.item });
       return true;
     }
-    if (now - (lastOrderAt.get(u.id) ?? 0) < 25_000) return true; // just ate: the comment is still about food
+    if (now - (lastOrderAt.get(key) ?? 0) < (small ? 12_000 : 25_000)) return true; // vừa gọi xong: comment vẫn là chuyện gọi món
     if (orders.filter((x) => !x.gift).length >= 10) {
       broadcast('orderNote', { kind: 'full', user: show(u), item: found.item });
       return true;
     }
-    lastOrderAt.set(u.id, now);
-    enqueue(u, found.item, portions(text), false);
+    lastOrderAt.set(key, now);
+    enqueue(u, found.item, small ? 1 : portions(text), false);
     return true;
   }
 
@@ -205,6 +209,8 @@ export function createPub(o) {
     /** Comment nào cũng làm ghế "còn ấm" (giống lastActive trên sân khấu) */
     touchSeat: (/** @type {User} */ u) => sitting(u.id),
     hasSeat: (/** @type {User} */ u) => sitting(u.id),
+    /** Hết phiên live: cả quán ra về, không ai còn ghế nữa */
+    clearSeats: () => seated.clear(),
     /** Free orders still waiting or cooking (a regular only orders when the kitchen is not swamped) */
     waiting: () => orders.filter((x) => !x.gift).length,
     /** A regular of the quán (k = index in REGULARS) orders a free dish on their own */

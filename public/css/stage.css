@@ -51,34 +51,57 @@ html, body { margin: 0; background: #050307; }
 .burner { animation: coal 0.4s ease-in-out infinite alternate; }
 
 /* ---------------------------------------------------------------- the lit sign, the LED board */
-.signboard { position: absolute; left: 50px; top: 142px; width: 330px; height: 48px; box-sizing: border-box; border-radius: 3px; background: linear-gradient(180deg, #d12a2a, #9c1414 70%, #7d0f0f); border: 2px solid #f3cf62; box-shadow: 0 0 22px rgba(255, 70, 50, 0.55), 0 5px 10px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(255, 220, 150, 0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; animation: sign-hum 7s infinite; }
+.signboard { position: absolute; left: 50px; top: 142px; width: 330px; height: 48px; box-sizing: border-box; border-radius: 3px; background: linear-gradient(180deg, #d12a2a, #9c1414 70%, #7d0f0f); border: 2px solid #f3cf62; box-shadow: 0 0 22px rgba(255, 70, 50, 0.55), 0 5px 10px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(255, 220, 150, 0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; animation: sign-hum 11s infinite; }
 .signboard::before { content: ''; position: absolute; inset: 2px; border: 1px solid rgba(255, 233, 160, 0.45); border-radius: 2px; }
 .signboard::after { content: ''; position: absolute; left: 4px; right: 4px; top: 2px; height: 40%; border-radius: 2px; background: linear-gradient(rgba(255, 255, 255, 0.18), transparent); }
-@keyframes sign-hum { 0%, 96%, 100% { filter: none; } 97% { filter: brightness(0.75); } 98% { filter: none; } 98.6% { filter: brightness(0.8); } }
+/* đèn neon bật lên là chớp vài cái rồi sáng đều, thỉnh thoảng nháy nhẹ như bảng hiệu thật */
+@keyframes sign-hum { 0%, 92%, 100% { filter: none; } 93% { filter: brightness(0.6) saturate(0.85); } 93.6% { filter: brightness(1.12); } 94.4% { filter: brightness(0.5) saturate(0.8); } 95% { filter: none; } 97.4% { filter: brightness(0.82); } 97.9% { filter: none; } }
+/* quầng sáng đỏ thở ra thở vào sau bảng */
+.sb-glow { position: absolute; left: -14px; right: -14px; top: -10px; bottom: -10px; border-radius: 10px; background: radial-gradient(ellipse at center, rgba(255, 90, 60, 0.55), rgba(255, 60, 40, 0.18) 55%, transparent 75%); filter: blur(5px); z-index: -1; animation: sign-breathe 3.6s ease-in-out infinite alternate; }
+@keyframes sign-breathe { from { opacity: 0.55; transform: scale(0.98); } to { opacity: 1; transform: scale(1.03); } }
 .sb-main { display: flex; gap: 8px; align-items: center; line-height: 1; }
-.sb-name { font: 800 28px/1 'Baloo 2', 'Be Vietnam Pro', sans-serif; color: #ffe14d; letter-spacing: 0.5px; text-shadow: 0 0 7px rgba(255, 225, 77, 0.85), 0 2px 0 #6a0b0b; white-space: nowrap; }
-.sb-num { font: 800 24px/1 'Baloo 2', sans-serif; color: #fff; background: #1d4fa3; border: 1.5px solid #e8eef8; border-radius: 4px; padding: 3px 5px 0; box-shadow: 0 0 10px rgba(110, 168, 255, 0.9); }
+.sb-name { font: 800 28px/1 'Baloo 2', 'Be Vietnam Pro', sans-serif; color: #ffe14d; letter-spacing: 0.5px; text-shadow: 0 0 7px rgba(255, 225, 77, 0.85), 0 2px 0 #6a0b0b; white-space: nowrap; animation: neon-tube 2.8s ease-in-out infinite alternate; }
+@keyframes neon-tube {
+  from { color: #ffe14d; text-shadow: 0 0 6px rgba(255, 225, 77, 0.75), 0 0 14px rgba(255, 170, 40, 0.45), 0 2px 0 #6a0b0b; }
+  to { color: #fff6b0; text-shadow: 0 0 10px rgba(255, 236, 140, 1), 0 0 24px rgba(255, 180, 50, 0.8), 0 0 40px rgba(255, 120, 40, 0.45), 0 2px 0 #6a0b0b; }
+}
+.sb-num { font: 800 24px/1 'Baloo 2', sans-serif; color: #fff; background: #1d4fa3; border: 1.5px solid #e8eef8; border-radius: 4px; padding: 3px 5px 0; box-shadow: 0 0 10px rgba(110, 168, 255, 0.9); animation: plate-blink 2.8s ease-in-out infinite alternate-reverse; }
+@keyframes plate-blink { from { box-shadow: 0 0 7px rgba(110, 168, 255, 0.7); } to { box-shadow: 0 0 16px rgba(140, 195, 255, 1), 0 0 28px rgba(80, 150, 255, 0.6); } }
+/* dây bóng đèn chạy quanh bảng: một lớp duy nhất mỗi cạnh, chạy bằng background-position nên rất nhẹ */
+.sb-bulb { position: absolute; pointer-events: none; --b: radial-gradient(circle, #fff6c8 0 1.4px, rgba(255, 196, 80, 0.55) 1.9px, transparent 2.4px); }
+.sb-bulb.t, .sb-bulb.b { left: -3px; right: -3px; height: 5px; background: var(--b) 0 50% / 13px 100% repeat-x; animation: bulb-run 1.4s linear infinite, bulb-blink 1.6s ease-in-out infinite alternate; }
+.sb-bulb.t { top: -4px; }
+.sb-bulb.b { bottom: -4px; animation: bulb-run-rev 1.4s linear infinite, bulb-blink 1.6s ease-in-out -0.8s infinite alternate; }
+.sb-bulb.l, .sb-bulb.r { top: -3px; bottom: -3px; width: 5px; background: var(--b) 50% 0 / 100% 13px repeat-y; animation: bulb-down 1.4s linear infinite, bulb-blink 1.6s ease-in-out -0.4s infinite alternate; }
+.sb-bulb.l { left: -4px; }
+.sb-bulb.r { right: -4px; }
+@keyframes bulb-run { to { background-position-x: 13px; } }
+@keyframes bulb-run-rev { to { background-position-x: -13px; } }
+@keyframes bulb-down { to { background-position-y: 13px; } }
+@keyframes bulb-blink { from { opacity: 0.6; } to { opacity: 1; } }
 .sb-sub { font: 800 7.6px/1 'Be Vietnam Pro', sans-serif; color: #fff4c8; letter-spacing: 1.8px; margin-top: 3px; text-shadow: 0 1px 2px #5a0808; }
 .led { position: absolute; left: 98px; top: 192px; width: 234px; height: 21px; box-sizing: border-box; overflow: hidden; border: 1.5px solid #2b2b2f; border-radius: 2px; background: #140405 radial-gradient(circle, rgba(255, 50, 40, 0.16) 0.55px, transparent 0.75px) 0 0 / 2.4px 2.4px; box-shadow: 0 0 10px rgba(255, 30, 30, 0.35); }
 .led-track { position: absolute; left: 0; top: 0; white-space: nowrap; transform: translateX(230px); }
 .led-track span { display: inline-block; font: 800 9.4px/18px 'Be Vietnam Pro', system-ui, sans-serif; letter-spacing: 0.7px; color: #ff4b3a; text-shadow: 0 0 4px #ff1f1f, 0 0 1px #ffb3a8; }
 
 /* ---------------------------------------------------------------- wall boards */
-.board { position: absolute; top: 214px; width: 112px; height: 188px; box-sizing: border-box; border-radius: 3px; padding: 5px 6px 4px; display: flex; flex-direction: column; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65), 0 0 18px rgba(255, 196, 110, 0.18); }
+.board { position: absolute; top: 210px; width: 112px; height: 202px; box-sizing: border-box; border-radius: 3px; padding: 5px 6px 4px; display: flex; flex-direction: column; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65), 0 0 18px rgba(255, 196, 110, 0.18); }
 .bd-title { font: 800 12px/1 'Baloo 2', sans-serif; text-align: center; letter-spacing: 0.6px; padding-bottom: 3px; }
 .menu-board { left: 4px; background: radial-gradient(ellipse at 40% 30%, #2c3a33, #18221d 75%); border: 4px solid #6e4b2c; outline: 1px solid #3f2914; color: #f4efe2; }
 .menu-board::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 7px); pointer-events: none; }
 .menu-board .bd-title { color: #ffe08a; border-bottom: 1px dashed rgba(255, 255, 255, 0.35); }
-.mb-sec { font: 800 7px/1.15 'Be Vietnam Pro', sans-serif; color: #8fe3b0; margin: 3px 0 2px; letter-spacing: 0.3px; }
+.mb-sec { font: 800 6.9px/1.15 'Be Vietnam Pro', sans-serif; color: #8fe3b0; margin: 2.6px 0 1.4px; letter-spacing: 0.3px; }
 .mb-sec em { font-style: normal; font-weight: 600; color: #cfe9da; }
 .mb-sec.gift { color: #ffb3a3; }
+.mb-sec.small { color: #a9d8ff; }
+.mb-free.small { font-size: 6.9px; color: #dcebf7; }
 .mb-sec.gift em { color: #ffd9cf; }
-.mb-free { margin: 0; font: 600 7.8px/1.28 'Be Vietnam Pro', sans-serif; color: #f4efe2; }
-.mb-gift { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2.4px; }
+.mb-free { margin: 0; font: 600 7.4px/1.26 'Be Vietnam Pro', sans-serif; color: #f4efe2; }
+.mb-gift { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1.8px; }
 .mb-gift li { display: flex; align-items: center; gap: 4px; }
-.mb-gift b { flex: none; min-width: 30px; text-align: center; font: 800 8px/1.45 'Be Vietnam Pro', sans-serif; color: #2a1606; background: linear-gradient(#ffe08a, #f2a516); border-radius: 3px; }
-.mb-gift span { font: 700 8.2px/1.1 'Be Vietnam Pro', sans-serif; color: #fff; white-space: nowrap; }
-.mb-foot { margin-top: auto; font: 600 7px/1.3 'Be Vietnam Pro', sans-serif; color: #dfeee5; text-align: center; border-top: 1px dashed rgba(255, 255, 255, 0.3); padding-top: 3px; }
+.mb-gift b { flex: none; min-width: 29px; text-align: center; font: 800 7.6px/1.4 'Be Vietnam Pro', sans-serif; color: #2a1606; background: linear-gradient(#ffe08a, #f2a516); border-radius: 3px; }
+.mb-gift span { font: 700 7.8px/1.1 'Be Vietnam Pro', sans-serif; color: #fff; white-space: nowrap; }
+.mb-foot { margin-top: auto; font: 600 6.8px/1.28 'Be Vietnam Pro', sans-serif; color: #dfeee5; text-align: center; border-top: 1px dashed rgba(255, 255, 255, 0.3); padding-top: 2.6px; }
 .mb-foot b { color: #ffe08a; }
 .gold-board { left: 314px; background: linear-gradient(170deg, #7a1212, #4d0909); border: 3px solid #c99a3a; outline: 1px solid #5a3a0a; color: #ffe9b0; }
 .gold-board .bd-title { color: #ffd166; text-shadow: 0 0 6px rgba(255, 209, 102, 0.6); border-bottom: 1px solid rgba(255, 209, 102, 0.4); }
@@ -109,7 +132,7 @@ html, body { margin: 0; background: #050307; }
 /* ---------------------------------------------------------------- people */
 .sitter, .walker { position: absolute; pointer-events: none; }
 /* người đi bộ: khung cố định 53.6 x 134, vị trí và độ xa gần nằm hết trong transform (stage.js placeWalker) */
-.walker { left: 0; top: 0; width: 53.6px; height: 134px; transform-origin: 0 0; will-change: transform; }
+.walker { left: 0; top: 0; width: 53.6px; height: 134px; transform-origin: 0 0; }
 .pbody { position: absolute; inset: 0; }
 .sitter.flip .pbody { transform: scaleX(-1); }
 /* thở nhẹ: đặt trên lớp div bọc ngoài để trình duyệt chạy bằng GPU, không vẽ lại cả hình người */

@@ -77,8 +77,10 @@ const fx = el('div', 'layer fx');
 const ui = el('div', 'layer ui');
 stage.append(fx, ui);
 
+/** Dây bóng đèn chạy quanh bảng hiệu: bốn dải chấm sáng, chạy vòng như bảng hiệu quán ngoài đường */
+const bulbStrips = () => ['t', 'b', 'l', 'r'].map((s) => `<i class="sb-bulb ${s}"></i>`).join('');
 wall.innerHTML = `
-  <div class="signboard" id="signboard"><div class="sb-main"><span class="sb-name" id="sb-name"></span><span class="sb-num" id="sb-num"></span></div><div class="sb-sub">BIA HƠI · LẨU · NƯỚNG · ĐỒ NHẬU</div></div>
+  <div class="signboard" id="signboard"><div class="sb-glow"></div><div class="sb-main"><span class="sb-name" id="sb-name"></span><span class="sb-num" id="sb-num"></span></div><div class="sb-sub">BIA HƠI · LẨU · NƯỚNG · ĐỒ NHẬU</div>${bulbStrips()}</div>
   <div class="led"><div class="led-track"><span id="led-text"></span></div></div>
   <div class="board menu-board" id="menu-board"></div>
   <div class="board gold-board" id="gold-board"><div class="bd-title" id="board-title">BẢNG VÀNG</div><ol id="board-list"></ol><div class="bd-foot" id="stats"></div></div>
@@ -143,18 +145,19 @@ for (const t of TABLES) {
   tableEls.set(t.id, { el: e, top });
 }
 
-/** Put a dish on a table (3 at most; the oldest goes) */
+/** Put a dish on a table (4 things at most; the oldest goes). Lặt vặt (đá, khăn lạnh…) take less room. */
 function addDish(/** @type {number} */ tableId, /** @type {Item} */ item, ms = 240_000) {
   const t = TABLES[tableId];
   const box = tableEls.get(tableId)?.top;
   if (!box) return;
+  const small = item.kind === 'item';
   const d = el('div', `dish-wrap ${item.kind}`);
-  d.style.width = `${34 * t.s}px`;
-  d.style.height = `${27 * t.s}px`;
-  d.style.marginLeft = d.style.marginRight = `${-4 * t.s}px`;
+  d.style.width = `${(small ? 24 : 34) * t.s}px`;
+  d.style.height = `${(small ? 20 : 27) * t.s}px`;
+  d.style.marginLeft = d.style.marginRight = `${-3 * t.s}px`;
   d.innerHTML = dishSVG(item);
   box.appendChild(d);
-  while (box.children.length > 3) box.firstElementChild?.remove();
+  while (box.children.length > 4) box.firstElementChild?.remove();
   setTimeout(() => {
     d.classList.add('gone');
     setTimeout(() => d.remove(), 600);
@@ -334,6 +337,7 @@ function freeSeat(/** @type {number | null} */ tableId = null) {
 
 /** Seat a viewer if they are not seated yet. Full house: the one quiet the longest gives up their seat. */
 function seatUser(/** @type {User} */ user, /** @type {number | null} */ tableId = null) {
+  if (closedUp) openUp(); // có khách mới là quán mở cửa lại
   const have = occOf(user);
   if (have) {
     have.lastActive = Date.now();
@@ -373,6 +377,47 @@ function moveToTable(/** @type {User} */ user, /** @type {number} */ no) {
 
 // NPC regulars, so the quán is never empty
 for (const id of NPC_SEATS) occupy(id, undefined, false);
+
+// ---------------------------------------------------------------------- hết phiên live: cả quán đứng dậy đi về
+
+/** true từ lúc quán dọn hàng tới lúc có người mới vào bàn (hoặc live bật lại) */
+let closedUp = false;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let reopenTimer;
+/**
+ * Phiên live kết thúc (chủ quán tắt live, mất kết nối hẳn, hay bấm "Dọn quán"): khách đứng dậy khỏi bàn và
+ * đi bộ ra đường từng người một, bàn được dọn sạch, khách quen về sau cùng.
+ */
+function closeUp() {
+  if (closedUp) return;
+  closedUp = true;
+  clearTimeout(reopenTimer);
+  sound?.hush();
+  auto(say().closeUp(), true);
+  led('🧹 QUÁN DỌN HÀNG · CẢM ƠN CẢ NHÀ, HẸN BUỔI LIVE SAU', true);
+  const people = everyone();
+  people
+    .filter((o) => o.user)
+    .concat(people.filter((o) => !o.user))
+    .forEach((o, i) =>
+      setTimeout(() => {
+        if (seats.get(o.seat) === o) leaveSeat(o.seat, true);
+      }, 500 + i * 220),
+    );
+  setTimeout(() => {
+    for (const t of TABLES) tableEls.get(t.id)?.top.replaceChildren();
+  }, 1600 + people.length * 220);
+  setTimeout(() => auto(say().closeDone()), 9000);
+  // sân khấu để mở suốt đêm: một lúc sau khách quen quay lại cho quán đỡ trống
+  reopenTimer = setTimeout(() => openUp(), 120_000);
+}
+/** Quán mở lại: khách quen về chỗ của họ */
+function openUp() {
+  clearTimeout(reopenTimer);
+  if (!closedUp) return;
+  closedUp = false;
+  NPC_SEATS.forEach((id, i) => setTimeout(() => !seats.get(id) && occupy(id, undefined, false), i * 400));
+}
 
 // Idle viewers leave after seatIdleMin (TikTok never says when someone leaves the live)
 setInterval(() => {
@@ -531,7 +576,8 @@ function renderTickets(/** @type {Array<{ id: string; user: User; item: Item; qt
       bar.style.width = '100%';
     } else bar.style.width = '0%';
   }
-  setCooking(list.filter((o) => o.state === 'cook').length);
+  // đá hay khăn lạnh không phải nổi lửa: bếp chỉ bùng khi có món thật đang nấu
+  setCooking(list.filter((o) => o.state === 'cook' && o.item.kind !== 'item').length);
 }
 
 // -------------------------------------------------------------------------------------------- chat, greetings, reading
@@ -714,7 +760,7 @@ function onOrder({ order }) {
   const { occ } = seatUser(order.user);
   if (occ) setTimeout(() => bubble(occ, `${order.item.icon} ${order.qty > 1 ? `${order.qty} ` : ''}${order.item.short}`, 3500), 400);
   if (order.gift) auto(orderLines.giftOrder(order.user.name, order.item.ten, order.qty, order.item.kind === 'hotpot'), true);
-  else if (!sound || sound.waiting() < 3) auto(orderLines.order(order.user.name, order.item.ten, order.qty, order.vip));
+  else if (!sound || sound.waiting() < 3) auto(order.item.kind === 'item' ? orderLines.orderItem(order.user.name, order.item.ten) : orderLines.order(order.user.name, order.item.ten, order.qty, order.vip));
 }
 /** @param {{ order: { id: string; user: User; item: Item; qty: number; gift: boolean } }} e */
 function onOrderDone({ order }) {
@@ -735,7 +781,8 @@ function onOrderDone({ order }) {
   serve(tableId, order.item, () => {
     const o = occOf(order.user);
     if (o) cheer(o, 100);
-    if (!sound || sound.waiting() < 3 || order.gift) auto(orderLines.orderDone(name, order.item.ten));
+    if (sound && sound.waiting() >= 3 && !order.gift) return;
+    auto(order.item.kind === 'item' ? orderLines.itemDone(name, order.item.ten) : orderLines.orderDone(name, order.item.ten));
   });
 }
 function onOrderNote(/** @type {{ kind: string; user: User; item: Item; price?: number }} */ e) {
@@ -955,7 +1002,8 @@ setInterval(() => {
 
 function renderMenu() {
   const s = settings;
-  const free = ['lac', 'dauhanh', 'nem', 'khoai', 'dua', 'trung', 'bia', 'trada'].map((id) => FREE.find((m) => m.id === id)?.short).filter(Boolean);
+  const free = ['lac', 'dauhanh', 'nem', 'khoai', 'dua', 'trung', 'bia'].map((id) => FREE.find((m) => m.id === id)?.short).filter(Boolean);
+  const small = FREE.filter((m) => m.kind === 'item').map((m) => m.short);
   const tiers = [
     [s.foodMinCoins, 'Món ngon'],
     [s.hotpotMinCoins, 'Nồi lẩu'],
@@ -966,6 +1014,8 @@ function renderMenu() {
     <div class="bd-title">THỰC ĐƠN</div>
     <div class="mb-sec">MIỄN PHÍ · <em>comment tên món</em></div>
     <p class="mb-free">${free.join(' · ')}</p>
+    <div class="mb-sec small">GỌI THÊM</div>
+    <p class="mb-free small">${small.join(' · ')}</p>
     <div class="mb-sec gift">TẶNG QUÀ · <em>xu mỗi quà</em></div>
     <ul class="mb-gift">${tiers.map(([c, t]) => `<li><b>${c} xu</b><span>${t}</span></li>`).join('')}</ul>
     <div class="mb-foot">Chat <b>nhậu</b> vào bàn<br/>Chat <b>bàn 1–8</b> đổi bàn</div>`;
@@ -1124,6 +1174,7 @@ function onControl(/** @type {{ action: string; text: string }} */ { action, tex
     setTimeout(() => NPC_SEATS.forEach((id) => !seats.get(id) && occupy(id, undefined, false)), 2500);
     return;
   }
+  if (action === 'closeUp') return closeUp();
   if (!sound) return;
   if (action === 'unlockAudio') sound.unlock();
   if (action === 'hush') sound.hush();
@@ -1195,6 +1246,8 @@ listen(
       renderTickets(list);
     },
     npc: onNpc,
+    closing: () => closeUp(), // phiên live kết thúc: cả quán đứng dậy đi về
+    opening: () => openUp(),
     orderDone: (e) => {
       currentOrders = e.orders;
       renderTickets(e.orders);
