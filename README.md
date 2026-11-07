@@ -6,8 +6,9 @@ Một quán nhậu vỉa hè Hà Nội vẽ kiểu tranh chi tiết (đèn vàng
 
 ## Quán có gì
 
-- **Ngồi bàn như thật:** follow, chat **“nhậu”**, gọi món hoặc tặng quà là có ghế: khách đi bộ từ ngoài đường vào, ngồi ghế nhựa quanh 8 bàn có số. Chat **“bàn 3”** để đổi bàn. TikTok không báo ai rời live, nên ai im lặng quá lâu (mặc định 10 phút) tự đứng dậy đi về.
-- **Gọi món miễn phí:** comment tên món bình dân (đậu lạc, đậu tẩm hành, nem chua, khoai chiên, dưa chuột, trứng lộn, bia hơi, trà đá…). Phiếu order treo dưới mép bạt, bếp bùng lửa, chủ quán nấu xong tự bưng mâm ra tận bàn. Đông khách thì có chạy bàn phụ.
+- **Ngồi bàn như thật:** follow, chat **“nhậu”** hoặc tặng quà là có ghế: khách đi bộ từ ngoài đường vào, ngồi ghế nhựa quanh **8 bàn, mỗi bàn 6 chỗ (48 ghế)** — hai người ngồi sau bàn, hai người hai đầu bàn, hai người phía trước quay lưng ra ống kính như ảnh quán nhậu thật. Trên đầu mỗi khách hiện **tên và ảnh đại diện TikTok**. Chat **“bàn 3”** để đổi bàn. TikTok không báo ai rời live, nên ai im lặng quá lâu (mặc định 10 phút) tự đứng dậy đi về.
+- **Gọi món miễn phí (phải vào bàn đã):** ngồi xuống rồi comment tên món bình dân (đậu lạc, đậu tẩm hành, nem chua, khoai chiên, dưa chuột, trứng lộn, bia hơi, trà đá…). Ai chưa có ghế mà gọi món thì chủ quán nhắc chat “nhậu” vào bàn trước. Phiếu order treo dưới mép bạt, bếp bùng lửa, chủ quán nấu xong tự bưng mâm ra tận bàn. Đông khách thì có chạy bàn phụ.
+- **6 khách quen** của quán ngồi sẵn cho đỡ trống (chú Tư, anh Hùng, chị Lan, anh Tuấn, cô Ba, chị Mai), 42 ghế còn lại để dành cho người xem thật; khách quen nhường ghế khi hết chỗ.
 - **Quà theo số xu mỗi quà** (không cần tên quà, chỉnh được trong admin):
   - từ **1 xu**: một món ngon ngẫu nhiên (mực nướng, ốc hương, gà nướng…)
   - từ **5 xu**: một nồi lẩu ngẫu nhiên, sôi bốc khói trên bếp ga mini
@@ -73,7 +74,7 @@ Khóa chỉ lưu trong `settings.json` trên máy bạn (file này không đưa 
 | `public/js/stage.js` | Sân khấu: ghế ngồi, khách đi vào/ra, bếp, bưng món, quà, đập quán, bao quán, bảng, LED |
 | `public/js/art/scene.js` | Mặt tiền quán, bếp, lớp viền tối và hạt kiểu tranh |
 | `public/js/art/people.js` | Người tỉ lệ thật (ngồi, đứng, đi, bưng mâm), bàn ghế nhựa, món ăn |
-| `public/js/art/layout.js` | Vị trí 8 bàn, 32 ghế, độ xa gần |
+| `public/js/art/layout.js` | Vị trí 8 bàn, 48 ghế (6 ghế một bàn), độ xa gần |
 | `public/js/menu.js` | Thực đơn: món miễn phí, món ngon, lẩu |
 | `public/js/lines.js`, `bua.js`, `order-lines.js` | Câu chủ quán nói |
 | `public/js/chat.js`, `names.js`, `text.js` | Hiểu comment, đọc tên, lọc chữ |

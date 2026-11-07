@@ -7,6 +7,11 @@
 /** Background tracks: the quán nhậu one (made for this pub) and the old chill one */
 const TRACKS = /** @type {Record<string, string>} */ ({ nhau: '/assets/audio/quan_nhau.mp3', chill: '/assets/audio/chill_relax.mp3' });
 
+/** How long one line may take to come back from the server before it is given up on */
+const FETCH_MS = 22_000;
+/** The voice is stuck if the player has not moved for this long */
+const STALL_MS = 4000;
+
 export class SoundEngine {
   /** @type {AudioContext | null} */
   ctx = null;
@@ -23,6 +28,23 @@ export class SoundEngine {
   current = null;
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   watchdog;
+  /** Lines already made by the server and waiting as an mp3: the next line starts the moment this one ends */
+  /** @type {Map<string, { url: string; at: number }>} */
+  ready = new Map();
+  /** @type {Set<string>} */
+  fetching = new Set();
+  /** Lines the voice service could not make: tried twice, then dropped so the queue never jams on one line */
+  /** @type {Map<string, number>} */
+  failed = new Map();
+  /** The player that goes through the voice polish, and the plain one for when the audio context is asleep */
+  fxAudio = new Audio();
+  plainAudio = new Audio();
+  fxReady = false;
+  /** Everything the watchdog needs to tell "still talking" from "stuck" */
+  playedAt = 0;
+  playedTime = 0;
+  /** @type {number} */
+  lineStartedAt = 0;
   /** @type {SoundSettings} */
   settings = { voice: 'female_cute', rate: 1.05, music: true, musicVolume: 0.22, musicTrack: 'nhau', ambience: true };
   music = new Audio(TRACKS.nhau);
@@ -36,8 +58,110 @@ export class SoundEngine {
   constructor() {
     this.music.loop = true;
     this.music.preload = 'auto';
+    for (const a of [this.fxAudio, this.plainAudio]) a.preload = 'auto';
     const unlock = () => this.unlock();
     for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(ev, unlock, { passive: true });
+    // Chốt an toàn cho cả buổi live: không bao giờ để giọng đọc chết hẳn vì một câu bị kẹt
+    setInterval(() => this.guard(), 900);
+  }
+
+  /**
+   * Watchdog của hàng chờ: nếu đang "nói" mà máy phát không nhích thêm giây nào (mạng treo, mất event 'ended',
+   * LIVE Studio tạm dừng tab) thì bỏ câu đó và đọc tiếp. Nếu đang rảnh mà vẫn còn câu chờ thì khởi động lại.
+   */
+  guard() {
+    if (this.ctx?.state === 'suspended') this.ctx.resume().catch(() => {});
+    const now = Date.now();
+    if (this.speaking) {
+      const a = this.current;
+      if (!a) return void this.skip();
+      if (a.currentTime > this.playedTime + 0.05) {
+        this.playedTime = a.currentTime;
+        this.playedAt = now;
+        return;
+      }
+      if (a.paused && !a.ended && now - this.playedAt > 700) a.play().catch(() => {});
+      if (now - this.playedAt > STALL_MS) this.skip();
+      return;
+    }
+    if (!this.blocked && this.waiting() > 0 && now - this.lastSpokeAt > 1500) this.next();
+  }
+
+  /** Bỏ câu đang kẹt, đọc câu kế tiếp */
+  skip() {
+    const a = this.current;
+    this.current = null;
+    if (a) {
+      try {
+        a.pause();
+        a.removeAttribute('src');
+      } catch {
+        // ignore
+      }
+    }
+    clearTimeout(this.watchdog);
+    this.speaking = false;
+    this.onSpeaking(false);
+    this.next();
+  }
+
+  // ---------------------------------------------------------------- lines made ahead of time
+
+  key(/** @type {string} */ text) {
+    const s = this.settings;
+    return `${s.voice}|${s.rate}|${text}`;
+  }
+  url(/** @type {string} */ text) {
+    const s = this.settings;
+    return `/api/tts?voice=${encodeURIComponent(s.voice)}&rate=${s.rate}&text=${encodeURIComponent(text)}`;
+  }
+  /**
+   * Ask the server for a line now and keep the mp3 in hand. The pub talks a lot, and waiting for the voice
+   * service only when the line is needed is what leaves those long silences between comments.
+   */
+  prefetch(/** @type {string} */ text) {
+    const k = this.key(text);
+    if (!text || this.ready.has(k) || this.fetching.has(k)) return;
+    this.fetching.add(k);
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), FETCH_MS);
+    fetch(this.url(text), { signal: ctl.signal })
+      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(`TTS ${r.status}`))))
+      .then((b) => {
+        this.ready.set(k, { url: URL.createObjectURL(b), at: Date.now() });
+        this.failed.delete(k);
+        this.trimReady();
+        if (this.speaking || this.blocked) return;
+        if (this.waiting() > 0) this.next(); // câu đã sẵn sàng mà đang im: đọc luôn
+      })
+      .catch(() => {
+        this.failed.set(k, (this.failed.get(k) ?? 0) + 1);
+        if (this.failed.size > 50) this.failed.delete(this.failed.keys().next().value ?? '');
+        if (!this.speaking && !this.blocked && this.waiting() > 0) setTimeout(() => this.next(), 600);
+      })
+      .finally(() => {
+        clearTimeout(timer);
+        this.fetching.delete(k);
+      });
+  }
+  /** Keep only a few lines in memory (each one is an object URL that must be given back) */
+  trimReady() {
+    while (this.ready.size > 8) {
+      const [k, v] = /** @type {[string, { url: string; at: number }]} */ (this.ready.entries().next().value);
+      this.ready.delete(k);
+      URL.revokeObjectURL(v.url);
+    }
+  }
+  take(/** @type {string} */ text) {
+    const k = this.key(text);
+    const hit = this.ready.get(k);
+    if (!hit) return '';
+    this.ready.delete(k);
+    return hit.url;
+  }
+  /** Start making the next couple of lines while this one is still being read */
+  warmNext() {
+    for (const t of [...this.priority, ...this.queue].slice(0, 2)) this.prefetch(t);
   }
 
   /** Called on the first click/key (browsers only allow sound after one) and by the dashboard */
@@ -75,6 +199,11 @@ export class SoundEngine {
 
   /** @param {Partial<SoundSettings>} s */
   apply(s) {
+    // đổi giọng hay tốc độ: mp3 đã làm sẵn theo giọng cũ không dùng được nữa
+    if ((s.voice && s.voice !== this.settings.voice) || (s.rate && s.rate !== this.settings.rate)) {
+      for (const v of this.ready.values()) URL.revokeObjectURL(v.url);
+      this.ready.clear();
+    }
     const src = TRACKS[s.musicTrack ?? this.settings.musicTrack] ?? TRACKS.nhau;
     if (!this.music.src.endsWith(src)) {
       // new track: start it from the top, the play below picks it up
@@ -99,6 +228,7 @@ export class SoundEngine {
     else this.queue.push(...items);
     // Never let a flood pile up minutes of talking: oldest normal lines go first
     if (this.queue.length > 12) this.queue.splice(0, this.queue.length - 12);
+    this.warmNext();
     if (!this.speaking && !this.blocked) this.next();
   }
 
@@ -114,7 +244,7 @@ export class SoundEngine {
 
   next() {
     clearTimeout(this.watchdog);
-    const text = this.priority.shift() ?? this.queue.shift();
+    const text = this.priority[0] ?? this.queue[0];
     if (!text) {
       this.speaking = false;
       this.lastSpokeAt = Date.now();
@@ -122,51 +252,98 @@ export class SoundEngine {
       this.duck(false);
       return;
     }
+    // Giọng đọc lỗi hai lần (hết lượt API, sai key, mất mạng): bỏ câu đó, quán vẫn nói tiếp những câu sau
+    if ((this.failed.get(this.key(text)) ?? 0) >= 2) {
+      this.failed.delete(this.key(text));
+      if (this.priority[0] === text) this.priority.shift();
+      else this.queue.shift();
+      return this.next();
+    }
+    // Câu nào chưa có mp3 thì nhờ server làm rồi chờ: không phát nửa câu, không bỏ câu vì mạng chậm
+    const src = this.take(text);
+    if (!src) {
+      this.prefetch(text);
+      this.speaking = false;
+      this.onSpeaking(false);
+      this.duck(false);
+      return;
+    }
+    if (this.priority[0] === text) this.priority.shift();
+    else this.queue.shift();
     this.speaking = true;
     this.onSpeaking(true);
     this.duck(true);
-    const s = this.settings;
-    const audio = new Audio(`/api/tts?voice=${s.voice}&rate=${s.rate}&text=${encodeURIComponent(text)}`);
+    this.warmNext();
+
+    const audio = this.player();
     this.current = audio;
-    this.brighten(audio);
+    this.playedAt = Date.now();
+    this.playedTime = 0;
+    this.lineStartedAt = Date.now();
     let done = false;
     const finish = (/** @type {number} */ pause) => {
       if (done) return;
       done = true;
       clearTimeout(this.watchdog);
+      URL.revokeObjectURL(src);
       if (this.current === audio) this.current = null;
       audio.onended = audio.onerror = null;
+      this.lastSpokeAt = Date.now();
       setTimeout(() => this.next(), pause);
     };
-    audio.onended = () => finish(350);
-    audio.onerror = () => finish(800); // TTS failed: skip this line, keep the queue moving
-    // Watchdog: a stalled download or a lost "ended" event must never freeze the voice for the rest of the live
+    audio.onended = () => finish(320);
+    audio.onerror = () => finish(500); // câu lỗi thì bỏ, hàng chờ vẫn chạy
+    // Chặn cuối: dài hơn câu nói dài nhất, chỉ để không bao giờ treo vĩnh viễn (guard() lo phần kẹt giữa câu)
     this.watchdog = setTimeout(() => {
       audio.pause();
       finish(200);
-    }, 12000 + text.length * 120);
+    }, 45_000);
+    audio.src = src;
     audio.play().catch((err) => {
       if (err?.name === 'NotAllowedError') {
-        // No click yet: keep the line and wait for unlock()
+        // Chưa ai bấm vào trang: giữ lại câu, chờ unlock()
         done = true;
         clearTimeout(this.watchdog);
+        this.ready.set(this.key(text), { url: src, at: Date.now() });
         this.priority.unshift(text);
+        this.current = null;
         this.speaking = false;
         this.onSpeaking(false);
         this.duck(false);
         this.setBlocked(true);
-      } else finish(800);
+      } else finish(500);
     });
   }
 
   /**
-   * Voice polish: cut low rumble, lift the "presence" and "air" bands that make speech sound clear instead of muffled,
-   * then a gentle compressor so every line has the same loudness. Skipped when the audio context isn't running
-   * (a media element routed into a suspended context would be silent).
+   * The player for this line: the polished one when the audio context is awake, the plain one otherwise. Both are
+   * reused for every line — a new <audio> plus a new filter chain per line piled up hundreds of audio nodes over a
+   * long live and that is what made the voice crackle, then stick.
+   */
+  player() {
+    const ctx = this.ctx;
+    if (ctx && ctx.state === 'running') {
+      if (!this.fxReady) this.fxReady = this.brighten(this.fxAudio);
+      if (this.fxReady) {
+        try {
+          this.plainAudio.pause();
+        } catch {
+          // ignore
+        }
+        return this.fxAudio;
+      }
+    }
+    return this.plainAudio;
+  }
+
+  /**
+   * Voice polish, wired once: cut low rumble, lift the "presence" and "air" bands that make speech sound clear
+   * instead of muffled, then a gentle compressor so every line has the same loudness.
+   * @returns {boolean} whether the chain is in place
    */
   brighten(/** @type {HTMLAudioElement} */ audio) {
     const ctx = this.ctx;
-    if (!ctx || ctx.state !== 'running') return;
+    if (!ctx || ctx.state !== 'running') return false;
     try {
       const src = ctx.createMediaElementSource(audio);
       const hp = ctx.createBiquadFilter();
@@ -193,8 +370,10 @@ export class SoundEngine {
       const out = ctx.createGain();
       out.gain.value = 1.25;
       src.connect(hp).connect(mud).connect(presence).connect(air).connect(comp).connect(out).connect(ctx.destination);
+      return true;
     } catch {
       // already routed or unsupported: the plain audio element still plays
+      return false;
     }
   }
 
@@ -202,8 +381,21 @@ export class SoundEngine {
   hush() {
     this.queue = [];
     this.priority = [];
-    this.current?.pause();
-    this.next();
+    clearTimeout(this.watchdog);
+    const a = this.current;
+    this.current = null;
+    if (a) {
+      a.onended = a.onerror = null;
+      try {
+        a.pause();
+      } catch {
+        // ignore
+      }
+    }
+    this.speaking = false;
+    this.lastSpokeAt = Date.now();
+    this.onSpeaking(false);
+    this.duck(false);
   }
 
   // ------------------------------------------------------------------ music and the noise of the quán

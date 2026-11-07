@@ -213,12 +213,31 @@ function shin(/** @type {Look} */ L, /** @type {number} */ x, /** @type {number}
 
 // ------------------------------------------------------------------------------------------------ seated people
 
+/** The back of a head (hair all over the skull, ears at both sides, nape showing), around (30, 11) */
+function headBack(/** @type {Look} */ L) {
+  const skull = 'M23.6 11.2 Q23.6 3.3 30 3.1 Q36.4 3.3 36.4 11.2 Q36.4 16.8 30 17.8 Q23.6 16.8 23.6 11.2 Z';
+  const ear = (/** @type {number} */ x) => `<ellipse cx="${x}" cy="12.2" rx="1.2" ry="2" fill="${L.skin}"/><ellipse cx="${x}" cy="12.2" rx="0.5" ry="1" fill="${L.skinDark}" opacity="0.5"/>`;
+  let extra = '';
+  if (L.hairStyle === 'long') extra = `<path d="M23 11 Q21.2 22 22.6 29 L37.4 29 Q38.8 22 37 11 Z" fill="${L.hair}"/><path d="M23 11 Q21.2 22 22.6 29 L37.4 29 Q38.8 22 37 11 Z" fill="url(#pHair)"/>`;
+  else if (L.hairStyle === 'bob') extra = `<path d="M23 11 Q22.6 19.6 24 20.6 L36 20.6 Q37.4 19.6 37 11 Z" fill="${L.hair}"/>`;
+  else if (L.hairStyle === 'ponytail') extra = `<path d="M30 16.6 Q33.6 18 33.4 23 Q33.2 27 30.8 28.6 Q31.8 22 29 17.6 Z" fill="${L.hair}"/><circle cx="30" cy="16.4" r="1.5" fill="#d8484f"/>`;
+  else if (L.hairStyle === 'bun') extra = `<circle cx="30" cy="2.6" r="3.4" fill="${L.hair}"/><circle cx="30" cy="2.6" r="3.4" fill="url(#pHair)"/>`;
+  return `<g class="head">
+    ${extra}
+    <path d="M27.4 15.8 L32.6 15.8 L32.8 21.4 Q30 22.6 27.2 21.4 Z" fill="${L.skinDark}"/>
+    ${ear(23.6)}${ear(36.4)}
+    <path d="${skull}" fill="${L.hair}"/><path d="${skull}" fill="url(#pHair)"/>
+    <path d="M26.2 5.2 Q30 3.6 33.8 5" stroke="#fff" stroke-opacity="0.2" stroke-width="0.7" fill="none"/>
+    ${L.cap ? `<path d="M23.2 9 Q23.6 2.5 30 2.3 Q36.4 2.5 36.8 9 Z" fill="${L.cap}"/><path d="M23.2 9 Q23.6 2.5 30 2.3 Q36.4 2.5 36.8 9 Z" fill="url(#pHair)"/><path d="M24.6 9 Q30 7.8 35.4 9 L35.4 10.4 Q30 9.2 24.6 10.4 Z" fill="${L.cap}" opacity="0.85"/>` : ''}
+  </g>`;
+}
+
 /**
  * A customer on a low plastic stool (ghế đẩu nhựa), the bia hơi way: knees up, elbows on the knees, glass in hand.
  * 60 x 92 box, stool feet at the bottom. pose 'front' faces the camera (seat behind the table); 'side' sits at the
- * end of a table turned toward it (facing right; the stage mirrors it for the other end). The glass hand is in
- * .arm-cheer for "dzô".
- * @param {Look} L @param {'front' | 'side'} pose
+ * end of a table turned toward it (facing right; the stage mirrors it for the other end); 'back' sits in front of
+ * the table with their back to the camera (the two closest seats). The glass hand is in .arm-cheer for "dzô".
+ * @param {Look} L @param {'front' | 'side' | 'back'} pose
  */
 export function seatedSVG(L, pose = 'front') {
   const bareLegs = L.bottomStyle === 'shorts' || L.bottomStyle === 'skirt';
@@ -240,6 +259,21 @@ export function seatedSVG(L, pose = 'front') {
       <g class="body">
         ${head112(0.75, 1)}
         <g class="arm-cheer" style="transform-origin:38px 26px">${arm(L, 38, 26, 43.6, 49, 49.6, 42.4, 4.6)}${glass(50.6, 45.6, 1.15)}</g>
+      </g>
+    </svg>`;
+  }
+  if (pose === 'back') {
+    // seen from behind: the stool, the back of the shirt, one hand on the table and one holding the glass
+    return `<svg viewBox="0 0 60 92" class="person seated back" aria-hidden="true">
+      <ellipse cx="30" cy="90" rx="18" ry="2.4" fill="url(#pShadow)"/>
+      ${shin(L, 25.4, 64, 24.6, 84.6, 5, -0.3)}${shin(L, 34.6, 64, 35.4, 84.6, 5, 0.3)}
+      ${stool(L.stool, 30, 68)}
+      <g class="body">
+        ${torso(L, 'M16.6 26.4 Q17 22.8 22.4 22.4 L37.6 22.4 Q43 22.8 43.4 26.4 L42.4 67.6 Q30 70 17.6 67.6 Z', 22.6, 67.6)}
+        <path d="M18.4 40 Q30 43 41.6 40" stroke="#000" stroke-opacity="0.16" stroke-width="0.8" fill="none"/>
+        <g class="arm-back">${arm(L, 18.6, 26.2, 15.6, 42, 22.6, 23.6, 4.6)}</g>
+        ${headBack(L)}
+        <g class="arm-cheer" style="transform-origin:41.4px 26.2px">${arm(L, 41.4, 26.2, 45.2, 43.6, 40.6, 40, 4.6)}${glass(40.6, 43, 1.2)}</g>
       </g>
     </svg>`;
   }

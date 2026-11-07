@@ -3,8 +3,11 @@
 // và chủ quán đáp lại họ. Dùng chung cho server (chọn lúc nào ai nói gì) và sân khấu (hiện và nói).
 // Không bao giờ đặt lời vào miệng người xem thật.
 
-/** Names of the regulars, in the order of NPC_SEATS (layout.js) */
-export const REGULARS = ['chú Tư', 'anh Hùng', 'chị Lan', 'anh Tuấn', 'cô Ba', 'anh Khoa', 'chị Mai', 'bác Bảy', 'anh Long', 'em Vy', 'anh Phát'];
+/**
+ * Names of the regulars, in the order of NPC_SEATS (layout.js). Six only: the quán is never empty, and the other
+ * 42 stools stay free for real viewers (the owner's rule).
+ */
+export const REGULARS = ['chú Tư', 'anh Hùng', 'chị Lan', 'anh Tuấn', 'cô Ba', 'chị Mai'];
 
 /** What a regular says [bubble], and how the host answers ({name} = "chú Tư bàn ba") */
 export const NPC_TALK = /** @type {Array<[string, string]>} */ ([

@@ -1,6 +1,7 @@
 // @ts-check
 // Quán phía server: hiểu comment gọi món / xin ngồi / đổi bàn, và giữ hàng chờ của bếp (ai gọi trước làm trước,
 // khách tặng quà được ưu tiên). Server giữ bếp để sân khấu, khung xem trước và trang admin luôn khớp nhau.
+// Ở đây cũng giữ danh sách ai đang có ghế: món miễn phí chỉ dành cho khách đã vào bàn.
 import { FREE, HOTPOT, PAID } from './public/js/menu.js';
 import { NPC_DISHES, REGULARS } from './public/js/npc.js';
 import { tokensOf } from './public/js/text.js';
@@ -81,6 +82,29 @@ export function createPub(o) {
   const lastOrderAt = new Map();
   /** people who sent a gift during this live: their orders jump the queue */
   const gifters = new Set();
+  /**
+   * Who has a stool in the quán right now (mirror of the stage: a seat comes from follow / "nhậu" / "bàn N" /
+   * a gift, and goes when they have been quiet for `seatIdleMin`). Only someone sitting may order a free dish.
+   * @type {Map<string, number>} viewer id -> when they were last active
+   */
+  const seated = new Map();
+  const seatIdleMs = () => Math.max(2, Number(o.settings().seatIdleMin) || 10) * 60_000;
+  /** They asked for a seat (or followed, or gave a gift): the stage puts them on a stool */
+  function sit(/** @type {string} */ id) {
+    seated.set(id, Date.now());
+    if (seated.size > 3000) seated.delete(seated.keys().next().value ?? '');
+  }
+  /** Still at the table? Any comment keeps the seat warm, exactly like on the stage. */
+  function sitting(/** @type {string} */ id) {
+    const at = seated.get(id);
+    if (at === undefined) return false;
+    if (Date.now() - at > seatIdleMs()) {
+      seated.delete(id);
+      return false;
+    }
+    seated.set(id, Date.now());
+    return true;
+  }
 
   const orderList = () =>
     orders.map((x) => ({ id: x.id, user: x.user, item: x.item, qty: x.qty, state: x.state, vip: x.vip, left: x.state === 'cook' ? Math.max(0, x.ms - (Date.now() - x.start)) : x.ms, ms: x.ms }));
@@ -127,6 +151,11 @@ export function createPub(o) {
       broadcast('orderNote', { kind: 'paid', user: show(u), item: found.item, price });
       return true;
     }
+    // Luật quán: phải có ghế mới gọi được món miễn phí (chat "nhậu" vào bàn trước)
+    if (!sitting(u.id)) {
+      broadcast('orderNote', { kind: 'seat', user: show(u), item: found.item });
+      return true;
+    }
     const now = Date.now();
     const mine = orders.find((x) => x.uid === u.id && !x.gift);
     if (mine) {
@@ -148,6 +177,7 @@ export function createPub(o) {
     onChat(/** @type {User} */ u, /** @type {string} */ text) {
       const seat = seatWish(text);
       if (seat !== null) {
+        sit(u.id);
         broadcast('seat', { user: show(u), table: seat });
         // "nhậu" alone is a seat request; "nhậu đậu lạc" is also an order
         if (!orderedItem(text)) return seat ? 'table' : 'sit';
@@ -159,13 +189,22 @@ export function createPub(o) {
     giftOrder(/** @type {User} */ u, /** @type {number} */ coinsEach, /** @type {number} */ count) {
       const s = o.settings();
       gifters.add(u.id);
+      sit(u.id);
       const hot = s.hotpotMinCoins > 0 && coinsEach >= s.hotpotMinCoins;
       if (!hot && !(s.foodMinCoins > 0 && coinsEach >= s.foodMinCoins)) return false;
       const list = hot ? HOTPOT : PAID;
       enqueue(u, list[Math.floor(Math.random() * list.length)], Math.min(count, hot ? 3 : 5), true);
       return true;
     },
-    noteGifter: (/** @type {User} */ u) => gifters.add(u.id),
+    noteGifter: (/** @type {User} */ u) => {
+      gifters.add(u.id);
+      sit(u.id); // quà là có ghế: sân khấu cũng cho họ ngồi
+    },
+    /** Follow / được sân khấu cho ngồi: giữ chỗ cho họ ở phía server luôn */
+    noteSeated: (/** @type {User} */ u) => sit(u.id),
+    /** Comment nào cũng làm ghế "còn ấm" (giống lastActive trên sân khấu) */
+    touchSeat: (/** @type {User} */ u) => sitting(u.id),
+    hasSeat: (/** @type {User} */ u) => sitting(u.id),
     /** Free orders still waiting or cooking (a regular only orders when the kitchen is not swamped) */
     waiting: () => orders.filter((x) => !x.gift).length,
     /** A regular of the quán (k = index in REGULARS) orders a free dish on their own */

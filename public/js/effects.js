@@ -2,7 +2,7 @@
 // Mọi hàm nhận một khung (box) và tọa độ tính bằng % của khung đó. Chỉ dùng transform/opacity để mượt trên LIVE Studio.
 
 /** Too many live particles slows LIVE Studio down: past this, new ones are skipped */
-const MAX_LIVE = 420;
+const MAX_LIVE = 240;
 let live = 0;
 
 const make = (/** @type {string} */ cls, /** @type {HTMLElement} */ box, /** @type {number} */ ms) => {
