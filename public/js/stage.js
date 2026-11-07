@@ -1012,12 +1012,20 @@ function renderMenu() {
   ].filter(([c]) => Number(c) > 0);
   $('menu-board').innerHTML = `
     <div class="bd-title">THỰC ĐƠN</div>
-    <div class="mb-sec">MIỄN PHÍ · <em>comment tên món</em></div>
-    <p class="mb-free">${free.join(' · ')}</p>
-    <div class="mb-sec small">GỌI THÊM</div>
-    <p class="mb-free small">${small.join(' · ')}</p>
-    <div class="mb-sec gift">TẶNG QUÀ · <em>xu mỗi quà</em></div>
-    <ul class="mb-gift">${tiers.map(([c, t]) => `<li><b>${c} xu</b><span>${t}</span></li>`).join('')}</ul>
+    <div class="mb-body">
+      <div class="mb-block">
+        <div class="mb-sec">MIỄN PHÍ <em>· gõ tên món</em></div>
+        <p class="mb-free">${free.join(' · ')}</p>
+      </div>
+      <div class="mb-block">
+        <div class="mb-sec small">GỌI THÊM <em>· có ngay</em></div>
+        <p class="mb-free small">${small.join(' · ')}</p>
+      </div>
+      <div class="mb-block">
+        <div class="mb-sec gift">TẶNG QUÀ <em>· xu mỗi quà</em></div>
+        <ul class="mb-gift">${tiers.map(([c, t]) => `<li><b>${c} xu</b><span>${t}</span></li>`).join('')}</ul>
+      </div>
+    </div>
     <div class="mb-foot">Chat <b>nhậu</b> vào bàn<br/>Chat <b>bàn 1–8</b> đổi bàn</div>`;
 }
 
