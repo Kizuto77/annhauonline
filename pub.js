@@ -2,6 +2,7 @@
 // Quán phía server: hiểu comment gọi món / xin ngồi / đổi bàn, và giữ hàng chờ của bếp (ai gọi trước làm trước,
 // khách tặng quà được ưu tiên). Server giữ bếp để sân khấu, khung xem trước và trang admin luôn khớp nhau.
 import { FREE, HOTPOT, PAID } from './public/js/menu.js';
+import { NPC_DISHES, REGULARS } from './public/js/npc.js';
 import { tokensOf } from './public/js/text.js';
 
 /** @typedef {{ id: string; name: string; avatar: string }} User */
@@ -165,6 +166,14 @@ export function createPub(o) {
       return true;
     },
     noteGifter: (/** @type {User} */ u) => gifters.add(u.id),
+    /** Free orders still waiting or cooking (a regular only orders when the kitchen is not swamped) */
+    waiting: () => orders.filter((x) => !x.gift).length,
+    /** A regular of the quán (k = index in REGULARS) orders a free dish on their own */
+    npcOrder(/** @type {number} */ k) {
+      const id = NPC_DISHES[Math.floor(Math.random() * NPC_DISHES.length)];
+      const item = FREE.find((m) => m.id === id) ?? FREE[0];
+      enqueue({ id: `npc-${k}`, name: REGULARS[k] ?? 'khách quen', avatar: '' }, item, 1, false);
+    },
     snapshot: () => ({ orders: orderList() }),
   };
 }

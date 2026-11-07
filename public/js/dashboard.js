@@ -116,6 +116,11 @@ app.innerHTML = `
       <div class="row wrap"><button class="btn" data-demo="free">🥜 Thử gọi món</button></div>
     </div>
     <div class="card">
+      <h3>🧑‍🤝‍🧑 Khách quen của quán</h3>
+      <p class="note">Mấy ghế có sẵn khách quen (chú Tư, anh Hùng, chị Lan…, là nhân vật của quán, không phải người xem). Bật lên thì họ tự gọi món, nói vài câu, chủ quán đáp lại họ lúc không có comment nào cần đọc, cho quán lúc nào cũng có chuyện. Người xem vào thì khách quen nhường ghế.</p>
+      <label class="field switch big"><input type="checkbox" id="s-npcLife" /><span><b>Khách quen tự gọi món, nói chuyện</b></span></label>
+    </div>
+    <div class="card">
       <h3>🔑 Từ khóa cụng ly</h3>
       <label class="field"><span>Comment có một trong các từ này là khách nâng ly. Cách nhau dấu phẩy. Từ 3 chữ cái trở lên (dzo) không phân biệt dấu; từ ngắn (dô, zo) phải gõ đứng riêng và đúng dấu. 4 người cùng gõ trong 15 giây thì cả quán dzô.</span><div class="row"><input id="s-keyword" maxlength="120" placeholder="dzô, dzo, dô, zô, do, zo" /><button class="btn" data-save="keyword">Lưu</button></div></label>
     </div>
@@ -303,7 +308,7 @@ for (const b of document.querySelectorAll('[data-key]')) {
   };
 }
 for (const b of document.querySelectorAll('[data-style]')) /** @type {HTMLElement} */ (b).onclick = () => saveSetting('replyStyle', /** @type {HTMLElement} */ (b).dataset.style);
-const SWITCHES = ['orders', 'showBoard', 'autoVoice', 'greet', 'readChat', 'idleTalk', 'music', 'ambience'];
+const SWITCHES = ['npcLife', 'orders', 'showBoard', 'autoVoice', 'greet', 'readChat', 'idleTalk', 'music', 'ambience'];
 for (const key of SWITCHES) $(`s-${key}`).onchange = (/** @type {Event} */ e) => saveSetting(key, /** @type {HTMLInputElement} */ (e.target).checked);
 for (const key of ['rate', 'musicVolume']) {
   const input = $(`s-${key}`);

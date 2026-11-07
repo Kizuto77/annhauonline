@@ -320,6 +320,11 @@ export const lines = (ctx) => ({
     // "…run. bạn ngồi đây" -> "…run. Bạn ngồi đây"
     return `${intro} ${sentences(answer)}`;
   },
+  /** Read a question aloud, then the real answer from answers.js */
+  readAnswer: (/** @type {string} */ name, /** @type {string} */ text, /** @type {string} */ answer) =>
+    `${cap(fill(pick(READ_ASK), { name: ban(name), text: /[?!.…]$/.test(text) ? text : `${text}?` }))} ${sentences(answer)}`,
+  /** The answer alone, by name (when comments are not read aloud) */
+  answer: (/** @type {string} */ name, /** @type {string} */ answer) => `${cap(ban(name))} ơi, ${answer}`,
   /** Several people chatting at once: thank them together */
   shoutout: (/** @type {string[]} */ names) => fill(pick(SHOUT), { q: ctx.q, kw: ctx.kw, list: listNames(names) }),
   fastChat: () => fill(pick(FAST), { q: ctx.q, kw: ctx.kw }),

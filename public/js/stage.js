@@ -17,18 +17,20 @@ import { detectTopic, detectCity, daoCount } from './chat.js';
 import { readableComment } from './bua.js';
 import { tokensOf } from './text.js';
 import { beams, fireworks, flyArc, floatUp, reveal, ring, sparkles, splash } from './effects.js';
+import { answerFor } from './answers.js';
+import { REGULARS, NPC_TALK, NPC_ORDER, NPC_SERVED } from './npc.js';
 
 const params = new URLSearchParams(location.search);
 const PREVIEW = params.get('preview') === '1';
 
 const GREET_EVERY_MS = 6000;
 const SHARE_EVERY_MS = 5 * 60 * 1000;
-const TALK_AFTER_MS = 14 * 1000;
-const TALK_GAP_MS = 22 * 1000;
+const TALK_AFTER_MS = 8 * 1000;
+const TALK_GAP_MS = 14 * 1000;
 const DAO_WISH_MS = 15 * 60 * 1000;
 
 /** @typedef {{ id: string; name: string; avatar: string }} User */
-/** @typedef {{ seat: number; user?: User; npc: boolean; look: import('./art/people.js').Look; lastActive: number; dzo: number; el: HTMLElement; leaving?: boolean }} Occupant */
+/** @typedef {{ seat: number; user?: User; npc: boolean; npcIndex: number; look: import('./art/people.js').Look; lastActive: number; dzo: number; el: HTMLElement; leaving?: boolean }} Occupant */
 /** @typedef {{ id: string; ten: string; short: string; icon: string; kind: string }} Item */
 
 /** @type {any} */
@@ -231,7 +233,7 @@ function occupy(/** @type {number} */ seatId, /** @type {User | undefined} */ us
   const look = lookOf(user ? user.id : `npc-${seatId}`);
   const e = seatedEl(seatId, look, user ? user.name : '');
   /** @type {Occupant} */
-  const occ = { seat: seatId, user, npc: !user, look, lastActive: Date.now(), dzo: 0, el: e };
+  const occ = { seat: seatId, user, npc: !user, npcIndex: user ? -1 : NPC_SEATS.indexOf(seatId), look, lastActive: Date.now(), dzo: 0, el: e };
   seats.set(seatId, occ);
   if (user) seatOf.set(user.id, seatId);
   if (!walkIn) {
@@ -344,9 +346,10 @@ setInterval(() => {
 function bubble(/** @type {Occupant} */ occ, /** @type {string} */ text, ms = 4500) {
   occ.el.querySelector('.bubble')?.remove();
   const b = el('div', 'bubble');
-  const who = occ.user ? `<b></b>` : '';
-  b.innerHTML = `${who}<span></span>`;
-  if (occ.user) /** @type {HTMLElement} */ (b.querySelector('b')).textContent = occ.user.name;
+  const name = occ.user ? occ.user.name : npcName(occ);
+  b.innerHTML = `${name ? '<b></b>' : ''}<span></span>`;
+  if (!occ.user) b.classList.add('npc');
+  if (name) /** @type {HTMLElement} */ (b.querySelector('b')).textContent = occ.user ? name : `${name} · khách quen`;
   /** @type {HTMLElement} */ (b.querySelector('span')).textContent = text;
   // bubbles live outside the person (so they are not mirrored and sit above everything)
   const h = headOf(occ.seat);
@@ -360,6 +363,19 @@ function bubble(/** @type {Occupant} */ occ, /** @type {string} */ text, ms = 45
     occ.el.classList.remove('named');
   }, ms);
 }
+/** A regular's name, capitalised for display ("Chú Tư") */
+const npcName = (/** @type {Occupant} */ o) => {
+  const n = REGULARS[o.npcIndex] ?? '';
+  return n ? n.charAt(0).toUpperCase() + n.slice(1) : '';
+};
+/** The regular with this index, if they are sitting in their seat right now */
+const npcOcc = (/** @type {number} */ k) => everyone().find((o) => o.npc && o.npcIndex === k) ?? null;
+/** "chú Tư bàn 3" for the host's lines */
+const npcCall = (/** @type {Occupant} */ o) => `${REGULARS[o.npcIndex]} bàn ${TABLES[SEATS[o.seat].table].no}`;
+const npcFill = (/** @type {string} */ line, /** @type {Record<string, string>} */ v) => line.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
+/** Is the host free to chat with a regular? Real viewers always come first. */
+const hostFree = () => !sound || (sound.waiting() === 0 && toRead.length === 0 && !smashing);
+
 function cheer(/** @type {Occupant} */ occ, delay = 0) {
   setTimeout(() => {
     occ.el.classList.remove('cheer');
@@ -536,22 +552,47 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean; kind?: stri
     daoWish.set(user.id, { n: daoCount(text), at: Date.now() });
     if (occ) setTimeout(() => bubble(occ, `🍑 Gọi ${daoCount(text)} em đào`), 1500);
   }
-  if (settings.readChat && !(dzo && tokensOf(text).length <= 3)) queueRead(user, text, topic);
+  const ans = answerFor(text, answerCtx(user));
+  if (settings.readChat && !(dzo && tokensOf(text).length <= 3)) queueRead(user, text, topic, ans);
+  else if (ans) auto(say().answer(user.name, ans));
 }
 
+/** What the quán knows right now, for real answers to questions (answers.js) */
+function answerCtx(/** @type {User} */ user) {
+  const occ = occOf(user);
+  const mine = currentOrders.find((o) => o.user.id === user.id);
+  return {
+    q: settings.channelName,
+    kw: kwSaid(),
+    gender: /** @type {'m' | 'f'} */ (settings.voiceGender === 'm' ? 'm' : 'f'),
+    now: new Date(),
+    seated: everyone().filter((o) => o.user).length,
+    viewers: viewersNow,
+    myTable: occ ? TABLES[SEATS[occ.seat].table].no : 0,
+    top: topName,
+    cooking: currentOrders.map((o) => o.item.short),
+    myDish: mine ? mine.item.short : '',
+    free: FREE.map((m) => m.short),
+    tiers: { food: Number(settings.foodMinCoins) || 0, hotpot: Number(settings.hotpotMinCoins) || 0, smash: Number(settings.smashMinCoins) || 0, treat: Number(settings.treatMinCoins) || 0 },
+  };
+}
+/** @type {any[]} orders on the kitchen list (server's orderList) */
+let currentOrders = [];
+let topName = '';
+
 /** Comments waiting to be read aloud: newest kept when the chat runs faster than the voice */
-/** @type {Array<{ user: User; text: string; topic: import('./chat.js').Topic | null; at: number }>} */
+/** @type {Array<{ user: User; text: string; topic: import('./chat.js').Topic | null; ans: string; at: number }>} */
 const toRead = [];
 /** @type {Map<string, string>} */
 const lastRead = new Map();
 let skipped = 0;
 let lastFastNote = 0;
-function queueRead(/** @type {User} */ user, /** @type {string} */ raw, /** @type {import('./chat.js').Topic | null} */ topic) {
+function queueRead(/** @type {User} */ user, /** @type {string} */ raw, /** @type {import('./chat.js').Topic | null} */ topic, ans = '') {
   const text = readableComment(raw);
   if (!text || lastRead.get(user.id) === text.toLowerCase()) return;
   lastRead.set(user.id, text.toLowerCase());
   if (lastRead.size > 3000) lastRead.delete(lastRead.keys().next().value ?? '');
-  toRead.push({ user, text, topic, at: Date.now() });
+  toRead.push({ user, text, topic, ans, at: Date.now() });
   if (toRead.length > 6) {
     toRead.shift();
     skipped++;
@@ -578,6 +619,7 @@ setInterval(() => {
     occ.el.classList.add('glow');
     setTimeout(() => occ.el.classList.remove('glow'), 5000);
   }
+  if (next.ans) return auto(say().readAnswer(next.user.name, next.text, next.ans));
   const city = next.topic === 'city' ? detectCity(next.text) : '';
   auto(say().readComment(next.user.name, next.text, next.topic, city, daoCount(next.text)));
 }, 500);
@@ -611,6 +653,13 @@ function onFollow(/** @type {{ user: User }} */ { user }) {
 
 /** @param {{ order: { id: string; user: User; item: Item; qty: number; vip: boolean; gift: boolean } }} e */
 function onOrder({ order }) {
+  if (order.user.id.startsWith('npc-')) {
+    const o = npcOcc(Number(order.user.id.slice(4)));
+    if (!o) return;
+    setTimeout(() => bubble(o, `${order.item.icon} Cho ${order.item.short}!`, 3500), 300);
+    if (hostFree() && Math.random() < 0.6) auto(npcFill(pick(NPC_ORDER), { name: npcCall(o), mon: order.item.ten }));
+    return;
+  }
   noteActive(order.user);
   const { occ } = seatUser(order.user);
   if (occ) setTimeout(() => bubble(occ, `${order.item.icon} ${order.qty > 1 ? `${order.qty} ` : ''}${order.item.short}`, 3500), 400);
@@ -619,6 +668,15 @@ function onOrder({ order }) {
 }
 /** @param {{ order: { id: string; user: User; item: Item; qty: number; gift: boolean } }} e */
 function onOrderDone({ order }) {
+  if (order.user.id.startsWith('npc-')) {
+    const o = npcOcc(Number(order.user.id.slice(4)));
+    if (!o) return;
+    serve(SEATS[o.seat].table, order.item, () => {
+      cheer(o, 100);
+      if (hostFree() && Math.random() < 0.5) auto(npcFill(pick(NPC_SERVED), { name: npcCall(o), mon: order.item.ten }));
+    });
+    return;
+  }
   let occ = occOf(order.user);
   if (!occ) occ = seatUser(order.user).occ;
   if (!occ) return;
@@ -795,6 +853,7 @@ function shards(/** @type {(typeof TABLES)[number]} */ t) {
 // -------------------------------------------------------------------------------------------- boards, LED
 
 function renderBoard(/** @type {Array<{ id: string; name: string; score: number; coins: number }>} */ top) {
+  topName = top[0]?.name ?? '';
   const list = $('board-list');
   list.innerHTML = '';
   const rows = top.slice(0, 5);
@@ -944,8 +1003,29 @@ setInterval(() => {
     .forEach((o, i) => cheer(o, i * 140));
   setTimeout(() => sound?.clink(0.12), 800);
   const npc = everyone().filter((o) => o.npc);
-  if (npc.length && Math.random() < 0.45) bubble(pick(npc), pick(['Dzô!', 'Một hai ba dzô!', 'Hết bia rồi!', 'Trăm phần trăm!', 'Mồi ngon ghê', 'Haha', 'Ngồi thêm tí!']), 2600);
+  if (npc.length && Math.random() < 0.2) bubble(pick(npc), pick(['Dzô!', 'Một hai ba dzô!', 'Hết bia rồi!', 'Trăm phần trăm!', 'Mồi ngon ghê', 'Haha', 'Ngồi thêm tí!']), 2600);
 }, 6500);
+
+/** A regular says something; the host answers when no viewer is waiting for her */
+function onNpc(/** @type {{ k: number; talk: number }} */ e) {
+  const o = npcOcc(e.k) ?? null;
+  const pair = NPC_TALK[e.talk];
+  if (!o || !pair || smashing) return;
+  bubble(o, pair[0], 4200);
+  if (/dzô/i.test(pair[0])) {
+    cheer(o);
+    occupantsAt(SEATS[o.seat].table).forEach((x, i) => x !== o && cheer(x, 300 + i * 150));
+    sound?.clink(0.3, 0.6);
+  }
+  if (hostFree()) {
+    setTimeout(() => {
+      if (!hostFree()) return;
+      auto(npcFill(pair[1], { name: npcCall(o) }));
+      o.el.classList.add('glow');
+      setTimeout(() => o.el.classList.remove('glow'), 4000);
+    }, 1200);
+  }
+}
 
 // Hearts from the live float up from the tables
 function onLikes(/** @type {{ n: number; total: number }} */ e) {
@@ -1015,7 +1095,8 @@ listen(
       likesTotal = Number(snap.status?.totalLikes) || 0;
       applySettings(snap.settings);
       renderBoard(snap.board);
-      renderTickets(snap.pub?.orders ?? []);
+      currentOrders = snap.pub?.orders ?? [];
+      renderTickets(currentOrders);
     },
     status: (st) => {
       viewersNow = Number(st?.viewers) || 0;
@@ -1032,8 +1113,13 @@ listen(
     smash,
     wave: () => wave(true),
     order: onOrder,
-    orders: renderTickets,
+    orders: (list) => {
+      currentOrders = list;
+      renderTickets(list);
+    },
+    npc: onNpc,
     orderDone: (e) => {
+      currentOrders = e.orders;
       renderTickets(e.orders);
       onOrderDone(e);
     },

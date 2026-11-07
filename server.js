@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { cleanText, lettersOnly, maskBanned, tokensOf } from './public/js/text.js';
 import { createPub } from './pub.js';
 import { VOICES, synth } from './tts.js';
+import { NPC_TALK, REGULARS } from './public/js/npc.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(ROOT, 'public');
@@ -54,6 +55,7 @@ const DEFAULTS = {
   smashMinCoins: 30, // quà từ số xu này: đập quán; 0 = tắt
   treatMinCoins: 99, // quà từ số xu này: bao cả quán (mỗi bàn một nồi lẩu)
   seatIdleMin: 10, // im lặng bao nhiêu phút thì rời bàn (TikTok không báo ai rời live)
+  npcLife: true, // khách quen của quán (nhân vật) tự gọi món, nói chuyện, chủ quán đáp lại
   background: '', // ảnh nền tự tải lên; rỗng = cảnh quán vẽ sẵn
 };
 /** @typedef {typeof DEFAULTS} Settings */
@@ -93,6 +95,7 @@ const VALIDATE = {
   smashMinCoins: num(0, 1_000_000),
   treatMinCoins: num(0, 1_000_000),
   seatIdleMin: num(2, 120),
+  npcLife: bool,
 };
 
 /** @type {Settings} */
@@ -259,6 +262,7 @@ const pub = createPub({ broadcast, uid, show, settings: () => settings });
 function onChat(user, text) {
   const clean = cleanText(text, 200);
   if (!clean) return;
+  realChats.push(Date.now());
   addPoints(user, 1);
   const dzo = isKeyword(clean);
   // gọi món, xin ngồi, đổi bàn: the stage shows those its own way instead of reading the comment
@@ -304,6 +308,32 @@ function onGift(user, giftName, coinsEach, count) {
 const onJoin = (user) => broadcast('join', { user: show(user) });
 /** @param {User} user */
 const onFollow = (user) => broadcast('follow', { user: show(user) });
+
+// The quán's own regulars (characters, never viewers) order and talk now and then, a bit less when the live chat
+// is busy, so the room keeps moving between comments. Only while a stage or preview page is open.
+/** @type {number[]} */
+let realChats = [];
+let lastNpcTalk = Date.now();
+let lastNpcOrder = Date.now();
+let npcTalkGap = 15_000;
+let npcOrderGap = 35_000;
+const rndMs = (/** @type {number} */ a, /** @type {number} */ b) => Math.round(a + Math.random() * (b - a));
+setInterval(() => {
+  if (!settings.npcLife || ![...clients.values()].some((r) => r !== 'dash')) return;
+  const now = Date.now();
+  realChats = realChats.filter((t) => now - t < 15_000);
+  const busy = realChats.length >= 4;
+  if (now - lastNpcTalk > npcTalkGap * (busy ? 2.5 : 1)) {
+    lastNpcTalk = now;
+    npcTalkGap = rndMs(16_000, 30_000);
+    broadcast('npc', { id: uid(), k: Math.floor(Math.random() * REGULARS.length), talk: Math.floor(Math.random() * NPC_TALK.length) });
+  }
+  if (settings.orders && now - lastNpcOrder > npcOrderGap && pub.waiting() < 3) {
+    lastNpcOrder = now;
+    npcOrderGap = rndMs(40_000, 75_000);
+    pub.npcOrder(Math.floor(Math.random() * REGULARS.length));
+  }
+}, 3000);
 
 // ---------------------------------------------------------------------------------------------------------------
 // TikTok LIVE (tiktok-live-connector 2.x, proto v3: chat text in `content`, avatar in user.avatarThumb.urlList)
