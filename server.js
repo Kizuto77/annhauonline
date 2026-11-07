@@ -244,8 +244,8 @@ function onGift(user, giftName, coinsEach, count) {
   if (shouldSmash(giftName, coinsEach)) triggerSmash(user);
 }
 
-// "Đập quán": quà đặc biệt làm khách đập phá, chủ quán khóc rồi dọn lại. Một đợt kéo dài ~32 giây, quà trong lúc đó bỏ qua.
-const SMASH_MS = 32_000;
+// "Đập quán": quà đặc biệt làm khách đập phá, chủ quán khóc rồi dọn lại. Một đợt kéo dài ~15 giây, quà trong lúc đó bỏ qua.
+const SMASH_MS = 15_000;
 let smashUntil = 0;
 const fold = (/** @type {string} */ s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
 /** @param {string} giftName @param {number} coinsEach */

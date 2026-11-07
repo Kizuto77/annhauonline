@@ -267,7 +267,7 @@
 [hidden] { display: none !important; }
 
 /* ---------------------------------------------------------------- đập quán */
-.world.quake { animation: quake 0.5s linear 7; }
+.world.quake { animation: quake 0.5s linear 4; }
 @keyframes quake { 0%, 100% { translate: 0 0; } 20% { translate: -7px 4px; } 40% { translate: 6px -5px; } 60% { translate: -5px -3px; } 80% { translate: 7px 5px; } }
 .red-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 55%, rgba(255, 60, 40, 0.7), rgba(180, 0, 0, 0.25) 50%, transparent 78%); mix-blend-mode: screen; animation: flash 1.4s ease-out both; }
 .debris { position: absolute; font-size: 17px; line-height: 1; margin: -9px; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)); }

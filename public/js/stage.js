@@ -809,7 +809,7 @@ function debris(/** @type {number} */ n, /** @type {number} */ keep) {
 function smash(/** @type {{ user: User; ms?: number }} */ { user }) {
   if (smashing) return;
   smashing = true;
-  const total = 30_000;
+  const total = 14_000;
   const t = (/** @type {number} */ ms, /** @type {() => void} */ fn) => setTimeout(fn, ms);
   const all = everyone();
   const banner = $('smash-banner');
@@ -818,14 +818,14 @@ function smash(/** @type {{ user: User; ms?: number }} */ { user }) {
   banner.classList.remove('go');
   void banner.offsetWidth;
   banner.classList.add('go');
-  t(5200, () => (banner.hidden = true));
+  t(3200, () => (banner.hidden = true));
 
   // 0 s: BANG
   const f = el('div', 'red-flash');
   fx.appendChild(f);
   t(1500, () => f.remove());
   world.classList.add('quake');
-  t(3600, () => world.classList.remove('quake'));
+  t(2100, () => world.classList.remove('quake'));
   sound?.crash(0.8);
   debris(46, 16);
   for (const [id, te] of tableEls) {
@@ -846,10 +846,10 @@ function smash(/** @type {{ user: User; ms?: number }} */ { user }) {
   auto(say().smash(user.name), true);
 
   // ~9 s: everyone calms down, owner sobs
-  t(9000, () => all.forEach((o) => o.el.classList.remove('panic')));
+  t(4500, () => all.forEach((o) => o.el.classList.remove('panic')));
 
   // ~15 s: tidy up
-  t(15_000, () => {
+  t(6500, () => {
     auto(say().smashClean(), true);
     host.classList.remove('crying');
     if (tag) tag.textContent = 'Chủ quán';
@@ -862,15 +862,15 @@ function smash(/** @type {{ user: User; ms?: number }} */ { user }) {
       { left: i % 2 ? '92%' : '4%', top: `${top}%` },
       { left: i % 2 ? '4%' : '92%', top: `${top}%` },
     ]);
-    broom.animate(frames.map((fr, i) => ({ ...fr, offset: i / (frames.length - 1) })), { duration: 8500, easing: 'ease-in-out', fill: 'forwards' });
-    t(8600, () => broom.remove());
-    rubble.forEach((r, i) => t(rnd(500, 8000) + i * 10, () => {
+    broom.animate(frames.map((fr, i) => ({ ...fr, offset: i / (frames.length - 1) })), { duration: 4000, easing: 'ease-in-out', fill: 'forwards' });
+    t(4100, () => broom.remove());
+    rubble.forEach((r, i) => t(rnd(300, 3800) + i * 10, () => {
       r.classList.add('gone');
       setTimeout(() => r.remove(), 600);
     }));
     rubble = [];
     // the tables stand up again, one by one
-    [...tableEls].forEach(([id, te], i) => t(1500 + i * 650, () => {
+    [...tableEls].forEach(([id, te], i) => t(700 + i * 220, () => {
       te.classList.remove('wrecked');
       const at = TABLES[id];
       burst(at.x, at.y - 4, 'gold', 8);
@@ -878,7 +878,7 @@ function smash(/** @type {{ user: User; ms?: number }} */ { user }) {
   });
 
   // ~26 s: all done
-  t(total - 4000, () => {
+  t(total - 2500, () => {
     sound?.ding(0.5);
     flash();
     all.forEach((o, i) => cheer(o, i * 40));
