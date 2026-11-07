@@ -3,3 +3,4 @@ settings.json
 uploads/
 *.log
 .DS_Store
+viewers.json

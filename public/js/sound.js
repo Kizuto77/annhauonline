@@ -91,7 +91,7 @@ export class SoundEngine {
   say(/** @type {string | string[]} */ text, first = false) {
     // every sentence starts with a capital ("bạn Lan tặng…" -> "Bạn Lan tặng…"): the voice reads it as a new sentence
     const items = (Array.isArray(text) ? text : [text])
-      .map((t) => t.trim().replace(/(^|[.!?…]\s+)(\p{Ll})/gu, (_, p, c) => p + c.toUpperCase()))
+      .map((t) => t.trim().replace(/(^|[.!?]\s+)(\p{Ll})/gu, (_, p, c) => p + c.toUpperCase()))
       .filter(Boolean);
     if (!items.length) return;
     if (first) this.priority.push(...items);
@@ -367,6 +367,47 @@ export class SoundEngine {
   }
 
   /** Bright "ting" (wheel result, flower rain) */
+  /** Far rumbling thunder: low noise swelling and fading */
+  thunder(volume = 0.7) {
+    const ctx = this.audio();
+    if (!ctx || !this.sfxBus || ctx.state !== 'running') return;
+    const t0 = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuffer(ctx, 3.2);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(900, t0);
+    lp.frequency.exponentialRampToValueAtTime(140, t0 + 2.8);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(volume, t0 + 0.08);
+    g.gain.setValueAtTime(volume * 0.6, t0 + 0.4);
+    g.gain.linearRampToValueAtTime(volume * 0.9, t0 + 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 3);
+    src.connect(lp).connect(g).connect(this.sfxBus);
+    src.start(t0);
+  }
+  /** Lights go out: a click and a falling hum */
+  powerOff(volume = 0.5) {
+    const ctx = this.audio();
+    if (!ctx || !this.sfxBus || ctx.state !== 'running') return;
+    const t0 = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(120, t0);
+    o.frequency.exponentialRampToValueAtTime(30, t0 + 0.6);
+    g.gain.setValueAtTime(volume * 0.25, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
+    o.connect(g).connect(this.sfxBus);
+    o.start(t0);
+    o.stop(t0 + 0.65);
+    this.pop(volume);
+  }
+  /** Vendor's little bell (kem tinh tinh) */
+  bell(volume = 0.4) {
+    for (let i = 0; i < 3; i++) setTimeout(() => this.ding(volume * (i === 2 ? 0.7 : 1)), i * 260);
+  }
   ding(volume = 0.5) {
     const ctx = this.audio();
     if (!ctx || !this.sfxBus || ctx.state !== 'running') return;

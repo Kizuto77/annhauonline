@@ -243,7 +243,7 @@ const REPLIES = {
 
 const cap = (/** @type {string} */ s) => s.charAt(0).toUpperCase() + s.slice(1);
 /** Capital letter at the start of every sentence */
-const sentences = (/** @type {string} */ s) => cap(s).replace(/([.!?…]\s+)(\p{Ll})/gu, (_, p, c) => p + c.toUpperCase());
+const sentences = (/** @type {string} */ s) => cap(s).replace(/([.!?]\s+)(\p{Ll})/gu, (_, p, c) => p + c.toUpperCase());
 
 /** @param {{ q: string; kw: string; style?: string }} ctx style: 'bua' (hài hước, lầy) or 'hien' (lịch sự) */
 export const lines = (ctx) => ({

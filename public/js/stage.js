@@ -13,6 +13,8 @@ import { DISHES } from './dishes.js';
 import { readableComment } from './bua.js';
 import { tokensOf } from './text.js';
 import { livingScene } from './living.js';
+import { setupClub } from './club-stage.js';
+import { LEVELS } from './levels.js';
 import { ambient, beams, fireworks, flyArc, floatUp, hearts, reveal, ring, sparkles, splash } from './effects.js';
 
 const params = new URLSearchParams(location.search);
@@ -26,7 +28,7 @@ const TALK_GAP_MS = 22 * 1000;
 const GIFT_THANKS_GAP_MS = 30 * 1000;
 const COMBO_MS = 4500;
 
-/** @typedef {{ id: string; name: string; avatar: string }} User */
+/** @typedef {{ id: string; name: string; avatar: string; lv?: number; visits?: number }} User */
 /** @typedef {{ seat: number; user?: User; npc: boolean; lastActive: number; dzo: number; el: HTMLElement }} Occupant */
 
 /** @type {any} */
@@ -177,6 +179,12 @@ function makePerson(/** @type {number} */ seatId, /** @type {User | undefined} *
       img.src = user.avatar;
       img.onerror = () => img.remove();
       tag.appendChild(img);
+    }
+    // cấp khách quen: 🥂 khách quen, 🍻 chiến hữu, 😎 dân chơi, 💰 đại gia, 👑 trùm quán, 🐉 huyền thoại
+    if ((user.lv ?? 0) >= 2) {
+      const lvb = el('span', 'lvb');
+      lvb.textContent = LEVELS[Math.min(LEVELS.length, user.lv ?? 1) - 1].icon;
+      tag.appendChild(lvb);
     }
     const name = el('span', 'nm');
     name.textContent = user.name;
@@ -527,11 +535,12 @@ setInterval(() => {
   for (let i = 0; i < fresh.length; i += 3) auto(say().greet(fresh.slice(i, i + 3).map((u) => u.name)));
 }, GREET_EVERY_MS);
 
-function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user, text, dzo }) {
+function onChat(/** @type {{ user: User; text: string; dzo: boolean; kind?: string }} */ { user, text, dzo, kind }) {
   noteActive(user);
   const occ = seatUser(user, dzo);
   if (occ) {
-    bubble(occ, dzo && text.length > 30 ? 'Dzô! 🍻' : text);
+    // oẳn tù tì, gọi món, tính tiền put up their own bubble (it arrives just before this chat)
+    if (!kind || kind === 'game') bubble(occ, dzo && text.length > 30 ? 'Dzô! 🍻' : text);
     const head = headOf(occ.seat);
     const emojis = text.match(/\p{Extended_Pictographic}/gu);
     if (emojis && !dzo) floatUp(wfx, head.x, head.y, [...new Set(emojis)].slice(0, 3), 12);
@@ -549,6 +558,8 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user
       for (const o of occupantsAt(SEATS[occ.seat].table)) if (o !== occ && Math.random() < 0.6) cheer(o, 200 + Math.random() * 500);
     }
   }
+  // gọi món, tính tiền, oẳn tù tì, đoán số / kéo co: answered by their own events, not as a chat
+  if (kind) return;
   noteChatter(user, dzo);
   const topic = detectTopic(text);
   // "cho thêm 3 em đào": remembered for 15 minutes; their next gift brings 3 glasses of trà đào
@@ -1358,6 +1369,17 @@ if (sound) {
   $('unlock').onclick = () => sound.unlock();
 }
 
+// -------------------------------------------------------------------------------------------- the real quán
+
+const club = setupClub({
+  stage, world, ui, fx, wfx, floor, sign,
+  seatUser, seatOf, seats, SEATS, TABLES, headOf, bubble, cheer, occupantsAt, everyone, serve,
+  fxs: { ring, sparkles, floatUp, fireworks, beams, splash, confetti, flash },
+  sound,
+  say: (text, first = false) => auto(text, first),
+  smashing: () => smashing,
+});
+
 // -------------------------------------------------------------------------------------------- go
 
 listen({
@@ -1367,7 +1389,18 @@ listen({
     if (snap.meters.rainLeft > 0) startRain(snap.meters.rainLeft, false);
     updateMeters();
     renderBoard(snap.board);
+    club.restore(snap.club);
   },
+  order: (e) => club.order(e),
+  orders: (e) => club.orders(e),
+  orderDone: (e) => club.orderDone(e),
+  orderNote: (e) => club.orderNote(e),
+  bill: (e) => club.bill(e),
+  levelup: (e) => club.levelup(e),
+  event: (e) => club.event(e),
+  game: (e) => club.game(e),
+  gameEnd: (e) => club.gameEnd(e),
+  rps: (e) => club.rps(e),
   settings: applySettings,
   board: renderBoard,
   meters: (m) => {

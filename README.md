@@ -19,9 +19,16 @@ Sân khấu tương tác dọc 9:16 chạy cùng TikTok LIVE Studio. Bối cản
 - **Thanh tim.**
   - Đủ 666 tim: **mưa bọt bia** 1 phút.
   - Đủ 99 tim: **vòng quay mồi** quay ra một món nhậu (30 món), món đó được dọn lên các bàn và chủ quán đọc tên món.
-- **Chủ quán biết đáp comment:** sinh nhật, buồn hoặc thất tình, mệt, say (khuyên uống nước, đừng lái xe), đòi mồi, chào về. Comment không bao giờ bị đọc nguyên văn, nên không ai bắt được giọng đọc nói bậy.
-- **Giọng đọc 2 lựa chọn:** chị chủ quán (Hoài My) hoặc anh chủ quán (Nam Minh). Nhân vật sau quầy đổi theo, và mấp máy miệng khi đang nói.
-- **Âm thanh:** nhạc nền chill, tiếng quán ồn ào, tiếng ly chạm, tiếng mở nắp chai, tiếng vòng quay. Toàn bộ hiệu ứng tự tổng hợp nên không cần file âm thanh.
+- **Chủ quán đọc to từng comment rồi đáp kiểu bựa** (hoặc kiểu hiền, chọn trong admin). Comment có từ tục, link, số điện thoại, @tag thì bỏ qua; teencode được đọc thành chữ. Khi quán im, chủ quán tự gọi tên người vừa chat để bắt chuyện hoặc hỏi cả quán.
+- **Giọng đọc 8 kiểu** (Hoài My, Nam Minh với nhiều cao độ/tốc độ, giọng Google), lỗi mạng thì thử lại cùng giọng chứ không đổi giọng.
+- **Gọi món & bếp:** khách gõ "cho 1 dĩa ốc len", "gọi lẩu thái"... là phiếu order treo trên dây, bếp nấu có thanh tiến độ, phục vụ bưng tận bàn; khách đã tặng quà được làm trước. Gõ "tính tiền" ra hóa đơn ảo 0đ.
+- **Quà lên mồi, gọi đào:** quà cấu hình sẵn ra dĩa mồi (bảng thực đơn trên tường ghi rõ); khách đòi "3 em đào" thì tặng quà xong ra… 3 ly trà đào.
+- **Khách quen & cấp bậc** (lưu trong `viewers.json` qua nhiều buổi live): 🍺 Khách mới → 🥂 Khách quen → 🍻 Chiến hữu → 😎 Dân chơi → 💰 Đại gia → 👑 Trùm quán → 🐉 Huyền thoại. Huy hiệu cạnh tên, lên cấp có ăn mừng.
+- **Sự kiện trong quán** (tự động hoặc bấm trong admin): giờ vàng x2 điểm, mất điện, mưa bão sấm chớp, người bán dạo, bàn bên hát karaoke.
+- **Mini game:** oẳn tù tì với chủ quán (gõ kéo/búa/bao), đoán số 1–50, kéo co đội Ốc (gõ 1) với đội Mực (gõ 2).
+- **Đập quán:** quà đặc biệt làm cả quán bị đập, chủ quán khóc rồi dọn lại.
+- **Quán sống động:** sao, mây, đèn lồng, quạt, mèo đi dạo, khói mồi, khách tự cụng ly, đom đóm, pháo hoa khi có quà lớn.
+- **Âm thanh:** nhạc nền quán nhậu Việt tự tổng hợp (`tools/nhac-nhau.py`) hoặc nhạc chill, tiếng quán ồn ào, ly chạm, sấm, chuông kem.
 - **Trang điều khiển:**
   - Kết nối TikTok, xem trước sân khấu (không có tiếng).
   - "Đọc ngay", nhắc chia sẻ, bấm "Cả quán dzô".
@@ -85,6 +92,11 @@ Giữ cửa sổ đen (BAT) mở suốt buổi live; đóng nó là tắt quán.
 | `public/js/names.js` | Đọc tên TikTok cho giọng đọc |
 | `public/js/dishes.js` | 30 món của vòng quay mồi |
 | `public/js/dashboard.js` | Trang điều khiển |
+| `club.js` | Server: khách quen & cấp bậc, gọi món & bếp, hóa đơn, sự kiện, mini game |
+| `public/js/club-stage.js`, `club-lines.js` | Sân khấu và câu nói cho phần trên |
+| `public/js/bua.js` | Đọc comment an toàn, câu đáp bựa, câu bắt chuyện |
+| `public/js/effects.js`, `living.js` | Hiệu ứng (quà bay, pháo hoa, tim) và cảnh quán sống động |
+| `public/js/levels.js` | Bảng cấp bậc khách quen |
 
 Kiểm tra kiểu: `npm run check`.
 

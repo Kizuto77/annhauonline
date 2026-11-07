@@ -2,6 +2,7 @@
 // Bảng điều khiển admin (http://localhost:3000). Im lặng: mọi tiếng phát trên trang stage trong TikTok LIVE Studio.
 import { listen, post } from './api.js';
 import { DISHES } from './dishes.js';
+import { LEVELS } from './levels.js';
 
 const app = /** @type {HTMLElement} */ (document.getElementById('app'));
 app.className = 'dash';
@@ -12,6 +13,8 @@ const TABS = [
   ['home', '📊', 'Tổng quan'],
   ['control', '🎛', 'Điều khiển'],
   ['gift', '🎁', 'Quà & Đập quán'],
+  ['club', '🎮', 'Trò chơi & Sự kiện'],
+  ['regulars', '👑', 'Khách quen'],
   ['voice', '🎙', 'Giọng & Âm thanh'],
   ['look', '🏮', 'Giao diện quán'],
   ['lab', '🧪', 'Thử nghiệm'],
@@ -207,6 +210,53 @@ app.innerHTML = `
   </div>
 
   <!-- ============================================================ THỬ NGHIỆM -->
+  <!-- ============================================================ TRÒ CHƠI & SỰ KIỆN -->
+  <div class="tab" data-pane="club" hidden>
+    <div class="card">
+      <h3>🍽 Gọi món &amp; bếp</h3>
+      <p class="note">Khách comment như <b>“cho 1 dĩa ốc len”</b>, <b>“gọi lẩu thái”</b>, <b>“lên 2 dĩa khô mực”</b> là phiếu order treo lên dây, bếp nấu có thanh tiến độ rồi phục vụ bưng ra tận bàn. Khách đã tặng quà được làm trước ⭐. Gõ <b>“tính tiền”</b> ra hóa đơn ảo (0đ).</p>
+      <label class="field switch big"><input type="checkbox" id="s-orders" /><span><b>Bật gọi món &amp; hóa đơn</b></span></label>
+    </div>
+    <div class="card">
+      <h3>🎉 Sự kiện trong quán</h3>
+      <div class="tiles">
+        <button class="tile" data-event="happy"><i>⏰</i><b>Giờ vàng</b><small>3 phút x2 điểm</small></button>
+        <button class="tile" data-event="blackout"><i>💡</i><b>Mất điện</b><small>12 giây</small></button>
+        <button class="tile" data-event="storm"><i>⛈️</i><b>Mưa bão</b><small>45 giây</small></button>
+        <button class="tile" data-event="vendor"><i>🛒</i><b>Người bán dạo</b><small>đậu, bắp, kem, kẹo kéo</small></button>
+        <button class="tile" data-event="karaoke"><i>🎤</i><b>Karaoke</b><small>bàn bên hát</small></button>
+      </div>
+      <label class="field switch"><input type="checkbox" id="s-autoEvents" /><span><b>Tự động</b> có sự kiện trong lúc live</span></label>
+      <label class="field"><span>Cứ bao nhiêu phút một sự kiện: <b id="event-val"></b></span><input type="range" id="s-eventEvery" min="2" max="30" step="1" /></label>
+    </div>
+    <div class="card">
+      <h3>🎮 Mini game</h3>
+      <p class="note"><b>Oẳn tù tì</b>: khách gõ <b>kéo</b>, <b>búa</b> hoặc <b>bao</b> là chơi với chủ quán, thắng +5 điểm. <b>Đoán số</b>: chủ quán nghĩ số 1–50, khách gõ số, trúng +50 điểm. <b>Kéo co</b>: gõ <b>1</b> vào đội Ốc, <b>2</b> vào đội Mực, tặng quà kéo cực mạnh, đội thắng mỗi người +10 điểm.</p>
+      <div class="row wrap">
+        <button class="btn primary" data-game="guess">🔢 Mở đoán số</button>
+        <button class="btn primary" data-game="tug">🪢 Mở kéo co</button>
+        <button class="btn" data-game="stop">⏹ Dừng trò đang chơi</button>
+      </div>
+      <div class="grid2">
+        <label class="field switch"><input type="checkbox" id="s-games" /><span><b>Bật mini game</b></span></label>
+        <label class="field switch"><input type="checkbox" id="s-rps" /><span>Oẳn tù tì (kéo / búa / bao)</span></label>
+        <label class="field switch"><input type="checkbox" id="s-autoGames" /><span>Tự mở đoán số / kéo co xen kẽ</span></label>
+      </div>
+      <label class="field"><span>Cứ bao nhiêu phút một trò: <b id="game-val"></b></span><input type="range" id="s-gameEvery" min="3" max="30" step="1" /></label>
+    </div>
+  </div>
+
+  <!-- ============================================================ KHÁCH QUEN -->
+  <div class="tab" data-pane="regulars" hidden>
+    <div class="card">
+      <div class="card-head"><h3>👑 Khách quen</h3><small id="reg-total"></small></div>
+      <p class="note">Điểm trọn đời cộng qua mọi buổi live (comment, quà, follow, mỗi lần ghé). Lên cấp thì sân khấu ăn mừng và huy hiệu hiện cạnh tên: ${LEVELS.map((l) => `${l.icon} ${l.name} (${l.xp.toLocaleString('vi-VN')})`).join(' · ')}.</p>
+      <label class="field switch"><input type="checkbox" id="s-levels" /><span><b>Bật cấp bậc khách quen</b></span></label>
+      <div class="row wrap"><button class="btn" id="reg-refresh">🔄 Tải lại</button><button class="btn danger" id="reg-reset">♻️ Xóa toàn bộ khách quen</button></div>
+      <ol class="rank reg" id="reg-list"><li class="empty">Chưa có khách quen</li></ol>
+    </div>
+  </div>
+
   <div class="tab" data-pane="lab" hidden>
     <div class="card">
       <h3>🧪 Thử không cần live</h3>
@@ -220,6 +270,10 @@ app.innerHTML = `
         <button class="tile" data-demo="bigGift"><i>💎</i><b>Quà lớn</b></button>
         <button class="tile" data-demo="follow"><i>❤️</i><b>Follow</b></button>
         <button class="tile red" data-demo="smash"><i>💥</i><b>Đập quán</b></button>
+        <button class="tile" data-demo="order"><i>🍽</i><b>Gọi món</b></button>
+        <button class="tile" data-demo="bill"><i>🧾</i><b>Tính tiền</b></button>
+        <button class="tile" data-demo="rps"><i>✌️</i><b>Oẳn tù tì</b></button>
+        <button class="tile" data-demo="play"><i>🎮</i><b>Khách chơi game</b><small>khi đang có trò</small></button>
         <button class="tile" data-demo="likes99"><i>🎡</i><b>+99 tim</b></button>
         <button class="tile" data-demo="likes666"><i>🫧</i><b>+666 tim</b></button>
       </div>
@@ -258,6 +312,8 @@ const TITLES = {
   home: 'Theo dõi buổi live theo thời gian thực',
   control: 'Kết nối TikTok, link stage và các lệnh nhanh',
   gift: 'Quà tặng, đập quán, từ khóa và bảng xếp hạng',
+  club: 'Gọi món, sự kiện trong quán và mini game',
+  regulars: 'Cấp bậc khách quen, lưu qua nhiều buổi live',
   voice: 'Giọng đọc, nhạc nền và không khí quán',
   look: 'Tên quán và ảnh nền',
   lab: 'Tạo khách giả để thử hiệu ứng',
@@ -310,15 +366,17 @@ for (const b of document.querySelectorAll('[data-save]')) {
 $('menu-names').textContent = `Món có sẵn: ${DISHES.map((d) => d.ten).join(', ')}.`;
 $('save-giftFoods').onclick = () => saveSetting('giftFoods', $('s-giftFoods').value);
 for (const b of document.querySelectorAll('[data-style]')) /** @type {HTMLElement} */ (b).onclick = () => saveSetting('replyStyle', /** @type {HTMLElement} */ (b).dataset.style);
-const SWITCHES = ['showBoard', 'autoVoice', 'greet', 'chatReply', 'readChat', 'idleTalk', 'music', 'ambience', 'smashEnabled', 'stories'];
+const SWITCHES = ['orders', 'levels', 'autoEvents', 'games', 'autoGames', 'rps', 'showBoard', 'autoVoice', 'greet', 'chatReply', 'readChat', 'idleTalk', 'music', 'ambience', 'smashEnabled', 'stories'];
 for (const key of SWITCHES) $(`s-${key}`).onchange = (/** @type {Event} */ e) => saveSetting(key, /** @type {HTMLInputElement} */ (e.target).checked);
-for (const key of ['rate', 'musicVolume', 'storyEvery']) {
+for (const key of ['rate', 'musicVolume', 'storyEvery', 'eventEvery', 'gameEvery']) {
   const input = $(`s-${key}`);
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   let t;
   input.oninput = () => {
     showRanges(Number(key === 'rate' ? input.value : $('s-rate').value), Number(key === 'musicVolume' ? input.value : $('s-musicVolume').value));
     $('story-val').textContent = `${$('s-storyEvery').value} phút`;
+    $('event-val').textContent = `${$('s-eventEvery').value} phút`;
+    $('game-val').textContent = `${$('s-gameEvery').value} phút`;
     clearTimeout(t);
     t = setTimeout(() => saveSetting(key, Number(input.value)), 250);
   };
@@ -370,6 +428,10 @@ if (document.activeElement !== foodBox) foodBox.value = s.giftFoods ?? '';
   $('s-rate').value = s.rate;
   $('s-musicVolume').value = s.musicVolume;
   $('s-storyEvery').value = s.storyEvery;
+  $('s-eventEvery').value = s.eventEvery;
+  $('s-gameEvery').value = s.gameEvery;
+  $('event-val').textContent = `${s.eventEvery} phút`;
+  $('game-val').textContent = `${s.gameEvery} phút`;
   $('story-val').textContent = `${s.storyEvery} phút`;
   showRanges(s.rate, s.musicVolume);
   for (const b of document.querySelectorAll('.voice[data-v]')) b.classList.toggle('on', /** @type {HTMLElement} */ (b).dataset.v === s.voice);
@@ -425,6 +487,44 @@ for (const b of document.querySelectorAll('[data-demo]')) {
     if (!r.success) toast(r.error || 'Lỗi', false);
   };
 }
+for (const b of document.querySelectorAll('[data-event]')) {
+  /** @type {HTMLElement} */ (b).onclick = async () => {
+    const r = await post('/api/control', { action: 'event', text: /** @type {HTMLElement} */ (b).dataset.event });
+    toast(r.success ? (r.stages ? 'Đã bắt đầu' : 'Đã bắt đầu, nhưng chưa có trang stage nào mở') : r.error || 'Lỗi', r.success);
+  };
+}
+for (const b of document.querySelectorAll('[data-game]')) {
+  /** @type {HTMLElement} */ (b).onclick = async () => {
+    const r = await post('/api/control', { action: 'game', text: /** @type {HTMLElement} */ (b).dataset.game });
+    toast(r.success ? 'Đã gửi' : r.error || 'Lỗi', r.success);
+  };
+}
+async function loadRegulars() {
+  try {
+    const d = await (await fetch('/api/viewers')).json();
+    $('reg-total').textContent = `${fmt(d.total)} khách đã ghé`;
+    const ol = $('reg-list');
+    ol.innerHTML = d.list.length
+      ? d.list
+          .map((/** @type {any} */ u, /** @type {number} */ i) => {
+            const l = LEVELS[Math.max(0, u.lv - 1)];
+            return `<li><b class="n n${i + 1}">${i + 1}</b><span class="nm">${l.icon} ${esc(u.name)}</span><em>${esc(l.name)} · ${fmt(u.xp)} điểm · ${fmt(u.visits)} lần ghé${u.coins ? ` · ${fmt(u.coins)} xu` : ''}</em></li>`;
+          })
+          .join('')
+      : '<li class="empty">Chưa có khách quen</li>';
+  } catch {
+    toast('Không tải được danh sách khách quen', false);
+  }
+}
+$('reg-refresh').onclick = loadRegulars;
+$('reg-reset').onclick = async () => {
+  if (!confirm('Xóa toàn bộ điểm và cấp của khách quen? Không lấy lại được.')) return;
+  const r = await post('/api/viewers/reset');
+  toast(r.success ? 'Đã xóa khách quen' : r.error, r.success);
+  loadRegulars();
+};
+addEventListener('hashchange', () => location.hash === '#regulars' && loadRegulars());
+if (location.hash === '#regulars') loadRegulars();
 $('reset-board').onclick = async () => {
   if (!confirm('Xóa toàn bộ điểm trên bảng TOP?')) return;
   const r = await post('/api/board/reset');

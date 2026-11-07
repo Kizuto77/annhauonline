@@ -16,11 +16,13 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { DISHES } from './public/js/dishes.js';
 import { cleanText, lettersOnly, maskBanned, tokensOf } from './public/js/text.js';
+import { createClub } from './club.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const UPLOAD_DIR = path.join(ROOT, 'uploads');
 const SETTINGS_FILE = path.join(ROOT, 'settings.json');
+const VIEWERS_FILE = path.join(ROOT, 'viewers.json'); // khách quen: điểm trọn đời, số lần ghé
 const PORT = Number(process.env.PORT) || 3000;
 
 const POINTS_PER_COIN = 10; // bảng TOP: 1 comment = 1 điểm, 1 xu quà = 10 điểm
@@ -72,6 +74,14 @@ const DEFAULTS = {
   smashGifts: 'Doughnut, Cheese Donuts, Bubble Tea, Bouquet Flower', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
   smashMinCoins: 30, // >0: mọi quà có giá từ số xu này trở lên (mỗi cái) cũng đập quán; 0 = tắt
   giftFoods: 'Rose, Bông hoa = Gỏi gà xé phay\nFinger Heart, Bắn Tim = Nem chua rán\nRosa = Khô mực nướng\nLucky Pig, Chú Heo May Mắn = Chân gà sả tắc\nIce Cream Cone, Kem Ốc Quế = Ốc len xào dừa', // mỗi dòng: tên quà (cách nhau dấu phẩy) = tên món mồi
+  orders: true, // khách comment gọi món theo thực đơn, bếp nấu rồi bưng ra; gõ "tính tiền" ra hóa đơn ảo
+  levels: true, // cấp bậc khách quen (lưu qua nhiều buổi live)
+  autoEvents: true, // sự kiện tự động: giờ vàng, mất điện, mưa bão, người bán dạo, karaoke
+  eventEvery: 6, // phút giữa hai sự kiện
+  games: true, // mini game
+  autoGames: true, // tự mở đoán số / kéo co
+  gameEvery: 8, // phút giữa hai trò
+  rps: true, // oẳn tù tì với chủ quán (gõ kéo / búa / bao)
   background: '', // ảnh nền tự tải lên; rỗng = cảnh quán vẽ sẵn
 };
 
@@ -109,6 +119,14 @@ const VALIDATE = {
   smashEnabled: bool,
   smashGifts: (v) => (typeof v === 'string' ? cleanText(v, 160) : undefined),
   smashMinCoins: num(0, 1_000_000),
+  orders: bool,
+  levels: bool,
+  autoEvents: bool,
+  eventEvery: num(2, 60),
+  games: bool,
+  autoGames: bool,
+  gameEvery: num(3, 60),
+  rps: bool,
   giftFoods: (v) => (typeof v === 'string' ? v.replace(/[\x00-\x09\x0b-\x1f\x7f]/g, '').replace(/\r/g, '').trim().slice(0, 1200) : undefined),
 };
 
@@ -196,6 +214,9 @@ const topBoard = () =>
 const sendBoard = throttle(() => broadcast('board', topBoard()), 400);
 /** @param {User} user @param {number} points @param {number} coins */
 function addPoints(user, points, coins = 0) {
+  // giờ vàng: điểm x2 (cả bảng TOP lẫn điểm khách quen)
+  points *= club.multiplier();
+  club.addXp(user, points);
   const e = board.get(user.id) ?? { id: user.id, name: user.name, avatar: '', score: 0, coins: 0 };
   e.name = user.name;
   e.avatar = user.avatar || e.avatar;
@@ -313,13 +334,16 @@ function onChat(user, text) {
   if (!clean) return;
   addPoints(user, 1);
   const dzo = isKeyword(clean);
-  broadcast('chat', { user: show(user), text: maskBanned(clean), dzo });
+  // gọi món, tính tiền, oẳn tù tì, đoán số / kéo co: the stage shows those its own way instead of a chat reply
+  const kind = club.onChat(user, clean, dzo);
+  broadcast('chat', { user: show(user), text: maskBanned(clean), dzo, kind });
   if (dzo) noteDzo(user.id);
 }
 /** @param {User} user @param {string} giftName @param {number} coinsEach @param {number} count */
 function onGift(user, giftName, coinsEach, count) {
   const coins = Math.max(1, Math.round(coinsEach)) * Math.max(1, Math.round(count));
   addPoints(user, coins * POINTS_PER_COIN, coins);
+  club.onGift(user, coins);
   broadcast('gift', { id: uid(), user: show(user), giftName: cleanText(giftName, 40) || 'Quà', coins, count });
   if (shouldSmash(giftName, coinsEach)) triggerSmash(user);
 }
@@ -344,11 +368,27 @@ function triggerSmash(user) {
   return true;
 }
 /** @param {User} user */
-const onJoin = (user) => broadcast('join', { user: show(user) });
+const onJoin = (user) => {
+  club.onJoin(user);
+  broadcast('join', { user: show(user) });
+};
 /** @param {User} user */
-const onFollow = (user) => broadcast('follow', { user: show(user) });
-/** Name as shown: banned words masked; the stage never speaks a masked name */
-const show = (/** @type {User} */ u) => ({ id: u.id, name: maskBanned(u.name), avatar: u.avatar });
+const onFollow = (user) => {
+  club.onFollow(user);
+  broadcast('follow', { user: show(user) });
+};
+/** Name as shown: banned words masked; the stage never speaks a masked name. lv = cấp khách quen, visits = số lần ghé */
+const show = (/** @type {User} */ u) => ({ id: u.id, name: maskBanned(u.name), avatar: u.avatar, lv: settings.levels ? club.levelOf(u.id) : 0, visits: club.visitsOf(u.id) });
+
+const club = createClub({
+  file: VIEWERS_FILE,
+  broadcast,
+  uid: () => uid(),
+  show,
+  givePoints: (u, n) => addPoints(u, n),
+  settings: () => settings,
+  busy: () => Date.now() < smashUntil,
+});
 
 // ---------------------------------------------------------------------------------------------------------------
 // TikTok LIVE (tiktok-live-connector 2.x, proto v3: chat text in `content`, avatar in user.avatarThumb.urlList)
@@ -633,6 +673,13 @@ function demo(type) {
   } else if (type === 'bigGift') onGift(demoUser(), pick(['Perfume', 'Galaxy', 'Money Gun']), pick([99, 199, 500, 1000]), 1);
   else if (type === 'smash') triggerSmash(demoUser());
   else if (type === 'follow') onFollow(demoUser());
+  else if (type === 'order') onChat(demoUser(), pick(['Cho 1 dĩa ốc len xào dừa', 'Gọi lẩu thái đi chủ quán', 'Lên 2 dĩa khô mực', 'cho dĩa mồi nha', 'Thêm một phần bò lá lốt', 'order khoai tây chiên']));
+  else if (type === 'bill') onChat(demoUser(), 'Tính tiền chủ quán ơi');
+  else if (type === 'rps') onChat(demoUser(), pick(['kéo', 'búa', 'bao', 'oẳn tù tì ra búa']));
+  else if (type === 'play') {
+    // a few viewers play whatever game is on
+    for (let i = 0; i < 8; i++) setTimeout(() => onChat(demoUser(), String(pick(['1', '2', '1', String(Math.ceil(Math.random() * 50))]))), i * 400);
+  }
   else if (type === 'likes99') addLikes(99);
   else if (type === 'likes666') addLikes(666);
   else if (type === 'crowd') {
@@ -726,7 +773,7 @@ function sendFile(res, file, cache) {
 }
 
 function snapshot() {
-  return { settings, status, board: topBoard(), meters: metersPayload(), stages: stagePages() };
+  return { settings, status, board: topBoard(), meters: metersPayload(), stages: stagePages(), club: club.snapshot() };
 }
 
 const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGift', 'testGreet', 'testFollow', 'testChat', 'clearHall', 'unlockAudio', 'story']);
@@ -788,11 +835,22 @@ const routes = {
       if (!triggerSmash(demoUser())) return json(res, 400, { success: false, error: 'Quán đang bị đập / đang dọn, đợi chút nhé' });
       return json(res, 200, { success: true, stages: stagePages() });
     }
+    if (action === 'event' || action === 'game') {
+      const why = action === 'event' ? club.startEvent(String(text)) : club.startGame(String(text));
+      return json(res, why ? 400 : 200, why ? { success: false, error: why } : { success: true, stages: stagePages() });
+    }
     if (!CONTROL_ACTIONS.has(action)) return json(res, 400, { success: false, error: 'Lệnh không hợp lệ' });
     const line = typeof text === 'string' ? cleanText(text, 500) : '';
     if (action === 'speak' && !line) return json(res, 400, { success: false, error: 'Chưa nhập nội dung cần đọc' });
     broadcast('control', { action, text: line });
     json(res, 200, { success: true, stages: stagePages() });
+  },
+
+  'GET /api/viewers': (_req, res) => json(res, 200, { list: club.viewersList(60), total: club.count() }),
+  'POST /api/viewers/reset': async (req, res) => {
+    await readJson(req);
+    club.resetViewers();
+    json(res, 200, { success: true });
   },
 
   'POST /api/board/reset': async (req, res) => {
