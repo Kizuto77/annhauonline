@@ -103,7 +103,7 @@ body:has(.stage-page) { overflow: hidden; }
 .card .row + .note { margin: 10px 0 0; }
 .note b { color: var(--ink); }
 .err { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; background: #3a1414; border: 1px solid #7a2626; color: #ffc9c9; font-size: 13px; }
-input[type='text'], input[type='number'], input:not([type]), textarea, code { background: var(--bg2); border: 1px solid #3a281d; border-radius: 10px; color: #fff; padding: 9px 11px; font: inherit; outline: none; }
+input[type='text'], input[type='number'], input[type='password'], input:not([type]), textarea, code { background: var(--bg2); border: 1px solid #3a281d; border-radius: 10px; color: #fff; padding: 9px 11px; font: inherit; outline: none; }
 input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px #f2a51622; }
 textarea { resize: vertical; }
 code { font: 13px ui-monospace, Menlo, Consolas, monospace; color: #ffd98a; overflow-x: auto; white-space: nowrap; }

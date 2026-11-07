@@ -1,31 +1,22 @@
-# 🍺 Xỉn Bia – Quán nhậu online cho TikTok LIVE
+# 🍻 Nhậu Đêm 134 – Quán nhậu vỉa hè online cho TikTok LIVE
 
-Sân khấu tương tác dọc 9:16 chạy cùng TikTok LIVE Studio. Bối cảnh là một quán nhậu vỉa hè buổi tối: bảng neon, bạt sọc, dây đèn, tủ mát, quầy bia hơi, bàn inox ghế nhựa. Người xem vào live là có nhân vật mang tên TikTok ngồi vào bàn. Gõ `dzo` là nâng ly cụng. Tặng quà thì nhân viên bưng mồi hoặc tháp bia ra bàn người đó, máy quay áp sát vào bàn, và chị (hoặc anh) chủ quán gọi tên cảm ơn.
+Một quán nhậu vỉa hè Hà Nội vẽ kiểu tranh chi tiết (đèn vàng, bạt đỏ, ghế nhựa, bếp than) chạy làm nguồn **Link** trong TikTok LIVE Studio. Người xem comment, follow, tặng quà là quán phản ứng ngay; chủ quán đứng bếp, nói bằng giọng AI và tự bưng món ra bàn.
 
-Đây là **quán ảo để giải trí**: không bán rượu bia, không khuyến khích uống thật. Trên màn hình luôn chạy dòng nhắc: quà tặng chỉ để nhận lời chúc, đã uống rượu bia không lái xe, người dưới 18 tuổi không uống rượu bia. Chủ quán cũng thỉnh thoảng nhắc uống có chừng.
+Đây là bản làm lại từ đầu. Bản cũ (kiểu hoạt hình, có vòng quay, mưa bọt bia, mini game…) vẫn còn ở nhánh `ban-cu-hoat-hinh`.
 
-## Tính năng
+## Quán có gì
 
-- **Quán vỉa hè phố cổ ban đêm:** dãy nhà ống có ban công và cửa chớp xanh, cột điện chằng chịt dây, cây sấu, biển hiệu sơn đỏ viền bóng đèn, quán dưới mái bạt cam có bàn thờ ông Địa, vỉa hè lát gạch tàu, xe máy chạy ngang ngoài đường.
-- **Bếp ngoài trời, chủ quán nấu và tự bưng món:** bếp than với chảo xào (lửa bùng khi đang nấu), vỉ nướng, nồi nước dùng, thùng đá. Món nấu xong chủ quán đi ra tận bàn đặt món rồi quay về bếp; đông đơn thì phụ quán bưng giúp.
-- **8 bàn nhựa đỏ đánh số (BÀN 1–8), 32 ghế.** Vào live chưa có ghế: **follow, chat "nhậu", gọi món hoặc tặng quà** mới được vào bàn. Gõ **"bàn 3"** / "sang bàn 3" để đổi bàn. TikTok không báo ai rời live, nên ai im lặng quá lâu (mặc định 10 phút) sẽ tự đứng dậy về.
-- **Gọi món miễn phí bằng comment:** đậu lạc, đậu tẩm hành, dưa chuột, khô cá, nem chua, khoai chiên, ngô chiên, rau muống, trứng lộn, bánh đa, bia hơi, trà đá, nước ngọt, nước lọc. Phiếu order treo dưới mép bạt, có thanh tiến độ.
-- **Tặng quà theo số xu (giá mỗi cái):** 1 xu món ngon ngẫu nhiên (gà nướng, mực, ốc, tôm…), 5 xu một nồi lẩu ngẫu nhiên, 30 xu đập quán, 99 xu **bao cả quán** (mỗi bàn một nồi lẩu). Mốc đổi trong admin, bảng gỗ bên trái sân khấu tự ghi theo.
-- **Chủ quán đọc to từng comment rồi đáp kiểu bựa** (hoặc kiểu hiền, chọn trong admin). Comment có từ tục, link, số điện thoại, @tag thì bỏ qua; teencode được đọc thành chữ. Khi quán im, chủ quán tự gọi tên người vừa chat để bắt chuyện hoặc hỏi cả quán.
-- **Giọng đọc 8 kiểu** (Hoài My, Nam Minh với nhiều cao độ/tốc độ, giọng Google), lỗi mạng thì thử lại cùng giọng chứ không đổi giọng.
-- **Hóa đơn ảo:** gõ "tính tiền" ra hóa đơn 0đ (bình luận, cụng ly, món đã ăn, quà, cấp).
-- **Gọi đào:** khách đòi "3 em đào" thì tặng quà xong ra… 3 ly trà đào.
-- **Khách quen & cấp bậc** (lưu trong `viewers.json` qua nhiều buổi live): 🍺 Khách mới → 🥂 Khách quen → 🍻 Chiến hữu → 😎 Dân chơi → 💰 Đại gia → 👑 Trùm quán → 🐉 Huyền thoại. Huy hiệu cạnh tên, lên cấp có ăn mừng.
-- **Sự kiện trong quán** (tự động hoặc bấm trong admin): giờ vàng x2 điểm, mất điện, mưa bão sấm chớp, người bán dạo, bàn bên hát karaoke.
-- **Mini game:** oẳn tù tì với chủ quán (gõ kéo/búa/bao), đoán số 1–50, kéo co đội Ốc (gõ 1) với đội Mực (gõ 2).
-- **Đập quán:** quà đủ số xu làm cả quán bị đập, chủ quán khóc rồi dọn lại.
-- **Quán sống động:** sao, mây, đèn lồng, quạt, mèo đi dạo, khói mồi, khách tự cụng ly, đom đóm, pháo hoa khi có quà lớn.
-- **Âm thanh:** nhạc nền quán nhậu Việt tự tổng hợp (`tools/nhac-nhau.py`) hoặc nhạc chill, tiếng quán ồn ào, ly chạm, sấm, chuông kem.
-- **Trang điều khiển:**
-  - Kết nối TikTok, xem trước sân khấu (không có tiếng).
-  - "Đọc ngay", nhắc chia sẻ, bấm "Cả quán dzô".
-  - Đổi tên quán, từ khóa, tên bảng, ảnh nền, giọng, tốc độ đọc, nhạc.
-  - Nút **thử không cần live** để xem trước mọi hiệu ứng.
+- **Ngồi bàn như thật:** follow, chat **“nhậu”**, gọi món hoặc tặng quà là có ghế: khách đi bộ từ ngoài đường vào, ngồi ghế nhựa quanh 8 bàn có số. Chat **“bàn 3”** để đổi bàn. TikTok không báo ai rời live, nên ai im lặng quá lâu (mặc định 10 phút) tự đứng dậy đi về.
+- **Gọi món miễn phí:** comment tên món bình dân (đậu lạc, đậu tẩm hành, nem chua, khoai chiên, dưa chuột, trứng lộn, bia hơi, trà đá…). Phiếu order treo dưới mép bạt, bếp bùng lửa, chủ quán nấu xong tự bưng mâm ra tận bàn. Đông khách thì có chạy bàn phụ.
+- **Quà theo số xu mỗi quà** (không cần tên quà, chỉnh được trong admin):
+  - từ **1 xu**: một món ngon ngẫu nhiên (mực nướng, ốc hương, gà nướng…)
+  - từ **5 xu**: một nồi lẩu ngẫu nhiên, sôi bốc khói trên bếp ga mini
+  - từ **30 xu**: **đập quán** (bàn lật, ly vỡ, chủ quán khóc rồi dọn)
+  - từ **99 xu**: **bao cả quán**, mỗi bàn có người một nồi lẩu
+- **Chủ quán nói chuyện:** đọc to từng comment rồi đáp kiểu bựa (hoặc hiền), chào khách, cảm ơn follow, quà, tự bắt chuyện khi live im. Gõ **dzô** là cả bàn nâng ly; 4 người cùng dzô trong 15 giây thì cả quán dzô.
+- **Bảng vàng** (TOP người comment, tặng quà), **bảng thực đơn** tự ghi các mốc quà, **bảng LED** chạy chữ (luật quán, người mới vào, quà, nhắc uống có trách nhiệm).
+- **Giọng đọc:** Microsoft (Hoài My, Nam Minh), Google, **FPT.AI** (Ban Mai, Thu Minh, Mỹ An, Lê Minh, Gia Huy…) và **Zalo AI**. FPT.AI và Zalo AI cần API key nhập trong admin. Chủ quán là chị hay anh tự đổi theo giọng.
+- **Không khí:** xe máy chạy ngang có đèn pha, khói bếp, khói lẩu, bóng đèn chập chờn, nhạc nền quán nhậu, tiếng quán ồn ào, ly chạm.
 
 ## Cần có
 
@@ -33,71 +24,69 @@ Sân khấu tương tác dọc 9:16 chạy cùng TikTok LIVE Studio. Bối cản
 - TikTok LIVE Studio, đăng nhập tài khoản sẽ live.
 - Internet: giọng đọc, font chữ và tên miền `lvh.me` đều cần mạng.
 
-Không cần card đồ họa mạnh: cảnh quán vẽ bằng SVG/CSS, không dùng 3D.
-
 ## Cài và chạy
 
 1. Giải nén thư mục này ra một chỗ cố định.
-2. **Windows:** bấm đúp `BAT-LIVE.bat`. Lần đầu nó tự cài 2 thư viện (khoảng 1 phút), sau đó mở trang điều khiển `http://localhost:3000`.
+2. **Windows:** bấm đúp `BAT-LIVE.bat`. Lần đầu nó tự cài 2 thư viện (khoảng 1 phút), sau đó mở trang admin `http://localhost:3000`.
    **Mac/Linux:** mở Terminal trong thư mục, chạy `npm install` rồi `npm start`.
-3. Ở trang điều khiển, phần **Tùy chỉnh quán**: đặt tên quán (mặc định "Xỉn Bia"), rồi bấm Lưu.
-4. Dùng phần **Thử không cần live** để xem trước và nghe thử giọng.
-5. Trong TikTok LIVE Studio, thêm nguồn **Link**:
-   - Link: `http://lvh.me:3000/?view=stage`
-   - Kích thước: 1080 × 1920
-6. Bấm **Xóa bảng TOP** (để xóa điểm của khách giả lúc thử), bắt đầu live, rồi nhập username TikTok và bấm **Kết nối**.
+3. Tab **Giọng đọc**: chọn giọng, bấm ▶ nghe thử. Muốn giọng FPT.AI / Zalo AI thì dán API key vào ô bên dưới rồi chọn giọng.
+4. Tab **Thử không cần live** để xem trước mọi thứ.
+5. Trong TikTok LIVE Studio, thêm nguồn **Link**: `http://lvh.me:3000/?view=stage`, kích thước 1080 × 1920.
+6. Bấm **Xóa bảng vàng** (xóa điểm của khách giả), bắt đầu live, nhập username TikTok và bấm **Kết nối**.
 
 Giữ cửa sổ đen (BAT) mở suốt buổi live; đóng nó là tắt quán.
 
+### Lấy API key giọng AI
+
+- **FPT.AI:** vào console.fpt.ai, đăng ký, mở Text to Speech, chép API key.
+- **Zalo AI:** vào zalo.ai, đăng nhập, vào Dashboard, chép API key.
+
+Khóa chỉ lưu trong `settings.json` trên máy bạn (file này không đưa lên GitHub), không gửi xuống trang sân khấu.
+
 ### Lưu ý khi live
 
-- Chỉ trang `?view=stage` phát tiếng. Trang điều khiển và khung xem trước luôn im lặng. Đừng mở thêm link stage ở trình duyệt khác trong lúc live, nếu không sẽ nghe hai giọng.
-- Nếu trang stage hiện nút **"Bấm vào đây để bật tiếng quán"**, nghĩa là trình duyệt đang chặn âm thanh. Hãy bấm nút đó (hoặc nút "Bật tiếng trang stage" trong dashboard). Trong LIVE Studio thường không gặp chuyện này.
-- Sửa code xong thì bấm làm mới nguồn Link trong LIVE Studio để nhận bản mới. App không tự tải lại giữa buổi live.
-- App chỉ nhận kết nối từ chính máy đang chạy nó, kể cả khi trang web lạ cố gửi lệnh. `lvh.me` là tên miền công khai trỏ về 127.0.0.1; app dùng nó vì LIVE Studio không nhận `localhost`.
+- Chỉ trang `?view=stage` phát tiếng. Trang admin và khung xem trước luôn im lặng. Đừng mở thêm link stage ở trình duyệt khác trong lúc live, nếu không sẽ nghe hai giọng.
+- Nếu trang stage hiện nút **"Bấm vào đây để bật tiếng quán"**, trình duyệt đang chặn âm thanh: bấm nút đó (hoặc "Bật tiếng stage" trong admin).
+- Sửa `server.js` thì phải tắt mở lại BAT; sửa giao diện thì chỉ cần làm mới nguồn Link.
+- App chỉ nhận kết nối từ chính máy đang chạy nó. `lvh.me` là tên miền công khai trỏ về 127.0.0.1; app dùng nó vì LIVE Studio không nhận `localhost`.
 
 ## Sửa lỗi thường gặp
 
-- **Không vào được `localhost:3000`:** xem cửa sổ BAT phải có dòng `Xỉn Bia đang chạy`. Nếu cửa sổ báo lỗi cài thư viện, xóa thư mục `node_modules` rồi chạy lại BAT.
-- **LIVE Studio không hiện gì với link `lvh.me`:** một số mạng hoặc phần mềm diệt virus chặn tên miền này. Mở Notepad bằng quyền Administrator, mở file `C:\Windows\System32\drivers\etc\hosts`, thêm dòng `127.0.0.1 lvh.me` ở cuối, lưu lại, rồi làm mới nguồn Link.
+- **Không vào được `localhost:3000`:** cửa sổ BAT phải có dòng `Nhậu Đêm 134 đang chạy`. Nếu báo lỗi cài thư viện, xóa thư mục `node_modules` rồi chạy lại BAT.
+- **LIVE Studio không hiện gì với link `lvh.me`:** mở Notepad bằng quyền Administrator, mở `C:\Windows\System32\drivers\etc\hosts`, thêm dòng `127.0.0.1 lvh.me`, lưu, rồi làm mới nguồn Link.
 - **Báo cổng 3000 đang bị dùng:** đóng cửa sổ BAT cũ rồi chạy lại.
-- **Không nghe giọng:** kiểm tra mạng, vì giọng đọc lấy từ dịch vụ của Microsoft Edge (lỗi thì tự chuyển sang Google). Câu nào lỗi sẽ được bỏ qua, các câu sau vẫn đọc tiếp.
+- **Không nghe giọng FPT.AI / Zalo AI:** bấm ▶ trong admin, lỗi thật sẽ hiện ra (sai key, hết lượt miễn phí, mất mạng). Câu nào lỗi sẽ được bỏ qua, quán không đổi sang giọng khác giữa chừng.
 
 ## Phụ thuộc bên ngoài cần biết
 
-- **Đọc sự kiện TikTok** dùng thư viện không chính thức [`tiktok-live-connector`](https://github.com/zerodytrash/TikTok-Live-Connector). TikTok có thể thay đổi làm nó ngừng chạy bất cứ lúc nào.
-- **Giọng đọc** dùng `msedge-tts` (giọng `vi-VN-HoaiMyNeural` / `vi-VN-NamMinhNeural`), dự phòng bằng Google Translate. Cả hai đều không phải API chính thức cho mục đích này.
-- **Luật của TikTok** về rượu bia, live tự động và kêu gọi tặng quà có thể thay đổi. Người dùng tự chịu trách nhiệm tuân thủ luật của TikTok và pháp luật nơi mình sống. Quán không dùng tên hay logo hãng bia thật nào.
+- **Sự kiện TikTok** dùng thư viện không chính thức [`tiktok-live-connector`](https://github.com/zerodytrash/TikTok-Live-Connector); TikTok có thể thay đổi làm nó ngừng chạy.
+- **Giọng đọc:** `msedge-tts` và Google Dịch không phải API chính thức cho việc này; FPT.AI và Zalo AI là API chính thức, tính lượt theo tài khoản của bạn.
+- **Luật của TikTok** về rượu bia, live tự động và kêu gọi tặng quà có thể thay đổi; người dùng tự chịu trách nhiệm tuân thủ. Quán không dùng tên hay logo hãng bia thật nào, quà chỉ đổi lấy lời cảm ơn và món ảo.
 
 ## Cấu trúc code
 
 | File | Làm gì |
 |---|---|
-| `server.js` | Server Node thuần (không cần Express): phát file, nhận sự kiện TikTok, giữ bảng điểm, thanh tim, cài đặt, đẩy sự kiện qua SSE, giọng đọc `/api/tts` |
-| `public/js/stage.js` | Sân khấu: bàn ghế, khách, cụng ly, nhân viên bưng mâm, máy quay, vòng quay, mưa bọt bia |
-| `public/js/scene.js` | Cảnh quán vẽ bằng SVG |
-| `public/js/people.js` | Nhân vật (khách, nhân viên, chủ quán), bàn, đồ trên bàn |
-| `public/js/layout.js` | Vị trí bàn và ghế |
-| `public/js/sound.js` | Hàng chờ giọng đọc (có chống kẹt), hiệu ứng âm thanh, tiếng quán, nhạc |
-| `public/js/lines.js` | Toàn bộ câu chủ quán nói |
-| `public/js/chat.js` | Nhận biết comment nói về chuyện gì |
-| `public/js/names.js` | Đọc tên TikTok cho giọng đọc |
-| `public/js/dishes.js` | 30 món của vòng quay mồi |
-| `public/js/dashboard.js` | Trang điều khiển |
-| `club.js` | Server: khách quen & cấp bậc, gọi món & bếp, hóa đơn, sự kiện, mini game |
-| `public/js/club-stage.js`, `club-lines.js` | Sân khấu và câu nói cho phần trên |
-| `public/js/bua.js` | Đọc comment an toàn, câu đáp bựa, câu bắt chuyện |
-| `public/js/effects.js`, `living.js` | Hiệu ứng (quà bay, pháo hoa, tim) và cảnh quán sống động |
-| `public/js/levels.js` | Bảng cấp bậc khách quen |
-| `public/js/menu.js` | Thực đơn: món miễn phí, món ngon 1 xu, lẩu 5 xu |
+| `server.js` | Server Node thuần: phát file, nhận sự kiện TikTok, bảng vàng, cài đặt, SSE `/api/events`, `/api/tts` |
+| `pub.js` | Hiểu comment gọi món / “nhậu” / “bàn N”, hàng chờ của bếp |
+| `tts.js` | Giọng đọc: Microsoft, Google, FPT.AI, Zalo AI |
+| `public/js/stage.js` | Sân khấu: ghế ngồi, khách đi vào/ra, bếp, bưng món, quà, đập quán, bao quán, bảng, LED |
+| `public/js/art/scene.js` | Mặt tiền quán, bếp, lớp viền tối và hạt kiểu tranh |
+| `public/js/art/people.js` | Người tỉ lệ thật (ngồi, đứng, đi, bưng mâm), bàn ghế nhựa, món ăn |
+| `public/js/art/layout.js` | Vị trí 8 bàn, 32 ghế, độ xa gần |
+| `public/js/menu.js` | Thực đơn: món miễn phí, món ngon, lẩu |
+| `public/js/lines.js`, `bua.js`, `order-lines.js` | Câu chủ quán nói |
+| `public/js/chat.js`, `names.js`, `text.js` | Hiểu comment, đọc tên, lọc chữ |
+| `public/js/sound.js`, `effects.js` | Hàng chờ giọng đọc (có chống kẹt), âm thanh, hiệu ứng |
+| `public/js/dashboard.js` | Trang admin |
 
 Kiểm tra kiểu: `npm run check`.
 
 ## Tài nguyên
 
-- `public/assets/audio/quan_nhau.mp3`: nhạc nền quán nhậu (mặc định), tự tổng hợp bằng `tools/nhac-nhau.py` (đàn tranh, đàn bầu, mõ, nhịp remix, không dùng bài hát có sẵn). Chạy lại script để tạo bản khác.
-- `public/assets/audio/chill_relax.mp3`: nhạc chill cũ, lấy từ dự án gốc (tạo bằng mô hình AI ACE-Step). Chọn bài trong admin, tab Giọng & Âm thanh.
-- Mọi hình ảnh (quán, nhân vật, bàn ghế, hiệu ứng) đều vẽ bằng code trong repo này.
+- `public/assets/audio/quan_nhau.mp3`: nhạc nền quán nhậu, tự tổng hợp bằng `tools/nhac-nhau.py`.
+- `public/assets/audio/chill_relax.mp3`: nhạc chill, lấy từ dự án gốc.
+- Mọi hình ảnh đều vẽ bằng code trong repo này.
 
 ## Giấy phép
 

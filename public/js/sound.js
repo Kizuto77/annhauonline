@@ -1,5 +1,5 @@
 // @ts-check
-// Âm thanh của trang stage: hàng chờ giọng đọc (TTS từ server), tiếng cụng ly, mở nắp, chuông vòng quay,
+// Âm thanh của trang stage: hàng chờ giọng đọc (TTS từ server), tiếng cụng ly, mở nắp, đập quán,
 // tiếng quán ồn ào và nhạc nền. Chỉ trang ?view=stage tạo SoundEngine; dashboard và bản xem trước im lặng.
 
 /** @typedef {{ voice: string; rate: number; music: boolean; musicVolume: number; musicTrack: string; ambience: boolean }} SoundSettings */
@@ -300,7 +300,7 @@ export class SoundEngine {
     for (let i = 0; i < 3; i++) setTimeout(() => this.crashHit(0.5), 350 + i * 330);
   }
 
-  /** @private smaller bang after the big one */
+  /** smaller bang (after the big one, or one table going over) */
   crashHit(volume = 0.5) {
     const ctx = this.audio();
     if (!ctx || !this.sfxBus || ctx.state !== 'running') return;
@@ -426,28 +426,6 @@ export class SoundEngine {
       o.connect(g).connect(this.sfxBus);
       o.start(t0);
       o.stop(t0 + d + 0.05);
-    }
-  }
-
-  /** Clicks slowing down while the wheel spins for `seconds` */
-  wheelTicks(seconds = 3.2, volume = 0.3) {
-    const ctx = this.audio();
-    if (!ctx || !this.sfxBus || ctx.state !== 'running') return;
-    const t0 = ctx.currentTime;
-    let t = 0;
-    let gap = 0.05;
-    while (t < seconds) {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'square';
-      o.frequency.value = 1800;
-      g.gain.setValueAtTime(volume * 0.25, t0 + t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + t + 0.02);
-      o.connect(g).connect(this.sfxBus);
-      o.start(t0 + t);
-      o.stop(t0 + t + 0.03);
-      t += gap;
-      gap *= 1.07;
     }
   }
 }

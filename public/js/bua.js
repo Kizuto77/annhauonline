@@ -76,17 +76,17 @@ export const BUA_REPLIES = {
     '{ban} xin bài hả? Quán có đúng một bài thôi, mà bài đó hay nên nghe hoài không chán.',
   ],
   seat: [
-    '{ban} muốn ghế hả? Gõ {kw} là có ghế liền, còn bàn VIP thì phải chịu chơi nha, quán nói thiệt.',
-    'Ghế còn nhiều lắm {ban} ơi, chỉ có bàn VIP là phải xếp hàng. Comment nhiều lên là được lên!',
-    'Bàn VIP sáu ghế, toàn đại gia ngồi. {ban} ráng cày điểm lên ngồi chung cho oai.',
+    '{ban} muốn ghế hả? Comment nhậu là chủ quán kéo ghế nhựa ra liền, ghế hơi lùn nhưng ngồi êm lắm.',
+    'Ghế còn nhiều lắm {ban} ơi, comment nhậu là có chỗ. Muốn ngồi cạnh crush thì gõ bàn với số của crush!',
+    'Quán có tám bàn, bàn nào cũng ồn như nhau. {ban} gõ bàn một tới bàn tám mà chọn, chọn sai thì đổi tiếp.',
   ],
   gift: [
-    '{ban} hỏi quà hả? Tặng bông hoa thì lên mồi, tặng donut thì đập quán. Chủ quán vừa mong vừa sợ!',
+    '{ban} hỏi quà hả? Một xu là có mồi ngon, ba mươi xu là đập quán. Chủ quán vừa mong vừa sợ!',
     'Quà là tấm lòng {ban} ơi, không có cũng được. Mà có thì chủ quán đọc tên to như loa phường luôn.',
     '{ban} nhắc tới quà làm chủ quán sáng mắt. Đùa thôi, ngồi chơi vui là quán vui rồi!',
   ],
   like: [
-    'Đúng rồi {ban}, cả nhà thả tim đi! Đủ tim là mưa bọt bia, ướt hết cả quán luôn.',
+    'Đúng rồi {ban}, cả nhà thả tim đi! Tim bay đầy quán là chủ quán vui tới sáng.',
     '{ban} hô thả tim hay quá, cho {ban} làm trưởng ban phong trào luôn nha!',
   ],
   follow: [

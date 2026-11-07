@@ -1,10 +1,10 @@
 // @ts-check
 /**
- * Xỉn Bia – quán nhậu online cho TikTok LIVE.
+ * Nhậu Đêm 134 – quán nhậu online cho TikTok LIVE.
  *
- * Server Node thuần (không cần Express): phát các file trong public/, nhận sự kiện TikTok LIVE, giữ bảng điểm,
- * thanh tim, vòng quay mồi và cài đặt, rồi đẩy mọi thứ tới các trang qua SSE (/api/events). Trang stage
- * (?view=stage, nguồn Link trong TikTok LIVE Studio) là trang duy nhất phát tiếng; dashboard chỉ điều khiển.
+ * Server Node thuần (không cần Express): phát các file trong public/, nhận sự kiện TikTok LIVE, giữ bảng vàng,
+ * bếp và cài đặt, rồi đẩy mọi thứ tới các trang qua SSE (/api/events). Trang stage (?view=stage, nguồn Link
+ * trong TikTok LIVE Studio) là trang duy nhất phát tiếng; dashboard chỉ điều khiển.
  *
  * Chỉ nghe trên 127.0.0.1 và chỉ nhận request có Host là localhost / 127.0.0.1 / lvh.me, nên trang web lạ
  * (kể cả kiểu DNS rebinding) không điều khiển được giọng đọc hay ngắt live.
@@ -14,86 +14,57 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { DISHES } from './public/js/dishes.js';
 import { cleanText, lettersOnly, maskBanned, tokensOf } from './public/js/text.js';
-import { createClub } from './club.js';
+import { createPub } from './pub.js';
+import { VOICES, synth } from './tts.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const UPLOAD_DIR = path.join(ROOT, 'uploads');
 const SETTINGS_FILE = path.join(ROOT, 'settings.json');
-const VIEWERS_FILE = path.join(ROOT, 'viewers.json'); // khách quen: điểm trọn đời, số lần ghé
 const PORT = Number(process.env.PORT) || 3000;
 
-const POINTS_PER_COIN = 10; // bảng TOP: 1 comment = 1 điểm, 1 xu quà = 10 điểm
+const POINTS_PER_COIN = 10; // bảng vàng: 1 comment = 1 điểm, 1 xu quà = 10 điểm
 
 // ---------------------------------------------------------------------------------------------------------------
-// Settings (settings.json, gitignored). Every page gets them on connect and on every change.
+// Settings (settings.json, gitignored). Every page gets them on connect and on every change, without the API keys.
 // ---------------------------------------------------------------------------------------------------------------
-
-/** @typedef {typeof DEFAULTS} Settings */
-/**
- * Voices to choose from in the dashboard. Microsoft has two Vietnamese voices (Hoài My, Nam Minh); each comes in a
- * few styles by pitch and speed. "google" is the Google Translate voice.
- * @type {Record<string, { name: string; pitch: string; rate: number }>}
- */
-const VOICES = {
-  female: { name: 'vi-VN-HoaiMyNeural', pitch: '+4%', rate: 0 }, // chị chủ quán, vui vẻ
-  female_cute: { name: 'vi-VN-HoaiMyNeural', pitch: '+12%', rate: 6 }, // em gái nhí nhảnh
-  female_soft: { name: 'vi-VN-HoaiMyNeural', pitch: '-3%', rate: -7 }, // cô chủ dịu dàng
-  female_news: { name: 'vi-VN-HoaiMyNeural', pitch: '0%', rate: -3 }, // chị phát thanh viên, rõ chữ
-  male: { name: 'vi-VN-NamMinhNeural', pitch: '-1%', rate: 0 }, // anh chủ quán, trầm ấm
-  male_deep: { name: 'vi-VN-NamMinhNeural', pitch: '-9%', rate: -6 }, // anh trầm, chậm rãi
-  male_hype: { name: 'vi-VN-NamMinhNeural', pitch: '+6%', rate: 9 }, // MC sôi động
-  google: { name: 'google', pitch: '0%', rate: 0 }, // giọng Google
-};
 
 const DEFAULTS = {
-  channelName: 'Xỉn Bia', // tên quán: tiêu đề bảng neon và tên giọng đọc xưng
-  keyword: 'dzô, dzo, dô, zô, do, zo', // các từ cụng ly, cách nhau dấu phẩy; từ đầu tiên hiện trên bảng hiệu
-  boardTitle: 'TOP CHIẾN HỮU',
+  channelName: 'Nhậu Đêm 134', // tên quán: bảng hiệu neon và tên giọng đọc xưng
+  keyword: 'dzô, dzo, dô, zô, do, zo', // các từ cụng ly, cách nhau dấu phẩy; từ đầu tiên hiện trên bảng
+  boardTitle: 'BẢNG VÀNG',
   showBoard: true,
-  voice: 'female_cute', // một trong VOICES bên dưới (Hoài My / Nam Minh với nhiều kiểu, hoặc giọng Google)
-  likeGoal: 666, // tim cả phòng cho một trận mưa bọt bia
-  rainSeconds: 60, // mưa bọt bia kéo dài bao lâu
-  wheelGoal: 99, // tim cả phòng cho một lần quay vòng mồi
+  voice: 'female_cute', // một trong VOICES (tts.js): Microsoft, Google, FPT.AI, Zalo AI
+  fptKey: '', // API key FPT.AI (console.fpt.ai), chỉ lưu trên máy này
+  zaloKey: '', // API key Zalo AI (zalo.ai), chỉ lưu trên máy này
   rate: 1.05,
   autoVoice: true, // tắt là giọng đọc im hẳn (trừ "Đọc ngay")
   greet: true, // chào khách mới vào
-  chatReply: true,
   readChat: true, // đọc to từng comment (lọc từ tục, link, số điện thoại) rồi đáp
-  replyStyle: 'bua', // bua = hài hước lầy lội, hien = lịch sự // đáp comment (sinh nhật, buồn, say, đòi mồi, chào về)
-  idleTalk: true, // live im lâu thì chủ quán tự nói chuyện + nhắc chia sẻ
+  replyStyle: 'bua', // bua = hài hước lầy lội, hien = lịch sự
+  idleTalk: true, // live im lâu thì chủ quán tự bắt chuyện + nhắc chia sẻ
   music: true,
   musicVolume: 0.22,
-  musicTrack: 'nhau', // nhau = nhạc quán nhậu (đàn tranh, đàn bầu, mõ, nhịp remix); chill = nhạc chill cũ
+  musicTrack: 'nhau',
   ambience: true, // tiếng quán ồn ào, ly chạm lách cách
-  stories: false, // chủ quán tự kể chuyện, chuyện cười, đố vui, nhắc thả tim / chia sẻ
-  storyEvery: 4, // phút giữa hai lần kể
-  smashEnabled: true, // quà đặc biệt = đập quán
-  smashGifts: 'Doughnut, Cheese Donuts, Bubble Tea, Bouquet Flower', // tên quà (cách nhau dấu phẩy, không phân biệt hoa thường/dấu)
-  foodMinCoins: 1, // quà từ số xu này (mỗi cái): bếp làm một món ngon ngẫu nhiên; 0 = tắt
+  orders: true, // khách comment gọi món miễn phí, bếp nấu rồi bưng ra
+  foodMinCoins: 1, // quà từ số xu này (mỗi cái): một món ngon ngẫu nhiên; 0 = tắt
   hotpotMinCoins: 5, // quà từ số xu này: một nồi lẩu ngẫu nhiên
+  smashMinCoins: 30, // quà từ số xu này: đập quán; 0 = tắt
   treatMinCoins: 99, // quà từ số xu này: bao cả quán (mỗi bàn một nồi lẩu)
   seatIdleMin: 10, // im lặng bao nhiêu phút thì rời bàn (TikTok không báo ai rời live)
-  smashMinCoins: 30, // >0: mọi quà có giá từ số xu này trở lên (mỗi cái) cũng đập quán; 0 = tắt
-  giftFoods: 'Rose, Bông hoa = Gỏi gà xé phay\nFinger Heart, Bắn Tim = Nem chua rán\nRosa = Khô mực nướng\nLucky Pig, Chú Heo May Mắn = Chân gà sả tắc\nIce Cream Cone, Kem Ốc Quế = Ốc len xào dừa', // mỗi dòng: tên quà (cách nhau dấu phẩy) = tên món mồi
-  orders: true, // khách comment gọi món theo thực đơn, bếp nấu rồi bưng ra; gõ "tính tiền" ra hóa đơn ảo
-  levels: true, // cấp bậc khách quen (lưu qua nhiều buổi live)
-  autoEvents: true, // sự kiện tự động: giờ vàng, mất điện, mưa bão, người bán dạo, karaoke
-  eventEvery: 6, // phút giữa hai sự kiện
-  games: true, // mini game
-  autoGames: true, // tự mở đoán số / kéo co
-  gameEvery: 8, // phút giữa hai trò
-  rps: true, // oẳn tù tì với chủ quán (gõ kéo / búa / bao)
   background: '', // ảnh nền tự tải lên; rỗng = cảnh quán vẽ sẵn
 };
+/** @typedef {typeof DEFAULTS} Settings */
+const SECRET = ['fptKey', 'zaloKey'];
 
 const bool = (/** @type {unknown} */ v) => (typeof v === 'boolean' ? v : v === '1' || v === 'true' ? true : v === '0' || v === 'false' ? false : undefined);
 const num = (/** @type {number} */ min, /** @type {number} */ max) => (/** @type {unknown} */ v) => {
   const n = Number(v);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n * 100) / 100)) : undefined;
 };
+const apiKey = (/** @type {unknown} */ v) => (typeof v === 'string' && /^[\w\-.=+/]{0,200}$/.test(v.trim()) ? v.trim() : undefined);
 /** @type {Record<string, (v: unknown) => unknown>} */
 const VALIDATE = {
   channelName: (v) => cleanText(v, 40) || undefined,
@@ -104,13 +75,11 @@ const VALIDATE = {
   boardTitle: (v) => cleanText(v, 24) || undefined,
   showBoard: bool,
   voice: (v) => (typeof v === 'string' && Object.hasOwn(VOICES, v) ? v : undefined),
-  likeGoal: num(10, 1_000_000),
-  rainSeconds: num(10, 600),
-  wheelGoal: num(10, 1_000_000),
+  fptKey: apiKey,
+  zaloKey: apiKey,
   rate: num(0.7, 1.3),
   autoVoice: bool,
   greet: bool,
-  chatReply: bool,
   readChat: bool,
   replyStyle: (v) => (v === 'bua' || v === 'hien' ? v : undefined),
   idleTalk: bool,
@@ -118,24 +87,12 @@ const VALIDATE = {
   musicVolume: num(0, 1),
   musicTrack: (v) => (v === 'nhau' || v === 'chill' ? v : undefined),
   ambience: bool,
-  stories: bool,
-  storyEvery: num(1, 30),
-  smashEnabled: bool,
-  smashGifts: (v) => (typeof v === 'string' ? cleanText(v, 160) : undefined),
-  smashMinCoins: num(0, 1_000_000),
+  orders: bool,
   foodMinCoins: num(0, 1_000_000),
   hotpotMinCoins: num(0, 1_000_000),
+  smashMinCoins: num(0, 1_000_000),
   treatMinCoins: num(0, 1_000_000),
   seatIdleMin: num(2, 120),
-  orders: bool,
-  levels: bool,
-  autoEvents: bool,
-  eventEvery: num(2, 60),
-  games: bool,
-  autoGames: bool,
-  gameEvery: num(3, 60),
-  rps: bool,
-  giftFoods: (v) => (typeof v === 'string' ? v.replace(/[\x00-\x09\x0b-\x1f\x7f]/g, '').replace(/\r/g, '').trim().slice(0, 1200) : undefined),
 };
 
 /** @type {Settings} */
@@ -146,16 +103,10 @@ try {
     const v = check(saved[key]);
     if (v !== undefined) /** @type {any} */ (settings)[key] = v;
   }
-  // older versions had a single keyword: move the default one to the full list
-  if (settings.keyword === 'dzo') settings.keyword = DEFAULTS.keyword;
-  // chủ quán chọn dùng một giọng "Em gái nhí nhảnh": đổi giọng mặc định cũ sang giọng này (một lần)
-  if (!saved.voiceSet && settings.voice === 'female') settings.voice = DEFAULTS.voice;
-  // chủ quán bỏ kể chuyện để trò chuyện với người chat: tắt kể chuyện một lần (bật lại được trong admin)
-  if (!saved.talkMode) settings.stories = false;
-  // the old smash setup that nobody changed: move to the new one
-  if (settings.smashGifts === 'Galaxy, Lion, Universe' && settings.smashMinCoins === 0) {
-    settings.smashGifts = DEFAULTS.smashGifts;
-    settings.smashMinCoins = DEFAULTS.smashMinCoins;
+  // bản mới "Nhậu Đêm 134": tên quán và tên bảng cũ đổi sang tên mới (một lần)
+  if (!saved.build134) {
+    if (settings.channelName === 'Xỉn Bia') settings.channelName = DEFAULTS.channelName;
+    if (settings.boardTitle === 'TOP CHIẾN HỮU') settings.boardTitle = DEFAULTS.boardTitle;
   }
   if (typeof saved.background === 'string' && /^\/uploads\/background-\d+\.(jpg|png|webp)$/.test(saved.background)) {
     settings.background = saved.background;
@@ -165,12 +116,19 @@ try {
 }
 const saveSettings = () => {
   try {
-    // voiceSet: the voice in this file is the owner's choice, not an old default to move on
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ ...settings, voiceSet: true, talkMode: true }, null, 2));
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify({ ...settings, build134: true }, null, 2));
   } catch (err) {
     console.error('Không lưu được settings.json:', err);
   }
 };
+/** What the pages see: no API keys, only whether one is set */
+const publicSettings = () => {
+  /** @type {Record<string, unknown>} */
+  const out = { ...settings, fptKeySet: Boolean(settings.fptKey), zaloKeySet: Boolean(settings.zaloKey), voiceGender: VOICES[settings.voice]?.gender ?? 'f' };
+  for (const k of SECRET) delete out[k];
+  return out;
+};
+const voiceList = () => Object.entries(VOICES).map(([id, v]) => ({ id, label: v.label, provider: v.provider, gender: v.gender }));
 
 // ---------------------------------------------------------------------------------------------------------------
 // SSE
@@ -202,15 +160,16 @@ const throttle = (/** @type {() => void} */ fn, /** @type {number} */ ms) => {
     }, ms);
   };
 };
+const uid = () => crypto.randomBytes(5).toString('hex');
 
 // ---------------------------------------------------------------------------------------------------------------
-// Game state: kept here so the stage, the dashboard and a reloaded page all agree
+// State kept here so the stage, the dashboard and a reloaded page all agree
 // ---------------------------------------------------------------------------------------------------------------
 
 /** @typedef {{ id: string; name: string; avatar: string }} User */
 
 const status = { connected: false, connecting: false, username: '', roomId: '', viewers: 0, totalLikes: 0, error: '' };
-const sendStatus = () => broadcast('status', status);
+const sendStatus = throttle(() => broadcast('status', status), 300);
 
 /** @type {Map<string, { id: string; name: string; avatar: string; score: number; coins: number }>} */
 const board = new Map();
@@ -222,9 +181,6 @@ const topBoard = () =>
 const sendBoard = throttle(() => broadcast('board', topBoard()), 400);
 /** @param {User} user @param {number} points @param {number} coins */
 function addPoints(user, points, coins = 0) {
-  // giờ vàng: điểm x2 (cả bảng TOP lẫn điểm khách quen)
-  points *= club.multiplier();
-  club.addXp(user, points);
   const e = board.get(user.id) ?? { id: user.id, name: user.name, avatar: '', score: 0, coins: 0 };
   e.name = user.name;
   e.avatar = user.avatar || e.avatar;
@@ -240,58 +196,17 @@ function addPoints(user, points, coins = 0) {
   sendBoard();
 }
 
-// Goals come from the settings, so a change in the dashboard shows at once
-const meters = { likes: 0, wheel: 0, rainUntil: 0, total: 0, rains: 0, wheels: 0 };
-/** like counts of the last minute, for "tim/phút" */
-/** @type {Array<{ at: number; n: number }>} */
-let likeLog = [];
-const perMinute = () => {
-  const now = Date.now();
-  likeLog = likeLog.filter((l) => now - l.at < 60_000);
-  return likeLog.reduce((a, l) => a + l.n, 0);
+/** Hearts: sent to the stage in small batches, it floats hearts up from the tables */
+let pendingLikes = 0;
+const sendLikes = throttle(() => {
+  broadcast('likes', { n: pendingLikes, total: status.totalLikes });
+  pendingLikes = 0;
+}, 600);
+const addLikes = (/** @type {number} */ n) => {
+  if (!(n > 0)) return;
+  pendingLikes += n;
+  sendLikes();
 };
-const metersPayload = () => ({
-  ...meters,
-  likeGoal: settings.likeGoal,
-  wheelGoal: settings.wheelGoal,
-  rainLeft: Math.max(0, meters.rainUntil - Date.now()),
-  perMinute: perMinute(),
-});
-const sendMeters = throttle(() => broadcast('meters', metersPayload()), 250);
-/** @type {NodeJS.Timeout | undefined} */
-let rainEndTimer;
-// "tim/phút" drifts down when likes stop: refresh it now and then while someone is watching
-setInterval(() => likeLog.length && sendMeters(), 5000);
-
-/** @param {number} count */
-function addLikes(count) {
-  if (!(count > 0)) return;
-  const now = Date.now();
-  meters.total += count;
-  likeLog.push({ at: now, n: count });
-  meters.likes += count;
-  const rains = Math.floor(meters.likes / settings.likeGoal);
-  meters.likes %= settings.likeGoal;
-  if (rains > 0) {
-    // Thêm tim trong lúc đang mưa thì mưa lâu hơn
-    meters.rains += rains;
-    meters.rainUntil = Math.max(meters.rainUntil, now) + rains * settings.rainSeconds * 1000;
-    broadcast('rain', { left: meters.rainUntil - now, id: uid() });
-    // tell every page when the rain is over
-    clearTimeout(rainEndTimer);
-    rainEndTimer = setTimeout(sendMeters, meters.rainUntil - now + 200);
-  }
-  meters.wheel += count;
-  if (meters.wheel >= settings.wheelGoal) {
-    // Một đợt tim qua mốc nhiều lần vẫn chỉ quay một lần, cho khỏi dồn bảng
-    meters.wheels++;
-    meters.wheel %= settings.wheelGoal;
-    broadcast('wheel', { id: uid(), index: Math.floor(Math.random() * DISHES.length) });
-  }
-  sendMeters();
-}
-
-const uid = () => crypto.randomBytes(5).toString('hex');
 
 // "Cả quán dzô": khi nhiều người cùng gõ từ khóa trong 15 giây
 const WAVE_WINDOW_MS = 15_000;
@@ -334,6 +249,10 @@ function isKeyword(text) {
   return false;
 }
 
+/** Name as shown: banned words masked; the stage never speaks a masked name */
+const show = (/** @type {User} */ u) => ({ id: u.id, name: maskBanned(u.name), avatar: u.avatar });
+const pub = createPub({ broadcast, uid, show, settings: () => settings });
+
 // Everything below is fed by TikTok and by the dashboard's test buttons (/api/demo) alike
 
 /** @param {User} user @param {string} text */
@@ -342,33 +261,15 @@ function onChat(user, text) {
   if (!clean) return;
   addPoints(user, 1);
   const dzo = isKeyword(clean);
-  // gọi món, tính tiền, oẳn tù tì, đoán số / kéo co: the stage shows those its own way instead of a chat reply
-  const kind = club.onChat(user, clean, dzo);
+  // gọi món, xin ngồi, đổi bàn: the stage shows those its own way instead of reading the comment
+  const kind = pub.onChat(user, clean);
   broadcast('chat', { user: show(user), text: maskBanned(clean), dzo, kind });
   if (dzo) noteDzo(user.id);
 }
-/** @param {User} user @param {string} giftName @param {number} coinsEach @param {number} count */
-function onGift(user, giftName, coinsEach, count) {
-  const coins = Math.max(1, Math.round(coinsEach)) * Math.max(1, Math.round(count));
-  addPoints(user, coins * POINTS_PER_COIN, coins);
-  club.onGift(user, coins);
-  broadcast('gift', { id: uid(), user: show(user), giftName: cleanText(giftName, 40) || 'Quà', coins, count });
-  // theo số xu mỗi cái: bao cả quán > đập quán > lẩu > món ngon
-  if (settings.treatMinCoins > 0 && coinsEach >= settings.treatMinCoins) broadcast('treat', { id: uid(), user: show(user) });
-  else if (shouldSmash(giftName, coinsEach)) triggerSmash(user);
-  else club.giftOrder(user, coinsEach, count);
-}
 
-// "Đập quán": quà đặc biệt làm khách đập phá, chủ quán khóc rồi dọn lại. Một đợt kéo dài ~15 giây, quà trong lúc đó bỏ qua.
+// "Đập quán": khách đập phá, chủ quán khóc rồi dọn lại. Một đợt ~15 giây, quà đập trong lúc đó thành quà thường.
 const SMASH_MS = 15_000;
 let smashUntil = 0;
-const fold = (/** @type {string} */ s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
-/** @param {string} giftName @param {number} coinsEach */
-function shouldSmash(giftName, coinsEach) {
-  if (!settings.smashEnabled) return false;
-  // chỉ theo số xu (mỗi cái), không cần tên quà
-  return settings.smashMinCoins > 0 && coinsEach >= settings.smashMinCoins;
-}
 /** @param {User} user @returns {boolean} false when a smash is already going on */
 function triggerSmash(user) {
   if (Date.now() < smashUntil) return false;
@@ -376,28 +277,33 @@ function triggerSmash(user) {
   broadcast('smash', { id: uid(), user: show(user), ms: SMASH_MS });
   return true;
 }
-/** @param {User} user */
-const onJoin = (user) => {
-  club.onJoin(user);
-  broadcast('join', { user: show(user) });
-};
-/** @param {User} user */
-const onFollow = (user) => {
-  club.onFollow(user);
-  broadcast('follow', { user: show(user) });
-};
-/** Name as shown: banned words masked; the stage never speaks a masked name. lv = cấp khách quen, visits = số lần ghé */
-const show = (/** @type {User} */ u) => ({ id: u.id, name: maskBanned(u.name), avatar: u.avatar, lv: settings.levels ? club.levelOf(u.id) : 0, visits: club.visitsOf(u.id) });
 
-const club = createClub({
-  file: VIEWERS_FILE,
-  broadcast,
-  uid: () => uid(),
-  show,
-  givePoints: (u, n) => addPoints(u, n),
-  settings: () => settings,
-  busy: () => Date.now() < smashUntil,
-});
+/**
+ * Gifts go by coins per gift, never by gift name: bao cả quán > đập quán > lẩu > món ngon > (thanks only)
+ * @param {User} user @param {string} giftName @param {number} coinsEach @param {number} count
+ */
+function onGift(user, giftName, coinsEach, count) {
+  const each = Math.max(1, Math.round(coinsEach));
+  const n = Math.max(1, Math.round(count));
+  const coins = each * n;
+  addPoints(user, coins * POINTS_PER_COIN, coins);
+  pub.noteGifter(user);
+  const s = settings;
+  /** @type {string} */
+  let tier = '';
+  if (s.treatMinCoins > 0 && each >= s.treatMinCoins) tier = 'treat';
+  else if (s.smashMinCoins > 0 && each >= s.smashMinCoins && Date.now() >= smashUntil) tier = 'smash';
+  else if (s.hotpotMinCoins > 0 && each >= s.hotpotMinCoins) tier = 'hotpot';
+  else if (s.foodMinCoins > 0 && each >= s.foodMinCoins) tier = 'food';
+  broadcast('gift', { id: uid(), user: show(user), giftName: cleanText(giftName, 40) || 'Quà', coins, count: n, each, tier });
+  if (tier === 'treat') broadcast('treat', { id: uid(), user: show(user) });
+  else if (tier === 'smash') triggerSmash(user);
+  else if (tier === 'hotpot' || tier === 'food') pub.giftOrder(user, each, n);
+}
+/** @param {User} user */
+const onJoin = (user) => broadcast('join', { user: show(user) });
+/** @param {User} user */
+const onFollow = (user) => broadcast('follow', { user: show(user) });
 
 // ---------------------------------------------------------------------------------------------------------------
 // TikTok LIVE (tiktok-live-connector 2.x, proto v3: chat text in `content`, avatar in user.avatarThumb.urlList)
@@ -433,8 +339,7 @@ async function connectTikTok(username) {
 
   const conn = new TikTokLiveConnection(username, {
     processInitialData: false, // không phát lại comment/quà cũ lúc mới kết nối
-    // The gift-list fetch behind this option needs a paid Euler Stream plan; gift events already carry name and coins
-    enableExtendedGiftInfo: false,
+    enableExtendedGiftInfo: false, // gift events already carry name and coins
   });
   activeConn = conn;
   // Every handler ignores events from a connection that has since been replaced
@@ -498,31 +403,21 @@ async function connectTikTok(username) {
     status.viewers = data.viewerCount;
     sendStatus();
   });
-
-  // Likes are counted from the room's running total when TikTok sends it (busy rooms drop some like events,
-  // but each one carries the total); otherwise from the event's own count. Reset for every connection.
+  // Likes come with the room's running total when TikTok sends it (busy rooms drop some events)
   /** @type {number | null} */
   let lastTotal = null;
   conn.on(WebcastEvent.LIKE, (/** @type {any} */ data) => {
     if (!live()) return;
     const count = Number(data?.likeCount) || 1;
     const total = typeof data?.totalLikeCount === 'number' ? data.totalLikeCount : null;
-    if (total === null) return addLikes(count);
-    if (lastTotal === null || total < lastTotal) {
-      // first news of this live (or the server was restarted mid-live): line the bars up with TikTok's own total
-      // instead of starting from 0, without raining for all the hearts that came before
-      lastTotal = total;
-      meters.likes = total % settings.likeGoal;
-      meters.wheel = total % settings.wheelGoal;
-      meters.total = Math.max(meters.total, total);
-      status.totalLikes = total;
+    if (total === null) {
+      status.totalLikes += count;
       sendStatus();
-      sendMeters();
-      return;
+      return addLikes(count);
     }
-    const delta = total - lastTotal;
+    const delta = lastTotal === null || total < lastTotal ? count : total - lastTotal;
     lastTotal = total;
-    status.totalLikes = total;
+    status.totalLikes = Math.max(status.totalLikes, total);
     sendStatus();
     addLikes(delta);
   });
@@ -557,125 +452,11 @@ function disconnectTikTok(announce = true) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Voice: Microsoft Edge neural voices (msedge-tts), Google Translate as fallback
-// ---------------------------------------------------------------------------------------------------------------
-
-const escapeXml = (/** @type {string} */ s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-/** Text as the voice should say it: no emoji or symbols, a breath after "!" and "?" so it sounds less flat */
-const speakable = (/** @type {string} */ t) =>
-  t
-    .replace(/[\p{Extended_Pictographic}\u200d\ufe0f]/gu, '')
-    .replace(/\s*[·•|]\s*/g, ', ')
-    .replace(/\.{2,}/g, '…')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-/** @param {string} text @param {number} rate @param {string} voice */
-async function edgeTts(text, rate, voice, waitMs = 15_000) {
-  /** @type {any} */
-  const { MsEdgeTTS, OUTPUT_FORMAT } = await import('msedge-tts');
-  const tts = new MsEdgeTTS();
-  /** @type {NodeJS.Timeout | undefined} */
-  let timer;
-  try {
-    // 48 kHz / 192 kbps: giữ được âm cao, giọng sáng và rõ hơn bản 24 kHz (tiếng bị "tù")
-    await tts.setMetadata(VOICES[voice].name, OUTPUT_FORMAT.AUDIO_48KHZ_192KBITRATE_MONO_MP3 ?? OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
-    const { audioStream } = tts.toStream(escapeXml(speakable(text)), { rate: `${Math.round((rate - 1) * 100) + VOICES[voice].rate}%`, pitch: VOICES[voice].pitch, volume: '+6%' });
-    /** @type {Buffer[]} */
-    const chunks = [];
-    const read = (async () => {
-      for await (const c of audioStream) chunks.push(/** @type {Buffer} */ (c));
-    })();
-    const timeout = new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error('Edge TTS quá thời gian')), waitMs);
-    });
-    await Promise.race([read, timeout]);
-    if (!chunks.length) throw new Error('Edge TTS không trả âm thanh');
-    return Buffer.concat(chunks);
-  } finally {
-    clearTimeout(timer);
-    try {
-      tts.close();
-    } catch {
-      // ignore
-    }
-  }
-}
-
-/** Microsoft voices, at most 2 at a time (more in parallel makes the service drop some), tried up to 3 times */
-let edgeBusy = 0;
-/** @type {Array<() => void>} */
-const edgeWaiting = [];
-async function edgeWithRetry(/** @type {string} */ text, /** @type {number} */ rate, /** @type {string} */ voice) {
-  if (edgeBusy >= 2) await new Promise((ok) => edgeWaiting.push(() => ok(undefined)));
-  edgeBusy++;
-  try {
-    let last;
-    for (const [i, wait] of [15_000, 9_000, 9_000].entries()) {
-      try {
-        return await edgeTts(text, rate, voice, wait);
-      } catch (err) {
-        last = err;
-        console.warn(`Giọng ${voice} lỗi lần ${i + 1}, thử lại:`, err instanceof Error ? err.message : err);
-        await new Promise((ok) => setTimeout(ok, 400 + i * 800));
-      }
-    }
-    throw last;
-  } finally {
-    edgeBusy--;
-    edgeWaiting.shift()?.();
-  }
-}
-
-/** Google Translate TTS caps each request near 200 chars: split at sentence/comma/space boundaries */
-function splitText(/** @type {string} */ text, max = 190) {
-  const out = [];
-  let rest = text.trim();
-  while (rest.length > max) {
-    const win = rest.slice(0, max + 1);
-    let cut = Math.max(win.lastIndexOf('. '), win.lastIndexOf('! '), win.lastIndexOf('? '));
-    if (cut < max / 2) cut = Math.max(win.lastIndexOf(', '), win.lastIndexOf('; '));
-    if (cut < max / 2) cut = win.lastIndexOf(' ');
-    if (cut <= 0) cut = max - 1;
-    out.push(rest.slice(0, cut + 1).trim());
-    rest = rest.slice(cut + 1).trim();
-  }
-  if (rest) out.push(rest);
-  return out;
-}
-async function googleTts(/** @type {string} */ text) {
-  const parts = [];
-  for (const chunk of splitText(text)) {
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(chunk)}`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://translate.google.com/' } });
-    if (!res.ok) throw new Error(`Google TTS lỗi ${res.status}`);
-    parts.push(Buffer.from(await res.arrayBuffer()));
-  }
-  return Buffer.concat(parts);
-}
-
-// Repeated lines (greetings, reminders) come from memory; capped by size, oldest out first
-const ttsCache = new Map();
-let ttsCacheBytes = 0;
-const TTS_CACHE_MAX = 60 * 1024 * 1024;
-/** @param {string} key @param {Buffer} audio */
-function cacheTts(key, audio) {
-  ttsCache.set(key, audio);
-  ttsCacheBytes += audio.length;
-  while (ttsCacheBytes > TTS_CACHE_MAX && ttsCache.size > 1) {
-    const [oldKey, old] = ttsCache.entries().next().value;
-    ttsCache.delete(oldKey);
-    ttsCacheBytes -= old.length;
-  }
-}
-
-// ---------------------------------------------------------------------------------------------------------------
 // Test events from the dashboard (try everything without going live)
 // ---------------------------------------------------------------------------------------------------------------
 
-const DEMO_NAMES = ['Tuấn Bia Hơi', 'Lan Ốc Len', 'Hùng Xe Ôm', 'Mai Trà Sữa', 'Khánh Đậu Phộng', 'Ngọc 2k', 'Phát Mực Nướng', 'Vy Hạt Dẻ', 'Bảo Lẩu Thái', 'Thảo Nem Chua', 'Duyên Dễ Thương', 'Long Sụn Gà', 'An Vui Vẻ', 'Trâm Khô Gà', 'Quân 9x'];
-const DEMO_CHATS = ['Quán vui quá', 'Hôm nay sinh nhật mình nè', 'Buồn quá, mới chia tay', 'Cho xin đĩa mồi đi chủ quán', 'Say rồi, đi ngủ đây', 'Chào cả nhà', 'Mai đi làm sớm rồi', 'Bia ngon ghê', 'Mình từ Hà Nội nè', 'Chủ quán giọng hay quá', 'Haha cười xỉu', 'Cho em ngồi bàn VIP với', 'Thả tim đi cả nhà ơi', 'Quán tên gì vậy ạ?', 'Cuối tuần rồi vui quá', 'Mưa to quá trời', 'Nay lương về rồi nè', 'Em vừa follow nha', 'Cảm ơn chủ quán', 'Tui đang ở Đà Nẵng', 'Ốc len xào ngon quá', 'Yêu quán quá trời'];
+const DEMO_NAMES = ['Tuấn Bia Hơi', 'Lan Ốc Len', 'Hùng Xe Ôm', 'Mai Trà Sữa', 'Khánh Đậu Phộng', 'Ngọc 2k', 'Phát Mực Nướng', 'Vy Hạt Dẻ', 'Bảo Lẩu Thái', 'Thảo Nem Chua', 'Duyên Dễ Thương', 'Long Sụn Gà', 'An Vui Vẻ', 'Trâm Khô Gà', 'Quân 9x', 'Đức Phố Cổ', 'Hoa Hàng Mã'];
+const DEMO_CHATS = ['Quán vui quá', 'Hôm nay sinh nhật mình nè', 'Buồn quá, mới chia tay', 'Say rồi, đi ngủ đây', 'Chào cả nhà', 'Mai đi làm sớm rồi', 'Mình từ Hà Nội nè', 'Chủ quán giọng hay quá', 'Haha cười xỉu', 'Thả tim đi cả nhà ơi', 'Quán ở đâu vậy ạ?', 'Cuối tuần rồi vui quá', 'Mưa to quá trời', 'Nay lương về rồi nè', 'Cảm ơn chủ quán', 'Tui đang ở Đà Nẵng', 'Cho thêm 2 em đào đi chủ quán', 'Yêu quán quá trời'];
 const pick = (/** @type {any[]} */ list) => list[Math.floor(Math.random() * list.length)];
 const demoUser = () => {
   const name = pick(DEMO_NAMES);
@@ -683,36 +464,34 @@ const demoUser = () => {
 };
 /** @param {string} type */
 function demo(type) {
+  const s = settings;
   if (type === 'join') onJoin(demoUser());
   else if (type === 'chat') onChat(demoUser(), pick(DEMO_CHATS));
   else if (type === 'dzo') onChat(demoUser(), pick(['Dzô!', 'dzo dzo', 'Một hai ba dzô', 'zô 100%']));
-  else if (type === 'gift') onGift(demoUser(), pick(['Rose', 'Finger Heart', 'TikTok', 'GG']), 1, 1);
-  else if (type === 'giftFood') {
-    onGift(demoUser(), pick(['Rose', 'Finger Heart', 'Rosa', 'Ice Cream Cone']), Math.max(1, settings.foodMinCoins), pick([1, 1, 2]));
-  } else if (type === 'hotpot') onGift(demoUser(), pick(['Doughnut', 'Bubble Tea', 'Perfume']), Math.max(1, settings.hotpotMinCoins), 1);
-  else if (type === 'treat') onGift(demoUser(), pick(['Galaxy', 'Money Gun']), Math.max(1, settings.treatMinCoins), 1);
   else if (type === 'nhau') onChat(demoUser(), pick(['nhậu', 'Nhậu nào', 'cho ngồi với', 'vào bàn']));
   else if (type === 'table') onChat(demoUser(), `bàn ${Math.ceil(Math.random() * 8)}`);
+  else if (type === 'follow') onFollow(demoUser());
   else if (type === 'free') {
     const u = demoUser();
     onChat(u, 'nhậu');
-    setTimeout(() => onChat(u, pick(['đậu lạc', 'cho dĩa nem chua', 'bia', 'trà đá', 'gọi khoai tây chiên', 'lên dưa chuột', 'trứng vịt lộn'])), 1200);
-  } else if (type === 'bigGift') onGift(demoUser(), pick(['Perfume', 'Galaxy', 'Money Gun']), pick([99, 199, 500, 1000]), 1);
-  else if (type === 'smash') triggerSmash(demoUser());
-  else if (type === 'follow') onFollow(demoUser());
-  else if (type === 'order') onChat(demoUser(), pick(['Cho 1 dĩa đậu lạc', 'gọi nem chua', 'Lên 2 ly trà đá', 'bia hơi', 'Thêm một dĩa khoai tây chiên', 'gọi mực nướng']));
-  else if (type === 'bill') onChat(demoUser(), 'Tính tiền chủ quán ơi');
-  else if (type === 'rps') onChat(demoUser(), pick(['kéo', 'búa', 'bao', 'oẳn tù tì ra búa']));
-  else if (type === 'play') {
-    // a few viewers play whatever game is on
-    for (let i = 0; i < 8; i++) setTimeout(() => onChat(demoUser(), String(pick(['1', '2', '1', String(Math.ceil(Math.random() * 50))]))), i * 400);
-  }
-  else if (type === 'likes99') addLikes(99);
-  else if (type === 'likes666') addLikes(666);
-  else if (type === 'crowd') {
-    // A busy minute: people join, chat and cheer one after another
-    for (let i = 0; i < 12; i++) setTimeout(() => onJoin({ id: `demo-crowd-${i}`, name: `${pick(DEMO_NAMES)} ${i + 1}`, avatar: '' }), i * 250);
-    for (let i = 0; i < 6; i++) setTimeout(() => onChat({ id: `demo-crowd-${i}`, name: `${pick(DEMO_NAMES)} ${i + 1}`, avatar: '' }, 'Dzô!'), 4000 + i * 400);
+    setTimeout(() => onChat(u, pick(['đậu lạc', 'cho dĩa nem chua', 'bia hơi', 'trà đá', 'gọi khoai tây chiên', 'lên dưa chuột', 'đậu tẩm hành'])), 1200);
+  } else if (type === 'gift') onGift(demoUser(), pick(['Rose', 'TikTok', 'GG']), 1, 1);
+  else if (type === 'food') onGift(demoUser(), pick(['Rose', 'Finger Heart', 'Rosa']), Math.max(1, s.foodMinCoins), pick([1, 1, 2]));
+  else if (type === 'hotpot') onGift(demoUser(), pick(['Doughnut', 'Bubble Tea', 'Perfume']), Math.max(1, s.hotpotMinCoins), 1);
+  else if (type === 'smash') onGift(demoUser(), pick(['Doughnut', 'Bouquet Flower']), Math.max(1, s.smashMinCoins), 1);
+  else if (type === 'treat') onGift(demoUser(), pick(['Galaxy', 'Money Gun']), Math.max(1, s.treatMinCoins), 1);
+  else if (type === 'likes') {
+    status.totalLikes += 120;
+    sendStatus();
+    addLikes(120);
+  } else if (type === 'crowd') {
+    // A busy minute: people join, sit, order and cheer one after another
+    for (let i = 0; i < 10; i++) {
+      const u = { id: `demo-crowd-${i}`, name: `${pick(DEMO_NAMES)} ${i + 1}`, avatar: '' };
+      setTimeout(() => onJoin(u), i * 300);
+      setTimeout(() => onChat(u, i % 3 ? 'nhậu' : `bàn ${1 + (i % 8)}`), 1500 + i * 500);
+      setTimeout(() => onChat(u, i % 2 ? 'Dzô!' : pick(['đậu lạc', 'bia hơi', 'nem chua'])), 8000 + i * 450);
+    }
   } else return false;
   return true;
 }
@@ -799,11 +578,9 @@ function sendFile(res, file, cache) {
   });
 }
 
-function snapshot() {
-  return { settings, status, board: topBoard(), meters: metersPayload(), stages: stagePages(), club: club.snapshot() };
-}
+const snapshot = () => ({ settings: publicSettings(), voices: voiceList(), status, board: topBoard(), stages: stagePages(), pub: pub.snapshot() });
 
-const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGift', 'testGreet', 'testFollow', 'testChat', 'clearHall', 'unlockAudio', 'story']);
+const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGreet', 'clearHall', 'unlockAudio', 'hush']);
 
 /** @type {Record<string, (req: http.IncomingMessage, res: http.ServerResponse, url: URL) => Promise<void> | void>} */
 const routes = {
@@ -842,14 +619,8 @@ const routes = {
     }
     if (!changed.length) return json(res, 400, { success: false, error: 'Không có gì để lưu' });
     saveSettings();
-    broadcast('settings', settings);
-    if (changed.some((k) => k === 'likeGoal' || k === 'wheelGoal')) {
-      // a lower goal than the hearts already in: keep the bar just under it
-      meters.likes = Math.min(meters.likes, settings.likeGoal - 1);
-      meters.wheel = Math.min(meters.wheel, settings.wheelGoal - 1);
-      sendMeters();
-    }
-    json(res, 200, { success: true, settings });
+    broadcast('settings', publicSettings());
+    json(res, 200, { success: true, settings: publicSettings() });
   },
 
   'POST /api/control': async (req, res) => {
@@ -858,14 +629,6 @@ const routes = {
       triggerWave();
       return json(res, 200, { success: true });
     }
-    if (action === 'smash') {
-      if (!triggerSmash(demoUser())) return json(res, 400, { success: false, error: 'Quán đang bị đập / đang dọn, đợi chút nhé' });
-      return json(res, 200, { success: true, stages: stagePages() });
-    }
-    if (action === 'event' || action === 'game') {
-      const why = action === 'event' ? club.startEvent(String(text)) : club.startGame(String(text));
-      return json(res, why ? 400 : 200, why ? { success: false, error: why } : { success: true, stages: stagePages() });
-    }
     if (!CONTROL_ACTIONS.has(action)) return json(res, 400, { success: false, error: 'Lệnh không hợp lệ' });
     const line = typeof text === 'string' ? cleanText(text, 500) : '';
     if (action === 'speak' && !line) return json(res, 400, { success: false, error: 'Chưa nhập nội dung cần đọc' });
@@ -873,11 +636,16 @@ const routes = {
     json(res, 200, { success: true, stages: stagePages() });
   },
 
-  'GET /api/viewers': (_req, res) => json(res, 200, { list: club.viewersList(60), total: club.count() }),
-  'POST /api/viewers/reset': async (req, res) => {
-    await readJson(req);
-    club.resetViewers();
-    json(res, 200, { success: true });
+  // "Nghe thử" in the dashboard: makes the line here and reports the real error (wrong key, no quota...)
+  'POST /api/tts/test': async (req, res) => {
+    const { voice, text } = await readJson(req);
+    const v = typeof voice === 'string' && Object.hasOwn(VOICES, voice) ? voice : settings.voice;
+    try {
+      const audio = await synth(cleanText(text, 200) || `Chào mừng cả nhà tới ${settings.channelName}!`, settings.rate, v, settings);
+      json(res, 200, { success: true, bytes: audio.length });
+    } catch (err) {
+      json(res, 400, { success: false, error: err instanceof Error ? err.message : String(err) });
+    }
   },
 
   'POST /api/board/reset': async (req, res) => {
@@ -925,7 +693,7 @@ const routes = {
     fs.writeFileSync(path.join(UPLOAD_DIR, file), data);
     settings.background = `/uploads/${file}`;
     saveSettings();
-    broadcast('settings', settings);
+    broadcast('settings', publicSettings());
     json(res, 200, { success: true, url: settings.background });
   },
 
@@ -934,7 +702,7 @@ const routes = {
     removeBackground();
     settings.background = '';
     saveSettings();
-    broadcast('settings', settings);
+    broadcast('settings', publicSettings());
     json(res, 200, { success: true });
   },
 
@@ -943,17 +711,15 @@ const routes = {
     if (!text) return json(res, 400, { error: 'Thiếu nội dung' });
     const rate = num(0.5, 1.5)(url.searchParams.get('rate') ?? 1) ?? 1;
     const asked = url.searchParams.get('voice') || '';
-    const voice = Object.hasOwn(VOICES, asked) ? asked : 'female';
-    const key = `${voice}|${rate}|${text}`;
-    let audio = ttsCache.get(key);
-    if (!audio) {
-      // Always the voice that was chosen: on a network hiccup try the same voice again instead of switching to
-      // another one (a line in a different voice sounds like a second person). Still failing: the stage skips it.
-      audio = voice === 'google' ? await googleTts(speakable(text)) : await edgeWithRetry(text, rate, voice);
-      cacheTts(key, audio);
+    const voice = Object.hasOwn(VOICES, asked) ? asked : settings.voice;
+    try {
+      const audio = await synth(text, rate, voice, settings);
+      res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': audio.length, 'Cache-Control': 'private, max-age=86400' });
+      res.end(audio);
+    } catch (err) {
+      console.warn('Giọng đọc lỗi:', err instanceof Error ? err.message : err);
+      json(res, 502, { error: err instanceof Error ? err.message : 'TTS lỗi' });
     }
-    res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': audio.length, 'Cache-Control': 'private, max-age=86400' });
-    res.end(audio);
   },
 };
 
@@ -1001,7 +767,7 @@ server.on('error', (/** @type {NodeJS.ErrnoException} */ err) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`\n🍺 Xỉn Bia đang chạy:`);
+  console.log(`\n🍻 ${settings.channelName} đang chạy:`);
   console.log(`   Trang điều khiển: http://localhost:${PORT}`);
   console.log(`   Link cho TikTok LIVE Studio: http://lvh.me:${PORT}/?view=stage\n`);
 });

@@ -53,12 +53,12 @@ const GREET_TIME = {
 // A second sentence now and then, to give newcomers something to do
 const HOOKS = [
   'Gõ {kw} để cụng ly với cả quán nha.',
-  'Thả tim cho quán đi, đủ chín mươi chín tim là có vòng quay mồi.',
-  'Ai gửi quà là được ra mồi và lên bàn VIP đó nha.',
-  'Comment nhiều là lên bảng chiến hữu, top sáu được ngồi bàn VIP luôn.',
+  'Comment nhậu là có ghế ngồi, gõ tên món là bếp làm liền, miễn phí nha.',
+  'Tặng quà một xu là có món ngon, năm xu là có nồi lẩu nóng hổi đó nha.',
+  'Comment nhiều là lên bảng vàng của quán, có tên trên bảng là oai lắm.',
   'Nhớ follow quán để lần sau vô là có ghế quen liền.',
   'Nếu thấy vui thì rủ thêm bạn vô ngồi chung cho đông.',
-  'Đủ sáu trăm sáu mươi sáu tim là quán mưa bọt bia, cả nhà cố lên.',
+  'Muốn đổi bàn thì gõ bàn với số, ví dụ bàn ba, là quán dắt qua liền.',
   'Nói thật nha, ngồi quán này không cần mang tiền, chỉ cần mang tiếng cười.',
 ];
 
@@ -73,7 +73,7 @@ const BACK = [
 // Someone on the TOP board (rank 1, 2, 3...) walks in
 const VIP = [
   'Chú ý chú ý, chiến hữu số {rank} của quán, {ban}, vừa vô! Cả quán đứng dậy chào nha.',
-  'Ôi, {ban}, top {rank} của {q}, ghé quán rồi! Bàn VIP luôn chờ {ban} đó.',
+  'Ôi, {ban}, top {rank} của {q}, ghé quán rồi! Ghế đẹp nhất quán luôn chờ {ban} đó.',
   'Nhân vật quan trọng xuất hiện: {ban}, chiến hữu hạng {rank} của quán. Mời {ban} vào bàn.',
 ];
 
@@ -153,11 +153,11 @@ const IDLE = [
   'Nhắc nhẹ cả nhà: đã uống rượu bia thì không lái xe nha. Gọi xe về cho an toàn, ở nhà còn có người chờ.',
   'Ai đang ngồi một mình thì gõ một câu chào đi, ở {q} không ai là người lạ hết.',
   'Đố vui nè: con gì càng say càng nói nhiều? Con người chứ con gì!',
-  'Cả nhà thả tim đi, đủ chín mươi chín tim là quán quay vòng mồi, ra món gì ăn món đó.',
+  'Đói thì cứ comment tên món nha, đậu lạc, nem chua, khoai tây chiên, bếp làm miễn phí hết.',
   'Ai biết vì sao bia hơi phải uống trong ngày không? Vì bia hơi không thanh trùng như bia chai, để qua đêm là mất ngon.',
   'Tối nay cả nhà nhậu món gì? Comment cho quán biết với, xem ai có món ngon nhất.',
   'Quán ảo nên uống bao nhiêu cũng không say. Còn ngoài đời thì uống có chừng thôi nha cả nhà.',
-  'Đủ sáu trăm sáu mươi sáu tim là quán mưa bọt bia một phút. Cả nhà thả tim đi!',
+  'Nhắc cả nhà: tặng quà ba mươi xu là đập quán, chủ quán khóc thét luôn. Chín mươi chín xu là bao cả quán ăn lẩu!',
   'Chuyện vui nè: hai ông bạn nhậu, một ông hỏi ông kia sao uống ít vậy? Ông kia nói tui sợ vợ. Ông này cười, tui sợ vợ hơn nên tui ngồi uống nước ngọt.',
   'Cả nhà biết không, người Việt mình có thói quen nói dzô là cụng ly, nghe vừa vui vừa đoàn kết. Gõ {kw} cho quán xem nào!',
   'Thử thách nhỏ nè: ai gõ {kw} đầu tiên sau câu này là chiến hữu nhanh tay nhất quán!',
@@ -212,7 +212,7 @@ const REPLIES = {
   drunk: ['{ban} say rồi hả? Uống ly nước lọc, nghỉ xíu nha. Nhớ đừng lái xe, gọi xe về cho an toàn.', 'Say rồi thì {ban} ngồi nghỉ thôi, quán ảo uống bao nhiêu cũng được, ngoài đời thì chừng đó là đủ rồi nha.', 'Nhớ uống nước lọc nha {ban}, nghỉ ngơi cho khỏe. Quán ảo thì vui chơi thoải mái, còn ngoài đời thì ngoan nha.'],
   sad: ['{ban} buồn hả? Ghé quán ngồi chơi đi, có anh em ở đây nghe {ban} tâm sự. Rồi mọi chuyện cũng qua thôi.', 'Thương {ban} nha. Buồn thì cứ nói ra, cả quán ở đây với {ban}. Mai sẽ là một ngày tốt hơn.', '{ban} ơi, ngồi xuống đây với quán nha. Buồn bao nhiêu cũng nói ra, nói xong là nhẹ lòng liền.'],
   tired: ['{ban} vất vả rồi. Ngồi xuống nghỉ chân đi, ở quán không có deadline đâu.', 'Mệt thì nghỉ chút nha {ban}. Làm việc cả ngày rồi, giờ là lúc thả lỏng với cả nhà.', 'Nghe {ban} mệt mà thương. Ngả lưng xíu, nghe nhạc chill với quán, mọi lo toan để mai tính.'],
-  hungry: ['{ban} đói rồi hả? Cả nhà thả đủ chín mươi chín tim là vòng quay mồi ra món liền!', 'Mồi tới liền, {ban} chờ xíu nha! Thả tim cho vòng quay mồi chạy nào cả nhà.', 'Đói hả {ban}? Quán đang nấu nè, thả tim cho vòng quay mồi chạy, may mắn thì trúng món ngon liền.'],
+  hungry: ['{ban} đói rồi hả? Comment tên món đi, đậu lạc, đậu tẩm hành, nem chua, bếp làm miễn phí liền!', 'Mồi có liền {ban} ơi! Gõ tên món như khoai tây chiên hay dưa chuột là bếp nổi lửa.', 'Đói hả {ban}? Món bình dân thì comment là có, tặng quà một xu là có món ngon, năm xu là có lẩu.'],
   bye: ['{ban} về hả? Về cẩn thận nha, mai ghé {q} tiếp nhé!', 'Tạm biệt {ban}, ngủ ngon nha. Nhớ đường về quán đó!', 'Tạm biệt {ban} nha, về nhà bình an, giấc ngủ ngon. Quán luôn chừa ghế cho {ban}!'],
   thanks: ['Không có chi {ban} ơi! {q} luôn vui khi có {ban} ghé chơi.', 'Cảm ơn lại {ban} nha, có {ban} quán mới vui đó.', '{ban} khách sáo quá, ngồi chơi cho vui thôi mà. Có {ban} là quán đông vui rồi.'],
   hello: ['Chào {ban}! {q} chào {ban} nha, ngồi chơi cho vui.', 'Hello {ban}! Vô ngồi đi, gõ {kw} cho quán nghe nào.', 'Chào {ban} nha! Quán mình hôm nay vui lắm, {ban} ngồi chơi với cả nhà.', 'Ê, {ban} chào quán nè! Chào {ban}, ngồi xuống bắt chuyện đi.'],
@@ -222,9 +222,9 @@ const REPLIES = {
   love: ['Ôi, {ban} yêu quán hả? Quán cũng thương {ban} lắm luôn! Ghé thường xuyên nha.', 'Nghe {ban} nói vậy chủ quán xúc động ghê. {q} cũng thương {ban} nhiều lắm.', 'Trời ơi dễ thương quá, cả quán thương {ban} nè. Dzô một cái nào!'],
   laugh: ['Ha ha, {ban} cười gì mà vui dữ vậy! Cười cho cả quán nghe với.', '{ban} cười làm cả quán cười theo luôn. Cười nhiều trẻ lâu nha!', 'Ui, {ban} cười tới nghẹn rồi đó. Uống miếng nước đi {ban}.'],
   music: ['{ban} muốn nghe nhạc hả? Quán đang mở nhạc chill đó, nhạc nền êm êm nghe cho thư giãn nha.', 'Nhạc quán là nhạc chill, nghe để thư giãn cho {ban} nè. {ban} thích thể loại nào cứ nói chủ quán nghe.', 'Chủ quán hát dở lắm {ban} ơi, để nhạc chill nghe cho an toàn nha!'],
-  seat: ['{ban} muốn có ghế hả? Gõ {kw} là quán kéo ghế liền! Muốn lên bàn VIP thì comment nhiều và gửi quà nha.', '{ban} ơi, ghế còn nhiều lắm, cứ gõ {kw} là có chỗ ngồi liền. Lên được bàn VIP thì phải lọt top sáu của quán.', 'Bàn VIP dành cho sáu chiến hữu nhiều điểm nhất. {ban} comment thật nhiều, gửi quà là có ghế đó!'],
-  gift: ['Cảm ơn {ban} có lòng nha! Quà nào cũng được quán cảm ơn tên, đưa mồi ra bàn, còn lên bảng chiến hữu nữa.', '{ban} định tặng quà hả? Quán cảm ơn trước nha! Mỗi món quà là một món mồi ra bàn đó.', 'Quà là tấm lòng, không bắt buộc đâu {ban}. Nhưng nếu {ban} gửi, quán sẽ đọc tên cảm ơn thiệt lớn!'],
-  like: ['{ban} nhắc đúng ý chủ quán! Cả nhà thả tim đi, đủ chín mươi chín tim là quay vòng mồi.', 'Cảm ơn {ban} nha! Cả nhà theo {ban} thả tim cho quán đi, tim càng nhiều quán càng vui.'],
+  seat: ['{ban} muốn có ghế hả? Comment chữ nhậu là quán kéo ghế liền!', '{ban} ơi, ghế còn nhiều lắm, comment nhậu là có chỗ, muốn ngồi bàn nào thì gõ bàn với số nha.', 'Follow quán hoặc comment nhậu là có ghế {ban} ơi. Muốn qua bàn bạn bè thì gõ bàn ba, bàn năm, tùy {ban}!'],
+  gift: ['Cảm ơn {ban} có lòng nha! Quà một xu là có món ngon, năm xu có lẩu, ba mươi xu đập quán, chín mươi chín xu bao cả quán.', '{ban} định tặng quà hả? Quán cảm ơn trước nha! Quà nào cũng được đọc tên cảm ơn và lên bảng vàng.', 'Quà là tấm lòng, không bắt buộc đâu {ban}. Nhưng nếu {ban} gửi, chủ quán bưng mồi ra tận bàn luôn!'],
+  like: ['{ban} nhắc đúng ý chủ quán! Cả nhà thả tim đi, tim bay đầy quán mới vui.', 'Cảm ơn {ban} nha! Cả nhà theo {ban} thả tim cho quán đi, tim càng nhiều quán càng vui.'],
   follow: ['Cảm ơn {ban} đã follow quán! Từ nay {ban} là khách quen rồi, ghé thường xuyên nha.', 'Ôi, {ban} follow quán rồi hả? Quán cảm ơn nhiều nha, có ghế riêng cho khách quen đó!'],
   share: ['Cảm ơn {ban} đã chia sẻ quán! {ban} tốt bụng quá, cả quán cảm ơn nha.', '{ban} chia sẻ live cho quán hả? Chủ quán cảm ơn {ban} nhiều nha, rủ thêm bạn vô ngồi chung nữa nha.'],
   money: ['Ôi, chuyện tiền bạc ai cũng có lúc. {ban} cứ ngồi chơi ở quán ảo, không tốn đồng nào. Rồi tiền sẽ về thôi nha.', '{ban} có lương rồi hả? Chúc mừng nha! Nhớ chi tiêu cho khôn khéo, giữ lại chút để dành nha.', 'Ví mỏng thì tim vui bù lại nha {ban}. Ở quán này ngồi miễn phí, chỉ cần mang tiếng cười.'],
@@ -234,7 +234,7 @@ const REPLIES = {
   sleepy: ['{ban} buồn ngủ thì đi ngủ đi, giữ sức khỏe quan trọng hơn. Quán mai vẫn mở cho {ban} nha.', 'Thức khuya hoài không tốt đâu {ban} ơi, nhưng nếu chưa ngủ được thì ngồi với quán một chút, nghe nhạc nhẹ nha.', 'Cú đêm hả {ban}? Quán cũng là hội cú đêm nè. Nhưng nhớ ngủ đủ giấc nha.'],
   lovelife: ['{ban} chuyện tình cảm hả? Cả quán đang ngồi nghe nè. Duyên tới là tới, đừng vội nha!', 'Độc thân vui tính cũng tốt mà {ban}. Quán đây toàn bạn bè, không lo cô đơn đâu.', 'Ôi chuyện tim gan, cả nhà ơi cho {ban} lời khuyên đi. Còn quán chúc {ban} sớm gặp người thương nha!'],
   about: ['Quán mình tên {q}, là quán nhậu ảo cho vui, mở trong buổi live này nha {ban}. Ai vô cũng được ngồi chơi miễn phí.', '{ban} hỏi hay ghê! {q} là quán ảo, không bán gì thiệt, chỉ có tiếng cười và bạn bè thôi.', 'Quán chỉ có trên live này thôi {ban} ơi. Muốn gặp lại thì bấm follow để biết khi nào quán mở cửa nha.'],
-  food: ['Nghe {ban} nói là thèm luôn! Thả đủ chín mươi chín tim để vòng quay mồi quay ra món ngon nha.', '{ban} gọi món hay ghê! Quán ảo nên chỉ có mồi ảo, nhưng cứ tưởng tượng thơm phức nha.', 'Món đó nghe ngon ghê {ban} ơi. Cả nhà ơi, ai thích món đó thì gõ {kw} cho quán xem nào!'],
+  food: ['Nghe {ban} nói là thèm luôn! Món ngon như mực nướng, ốc hương thì tặng quà một xu là bếp làm liền nha.', '{ban} nói món hay ghê! Quán ảo nên chỉ có mồi ảo, nhưng cứ tưởng tượng thơm phức nha.', 'Món đó nghe ngon ghê {ban} ơi. Cả nhà ơi, ai thích món đó thì gõ {kw} cho quán xem nào!'],
   critic: ['Quán cảm ơn góp ý của {ban}, quán sẽ cố gắng vui hơn nha. {ban} muốn quán làm gì thêm thì nói chủ quán nghe.', 'Ui, {ban} thấy chưa vui hả? Vậy gõ {kw} cho quán nghe, rồi cả nhà cùng cụng ly cho vui lên nào.'],
   city: ['Chào {ban} từ {city}! Xa vậy mà vẫn ghé quán, quý quá. Ngồi chơi với cả nhà nha.', 'Wow, có khách từ {city} nè! Cả quán chào {ban} nha, {city} dạo này thế nào rồi?', '{city} có {ban} ghé quán là quán vinh dự lắm! Cả nhà ai ở {city} giơ tay lên nào.', 'Hello {city}! {ban} ơi, quê mình {city} nhiều bạn không, rủ thêm về quán chơi nha.'],
   dao: ['{ban} muốn {n} phần đào hả? Tặng quà là quán mang ra {n} ly trà đào nha!', 'Đào hả {ban}? Quán có trà đào ngon lắm, tặng quà là có liền nha!'],
@@ -290,8 +290,6 @@ export const lines = (ctx) => ({
   ],
   smashClean: () => pick(['Thôi, lau nước mắt, dọn lại quán nào!', 'Hức, không khóc nữa, để tôi quét dọn!']),
   smashDone: () => pick([`Xong rồi! ${ctx.q} sạch bóng, lần sau đập nhẹ tay nha!`, `Dọn xong, ${ctx.q} mở cửa lại! Nhẹ tay giùm tôi nha!`]),
-  wheel: (/** @type {{ ten: string; loi: string }} */ dish) => [`Cả nhà thả đủ chín mươi chín tim rồi! Vòng quay mồi ra món ${dish.ten}.`, dish.loi],
-  rain: () => pick(['Sáu trăm sáu mươi sáu tim! Quán mưa bọt bia một phút, cả nhà cụng ly nào!', 'Đủ tim rồi! Mưa bọt bia khắp quán, cảm ơn cả nhà nha!']),
   reply: (/** @type {import('./chat.js').Topic} */ topic, /** @type {string} */ name, /** @type {string} */ city = '', n = 1) =>
     fill(pick((ctx.style === 'hien' ? REPLIES : BUA_REPLIES)[topic]), { q: ctx.q, kw: ctx.kw, ban: ban(name), city, n: NUM[n] ?? String(n) }),
   /** "nhậu": a seat at a numbered table */

@@ -1,254 +1,175 @@
-/* Sân khấu 430 x 764 (9:16), được phóng to cho vừa cửa sổ bằng CSS zoom (stage.js) */
-.stage-page {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: #050307;
-}
-.stage {
-  position: relative;
-  width: 430px;
-  height: 764px;
-  overflow: hidden;
-  background: #0b0712;
-  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
-  user-select: none;
-  flex: none;
-}
+/* Nhậu Đêm 134 – sân khấu 430 x 764 (9:16), phóng to vừa cửa sổ bằng CSS zoom (stage.js) */
+html, body { margin: 0; background: #050307; }
+[hidden] { display: none !important; }
+.stage-page { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #050307; }
+.stage { position: relative; width: 430px; height: 764px; overflow: hidden; background: #0b0712; font-family: 'Be Vietnam Pro', system-ui, sans-serif; user-select: none; flex: none; }
 .layer { position: absolute; inset: 0; }
 .scene-svg { width: 100%; height: 100%; display: block; }
 .custom-bg { width: 100%; height: 100%; object-fit: cover; }
-.world { position: absolute; inset: 0; transition: transform 1.4s cubic-bezier(0.45, 0, 0.2, 1); will-change: transform; }
+.world { position: absolute; inset: 0; }
+.bg { z-index: 0; }
+.custom-bg { z-index: 0; }
+.street { z-index: 1; pointer-events: none; }
+.wall { z-index: 2; pointer-events: none; }
+.chef-home { position: absolute; z-index: 3; transition: opacity 0.35s; }
+.kitchen { z-index: 4; pointer-events: none; }
+.floor { z-index: 5; }
+.wfx { z-index: 6; pointer-events: none; }
+.finish { z-index: 7; pointer-events: none; }
 .fx { z-index: 30; pointer-events: none; overflow: hidden; }
 .ui { z-index: 40; pointer-events: none; }
 .ui button { pointer-events: auto; }
+.chef-home svg, .sitter svg, .walker svg, .table svg, .table-base-wrap svg, .dish-wrap svg, .moto svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
-/* ---------------------------------------------------------------- scene details */
+/* ---------------------------------------------------------------- scene life */
 .bulb { animation: twinkle 4s ease-in-out infinite; }
-@keyframes twinkle { 0%, 100% { opacity: 1; } 45% { opacity: 0.55; } 50% { opacity: 1; } 70% { opacity: 0.8; } }
+@keyframes twinkle { 0%, 100% { opacity: 1; } 45% { opacity: 0.7; } 50% { opacity: 1; } 72% { opacity: 0.86; } }
+.tv-screen { animation: tv 3.2s steps(6) infinite; }
+@keyframes tv { 0%, 100% { opacity: 1; } 30% { opacity: 0.82; } 60% { opacity: 0.95; } }
+.kitchen .flame { transform-box: fill-box; transform-origin: 50% 100%; opacity: 0.5; animation: flame 0.28s ease-in-out infinite alternate; }
+.kitchen .flame.f2 { animation-duration: 0.36s; }
+.kitchen .flame.blue { opacity: 0.75; }
+@keyframes flame { from { transform: scale(0.92, 0.85); } to { transform: scale(1.06, 1.12); } }
+.kitchen.cooking .flame { opacity: 1; animation-name: flame-hi; }
+@keyframes flame-hi { from { transform: scale(1.1, 1.2); } to { transform: scale(1.35, 1.75); } }
+.kitchen .coal { animation: coal 1.6s ease-in-out infinite alternate; }
+@keyframes coal { from { opacity: 0.55; } to { opacity: 1; } }
+.kitchen .wok { transform-box: fill-box; transform-origin: 80% 60%; }
+.kitchen.cooking .wok { animation: toss 0.9s ease-in-out infinite; }
+@keyframes toss { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-7deg) translateY(-1.5px); } 55% { transform: rotate(3deg); } }
+.kitchen .wok-food { transform-box: fill-box; transform-origin: 50% 100%; }
+.kitchen.cooking .wok-food { animation: flip 0.9s ease-in-out infinite; }
+@keyframes flip { 0%, 100% { transform: translateY(0); } 35% { transform: translateY(-6px) scale(1.05, 0.95); } }
+.kitchen .steam, .steam-up path { animation: steam 2.6s ease-out infinite; }
+.kitchen .steam.s2, .steam-up path:nth-child(2) { animation-delay: -1.1s; }
+.steam-up path:nth-child(3) { animation-delay: -1.8s; }
+.kitchen .smoke { opacity: 0.35; transition: opacity 0.6s; }
+.kitchen.cooking .smoke { opacity: 1; }
+@keyframes steam { 0% { opacity: 0; transform: translateY(3px); } 35% { opacity: 1; } 100% { opacity: 0; transform: translateY(-7px); } }
+.burner { animation: coal 0.4s ease-in-out infinite alternate; }
 
-.host { position: absolute; left: 58.5%; top: 55%; width: 15.5%; transform: translate(-50%, -100%); }
-.host svg { width: 100%; display: block; }
-.host .host-talk { display: none; }
-.host.talking .host-talk { display: inline; animation: talk 0.28s steps(2) infinite; transform-box: fill-box; transform-origin: center; }
-.host.talking .host-smile { display: none; }
-.host .host-arm { transform-box: view-box; transform-origin: 47px 52px; animation: host-wipe 5s ease-in-out infinite; }
-.host.talking .host-arm { animation: host-wave 1.1s ease-in-out infinite; }
-.host-tag { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); white-space: nowrap; font: 700 7px/1 'Baloo 2', sans-serif; color: #2a1406; background: #ffd166; border-radius: 99px; padding: 2px 5px 1px; box-shadow: 0 0 6px #ffd16688; }
-@keyframes talk { 0% { transform: scaleY(1); } 100% { transform: scaleY(0.35); } }
-@keyframes host-wipe { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-14deg); } }
-@keyframes host-wave { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(-34deg); } }
+/* ---------------------------------------------------------------- the lit sign, the LED board */
+.signboard { position: absolute; left: 50px; top: 142px; width: 330px; height: 48px; box-sizing: border-box; border-radius: 3px; background: linear-gradient(180deg, #d12a2a, #9c1414 70%, #7d0f0f); border: 2px solid #f3cf62; box-shadow: 0 0 22px rgba(255, 70, 50, 0.55), 0 5px 10px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(255, 220, 150, 0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; animation: sign-hum 7s infinite; }
+.signboard::before { content: ''; position: absolute; inset: 2px; border: 1px solid rgba(255, 233, 160, 0.45); border-radius: 2px; }
+.signboard::after { content: ''; position: absolute; left: 4px; right: 4px; top: 2px; height: 40%; border-radius: 2px; background: linear-gradient(rgba(255, 255, 255, 0.18), transparent); }
+@keyframes sign-hum { 0%, 96%, 100% { filter: none; } 97% { filter: brightness(0.75); } 98% { filter: none; } 98.6% { filter: brightness(0.8); } }
+.sb-main { display: flex; gap: 8px; align-items: center; line-height: 1; }
+.sb-name { font: 800 28px/1 'Baloo 2', 'Be Vietnam Pro', sans-serif; color: #ffe14d; letter-spacing: 0.5px; text-shadow: 0 0 7px rgba(255, 225, 77, 0.85), 0 2px 0 #6a0b0b; white-space: nowrap; }
+.sb-num { font: 800 24px/1 'Baloo 2', sans-serif; color: #fff; background: #1d4fa3; border: 1.5px solid #e8eef8; border-radius: 4px; padding: 3px 5px 0; box-shadow: 0 0 10px rgba(110, 168, 255, 0.9); }
+.sb-sub { font: 800 7.6px/1 'Be Vietnam Pro', sans-serif; color: #fff4c8; letter-spacing: 1.8px; margin-top: 3px; text-shadow: 0 1px 2px #5a0808; }
+.led { position: absolute; left: 100px; top: 194px; width: 230px; height: 17px; box-sizing: border-box; overflow: hidden; border: 1.5px solid #2b2b2f; border-radius: 2px; background: #140405 radial-gradient(circle, rgba(255, 50, 40, 0.16) 0.55px, transparent 0.75px) 0 0 / 2.4px 2.4px; box-shadow: 0 0 10px rgba(255, 30, 30, 0.35); }
+.led-track { position: absolute; left: 0; top: 0; white-space: nowrap; transform: translateX(230px); }
+.led-track span { display: inline-block; font: 700 11px/14.5px 'Courier New', ui-monospace, monospace; letter-spacing: 0.6px; color: #ff4b3a; text-shadow: 0 0 4px #ff1f1f, 0 0 1px #ffb3a8; }
 
-/* ---------------------------------------------------------------- tables and people */
-.table { position: absolute; transform: translate(-50%, -100%); }
-.table svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.55)); }
-.vip-riser { position: absolute; left: -6%; right: -6%; bottom: -16%; height: 30%; z-index: -1; border-radius: 4px; background: linear-gradient(#7a1f1f, #4a1010); border-top: 2px solid #e7c46a; box-shadow: 0 4px 8px rgba(0,0,0,.6); }
-.vip-tag { position: absolute; left: 50%; bottom: -12%; z-index: 1; color: #ffd166 !important; transform: translateX(-50%); font: 800 6.5px/1 'Baloo 2', sans-serif; letter-spacing: 0.12em; color: #5a3a00; white-space: nowrap; }
-.drop-in { animation: drop-in 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) both; transform-box: fill-box; transform-origin: 50% 100%; }
-@keyframes drop-in { from { transform: translateY(-8px) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
-.steam-a, .steam-b { animation: steam 2.4s ease-in-out infinite; transform-box: fill-box; }
-.steam-b { animation-delay: -1.2s; }
-@keyframes steam { 0% { opacity: 0; transform: translateY(2px); } 40% { opacity: 0.8; } 100% { opacity: 0; transform: translateY(-5px); } }
+/* ---------------------------------------------------------------- wall boards */
+.board { position: absolute; top: 220px; width: 116px; height: 204px; box-sizing: border-box; border-radius: 3px; padding: 6px 6px 5px; display: flex; flex-direction: column; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65), 0 0 18px rgba(255, 196, 110, 0.18); }
+.bd-title { font: 800 13px/1 'Baloo 2', sans-serif; text-align: center; letter-spacing: 0.6px; padding-bottom: 3px; }
+.menu-board { left: 4px; background: radial-gradient(ellipse at 40% 30%, #2c3a33, #18221d 75%); border: 4px solid #6e4b2c; outline: 1px solid #3f2914; color: #f4efe2; }
+.menu-board::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 7px); pointer-events: none; }
+.menu-board .bd-title { color: #ffe08a; border-bottom: 1px dashed rgba(255, 255, 255, 0.35); }
+.mb-sec { font: 800 7.2px/1.15 'Be Vietnam Pro', sans-serif; color: #8fe3b0; margin: 4px 0 2px; letter-spacing: 0.3px; }
+.mb-sec em { font-style: normal; font-weight: 600; color: #cfe9da; }
+.mb-sec.gift { color: #ffb3a3; }
+.mb-sec.gift em { color: #ffd9cf; }
+.mb-free { margin: 0; font: 600 8.2px/1.3 'Be Vietnam Pro', sans-serif; color: #f4efe2; }
+.mb-gift { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2.4px; }
+.mb-gift li { display: flex; align-items: center; gap: 4px; }
+.mb-gift b { flex: none; min-width: 31px; text-align: center; font: 800 8.4px/1.5 'Be Vietnam Pro', sans-serif; color: #2a1606; background: linear-gradient(#ffe08a, #f2a516); border-radius: 3px; }
+.mb-gift span { font: 700 8.6px/1.1 'Be Vietnam Pro', sans-serif; color: #fff; white-space: nowrap; }
+.mb-foot { margin-top: auto; font: 600 7.2px/1.35 'Be Vietnam Pro', sans-serif; color: #dfeee5; text-align: center; border-top: 1px dashed rgba(255, 255, 255, 0.3); padding-top: 3px; }
+.mb-foot b { color: #ffe08a; }
+.gold-board { left: 310px; background: linear-gradient(170deg, #7a1212, #4d0909); border: 3px solid #c99a3a; outline: 1px solid #5a3a0a; color: #ffe9b0; }
+.gold-board .bd-title { color: #ffd166; text-shadow: 0 0 6px rgba(255, 209, 102, 0.6); border-bottom: 1px solid rgba(255, 209, 102, 0.4); }
+.gold-board ol { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.gold-board li { display: flex; align-items: center; gap: 3px; font: 700 8.6px/1.25 'Be Vietnam Pro', sans-serif; }
+.gold-board li i { flex: none; width: 13px; font-style: normal; font-size: 9px; text-align: center; color: #ffd166; }
+.gold-board li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff; }
+.gold-board li b { flex: none; font-size: 7.6px; color: #ffd166; }
+.gold-board li.r1 span { color: #ffe14d; }
+.gold-board li.empty { font-weight: 500; font-size: 7.6px; color: #f3d9b0; text-align: center; display: block; padding-top: 10px; }
+.bd-foot { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 6px; font: 700 7.4px/1.3 'Be Vietnam Pro', sans-serif; color: #ffe9b0; border-top: 1px solid rgba(255, 209, 102, 0.3); padding-top: 3px; }
 
-.person { position: absolute; transform: translate(-50%, -100%); aspect-ratio: 40 / 60; transition: opacity 0.5s, scale 0.5s; }
-.person .sprite, .person .sprite svg { width: 100%; height: 100%; display: block; }
-.person.npc .sprite { filter: brightness(0.82) saturate(0.85); }
-.person.leaving { opacity: 0; scale: 0.6; }
-.person.glow .sprite { filter: drop-shadow(0 0 4px #ffd166) drop-shadow(0 0 8px #ffb703); }
+/* ---------------------------------------------------------------- order tickets on the wire */
+.tickets { position: absolute; left: 132px; top: 287px; width: 168px; display: flex; justify-content: center; gap: 3px; }
+.ticket { position: relative; width: 39px; box-sizing: border-box; padding: 5px 3px 3px; background: #fffbea; border-radius: 1px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; text-align: center; transform-origin: 50% 0; animation: tk-in 0.4s ease-out, tk-sway 3s ease-in-out 0.4s infinite; }
+.ticket:nth-child(2n) { animation-delay: 0s, -1.4s; }
+.ticket::before { content: ''; position: absolute; top: -3px; left: 50%; width: 6px; height: 6px; margin-left: -3px; background: #c49a5a; border-radius: 1px; }
+.ticket i { position: absolute; top: 1px; right: 2px; font-style: normal; font-size: 5.5px; color: #c62828; }
+.ticket b { font: 800 6.8px/1.1 'Be Vietnam Pro', sans-serif; color: #2a1a10; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ticket span { font: 500 5.6px/1.2 'Be Vietnam Pro', sans-serif; color: #7a5a40; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ticket em { display: block; width: 100%; height: 2px; margin-top: 2px; background: #eadfc4; border-radius: 1px; overflow: hidden; }
+.ticket u { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #f2a516, #e5532d); }
+.ticket.vip { background: #fff4d6; }
+.ticket.cook { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 6px rgba(255, 140, 40, 0.6); }
+@keyframes tk-in { from { transform: translateY(-10px) rotate(-8deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tk-sway { 0%, 100% { rotate: -2deg; } 50% { rotate: 2deg; } }
 
-.person .body { transform-box: view-box; transform-origin: 20px 58px; animation: sway 6s ease-in-out var(--d, 0s) infinite; }
-.person.tipsy .body { animation: sway-tipsy 3.2s ease-in-out var(--d, 0s) infinite; }
-@keyframes sway { 0%, 100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
-@keyframes sway-tipsy { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+/* ---------------------------------------------------------------- people */
+.sitter, .walker { position: absolute; pointer-events: none; }
+.sitter.flip > svg { transform: scaleX(-1); }
+.sitter .body { animation: breathe var(--sway, 4.4s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
+@keyframes breathe { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.7px); } }
+.sitter.sit-down { animation: sit-down 0.45s ease-out; }
+@keyframes sit-down { from { transform: translateY(-8px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+.sitter.cheer .arm-cheer { animation: cheer-up 2.2s ease-in-out; }
+@keyframes cheer-up { 0% { transform: rotate(0); } 22% { transform: rotate(-140deg); } 32% { transform: rotate(-126deg); } 42% { transform: rotate(-142deg); } 70% { transform: rotate(-134deg); } 100% { transform: rotate(0); } }
+.sitter.cheer .head { animation: nod 2.2s ease-in-out; transform-box: fill-box; transform-origin: 50% 90%; }
+@keyframes nod { 30%, 60% { transform: rotate(-4deg) translateY(-0.6px); } }
+.sitter.panic .body { animation: panic 0.25s ease-in-out infinite; }
+@keyframes panic { 0%, 100% { transform: translate(-0.8px, 0); } 50% { transform: translate(0.8px, -1.6px); } }
+.sitter.glow > svg { filter: drop-shadow(0 0 3px #ffd166) drop-shadow(0 0 6px rgba(255, 209, 102, 0.6)); }
+.name-tag { position: absolute; left: 50%; top: 0; transform: translate(-50%, -110%); max-width: 92px; padding: 1px 5px; border-radius: 7px; background: rgba(12, 8, 6, 0.72); border: 1px solid rgba(255, 209, 102, 0.55); color: #fff; font: 700 7.4px/1.35 'Be Vietnam Pro', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity 0.35s; z-index: 2; }
+.name-tag:empty { display: none; }
+.sitter.named .name-tag, .sitter.glow .name-tag, .name-tag.on { opacity: 1; }
+.walker.walking .leg-l { animation: step 0.52s ease-in-out infinite alternate; }
+.walker.walking .leg-r { animation: step 0.52s ease-in-out infinite alternate-reverse; }
+.walker.walking:not(.server) .arm-l { animation: swing 0.52s ease-in-out infinite alternate-reverse; }
+.walker.walking:not(.server) .arm-r { animation: swing 0.52s ease-in-out infinite alternate; }
+.walker.walking .body { animation: bob 0.26s ease-in-out infinite alternate; }
+@keyframes step { from { transform: rotate(13deg); } to { transform: rotate(-13deg); } }
+@keyframes swing { from { transform: rotate(9deg); } to { transform: rotate(-9deg); } }
+@keyframes bob { from { transform: translateY(0); } to { transform: translateY(-1.4px); } }
+.walker.put .tray { animation: put 0.38s ease-in forwards; }
+@keyframes put { to { transform: translateY(5px); opacity: 0.4; } }
 
-/* Sip: the arm brings the mug to the mouth now and then; the mug counter-rotates so it tilts for a drink */
-.person .arm { transform-box: view-box; transform-origin: 29.2px 28px; animation: sip var(--sip, 10s) ease-in-out var(--d, 0s) infinite; }
-.person .mug-wrap { transform-box: view-box; transform-origin: 29.4px 39.6px; animation: sip-mug var(--sip, 10s) ease-in-out var(--d, 0s) infinite; }
-@keyframes sip { 0%, 60%, 100% { transform: rotate(0); } 70%, 79% { transform: rotate(118deg); } 88% { transform: rotate(0); } }
-@keyframes sip-mug { 0%, 60%, 100% { transform: rotate(0); } 70%, 79% { transform: rotate(-146deg); } 88% { transform: rotate(0); } }
+/* the cook at the stove */
+.chef-home.away { opacity: 0; }
+.chef-home.cooking .stir { animation: stir 0.9s ease-in-out infinite; }
+.chef-home.cooking .stir-l { animation: stir-l 0.9s ease-in-out infinite; }
+@keyframes stir { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(-16deg); } 70% { transform: rotate(6deg); } }
+@keyframes stir-l { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(6deg); } }
+.chef-home .mouth { transform-box: fill-box; transform-origin: 50% 0; }
+.chef-home.talking .mouth { animation: talk 0.18s ease-in-out infinite alternate; }
+@keyframes talk { from { transform: scaleY(1); } to { transform: scaleY(2.6); } }
+.chef-home.cry svg { animation: sob 0.55s ease-in-out infinite; }
+.chef-home.cry::after { content: '😭'; position: absolute; left: 50%; top: -8px; transform: translateX(-50%); font-size: 15px; animation: bob 0.3s infinite alternate; }
+@keyframes sob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(1.5px) rotate(1.5deg); } }
 
-/* Cheers: the mug goes up high, outward, and bounces a few times */
-.person.cheer .arm { animation: cheer-arm 2.4s ease-in-out both; }
-.person.cheer .mug-wrap { animation: cheer-mug 2.4s ease-in-out both; }
-@keyframes cheer-arm { 0% { transform: rotate(0); } 20% { transform: rotate(-162deg); } 30% { transform: rotate(-148deg); } 40% { transform: rotate(-164deg); } 50% { transform: rotate(-150deg); } 60%, 84% { transform: rotate(-160deg); } 100% { transform: rotate(0); } }
-@keyframes cheer-mug { 0% { transform: rotate(0); } 20% { transform: rotate(174deg); } 30% { transform: rotate(160deg); } 40% { transform: rotate(176deg); } 50% { transform: rotate(162deg); } 60%, 84% { transform: rotate(172deg); } 100% { transform: rotate(0); } }
-.person .eyes-happy, .person .mouth-open { display: none; }
-.person.cheer .eyes-happy, .person.cheer .mouth-open { display: inline; }
-.person.cheer .eyes-open, .person.cheer .mouth-smile { display: none; }
-.person .cheek { opacity: 0.22; }
-.person.tipsy .cheek { opacity: 0.75; }
+/* ---------------------------------------------------------------- tables and dishes */
+.table, .table-base-wrap, .tabletop { position: absolute; pointer-events: none; }
+.table { transform-origin: 50% 100%; transition: transform 0.45s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.table.tipped { transform: rotate(var(--tip, 18deg)) translateY(4px); }
+.tabletop { display: flex; align-items: flex-end; justify-content: center; gap: 0; transition: opacity 0.3s; }
+.tabletop.tipped { opacity: 0; }
+.dish-wrap { flex: none; animation: drop-in 0.45s cubic-bezier(0.3, 1.5, 0.5, 1); transition: opacity 0.6s; }
+.dish-wrap.gone { opacity: 0; }
+@keyframes drop-in { from { transform: translateY(-10px) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
 
-.person.walking { animation: none; }
-.person.walking .sprite { animation: bob 0.42s ease-in-out infinite; }
-.person.walking .stool { opacity: 0; }
-.person.walking .arm, .person.walking .mug-wrap { animation: none; }
-@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6%); } }
+/* ---------------------------------------------------------------- bubbles */
+.bubble { position: absolute; transform: translate(-50%, -100%); z-index: 3; max-width: 118px; box-sizing: border-box; padding: 3px 7px 4px; border-radius: 9px; background: #fffdf5; color: #2a1a10; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5); font: 600 8.6px/1.25 'Be Vietnam Pro', sans-serif; text-align: left; animation: bubble-in 0.3s ease-out; transition: opacity 0.35s; }
+.bubble b { display: block; font-size: 7px; font-weight: 800; color: #c62828; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bubble span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+.bubble::after { content: ''; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 8px; margin-left: -4px; background: #fffdf5; transform: rotate(45deg); border-radius: 1px; }
+.bubble.out { opacity: 0; }
+@keyframes bubble-in { from { transform: translate(-50%, -92%) scale(0.6); opacity: 0; } to { transform: translate(-50%, -100%); opacity: 1; } }
 
-.name-tag {
-  position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 2px; max-width: 58px;
-  padding: 0 4px 0 1px; border-radius: 99px; white-space: nowrap;
-  background: rgba(24, 12, 6, 0.86); border: 1px solid #f2a516;
-  font: 700 6.8px/9px 'Be Vietnam Pro', system-ui, sans-serif; color: #ffe9b0; text-shadow: 0 1px 1px #000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-}
-.person.lift .name-tag { bottom: calc(100% + 10px); }
-.person.vip.lift .name-tag { bottom: calc(100% + 13px); }
-.person.lift .bubble { bottom: calc(100% + 21px); }
-.name-tag img { width: 8px; height: 8px; border-radius: 50%; object-fit: cover; flex: none; }
-.name-tag .nm { overflow: hidden; text-overflow: ellipsis; }
-.name-tag .rank { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #ffd166; color: #3a1f00; font: 800 6px/8px 'Baloo 2', sans-serif; text-align: center; }
-.person.vip .name-tag { max-width: 62px; font-size: 7.4px; line-height: 11px; border-color: #ffd166; background: linear-gradient(#5a3413, #2a1608); }
-.person.vip .name-tag img { width: 10px; height: 10px; }
-.person.vip .name-tag .rank { width: 10px; height: 10px; font-size: 7px; line-height: 10px; }
+/* ---------------------------------------------------------------- street */
+.moto { position: absolute; }
+.moto.rtl svg { transform: scaleX(-1); }
 
-.bubble {
-  position: absolute; left: 50%; bottom: calc(100% + 11px); transform: translateX(-50%);
-  display: none; width: max-content; max-width: 104px; padding: 2px 6px;
-  background: #fffaf0; color: #2a1a0e; border-radius: 8px; border: 1px solid #f2a516;
-  font: 600 8px/1.25 'Be Vietnam Pro', sans-serif; text-align: center; z-index: 5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  overflow: hidden; display: none; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-}
-.bubble.show { display: -webkit-box; animation: bubble-in 0.3s ease-out; }
-@keyframes bubble-in { from { transform: translateX(-50%) translateY(4px) scale(0.7); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
-
-.waiter { position: absolute; transform: translate(-50%, -100%); aspect-ratio: 44 / 78; pointer-events: none; }
-.waiter svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.6)); }
-.waiter.walking svg { animation: bob 0.38s ease-in-out infinite; }
-.waiter.walking .leg-a { animation: step 0.38s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 0; }
-.waiter.walking .leg-b { animation: step 0.38s ease-in-out infinite reverse; transform-box: fill-box; transform-origin: 50% 0; }
-.waiter .tray-load.gone { opacity: 0; transition: opacity 0.3s; }
-@keyframes step { 0%, 100% { transform: rotate(10deg); } 50% { transform: rotate(-10deg); } }
-
-/* ---------------------------------------------------------------- effects */
-.particle { position: absolute; width: 5px; height: 5px; border-radius: 50%; margin: -2.5px; animation: fly 1.2s ease-out both; }
-.particle.foam { background: #fffdf4; box-shadow: 0 0 4px #fff; }
-.particle.gold { background: #ffd166; box-shadow: 0 0 6px #ffb703; }
-@keyframes fly { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; } }
-.confetti { position: absolute; top: -12px; width: 5px; height: 9px; border-radius: 1px; animation: fall 4s linear both; }
-@keyframes fall { from { transform: translate(0, 0) rotate(0); } to { transform: translate(var(--sx), 800px) rotate(var(--rot)); } }
-.gold-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 55%, rgba(255, 225, 140, 0.75), rgba(255, 183, 3, 0.2) 45%, transparent 75%); mix-blend-mode: screen; animation: flash 1.5s ease-out both; }
-@keyframes flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
-.fx.raining::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(255, 190, 60, 0.22), transparent 70%); animation: flash 3s ease-in-out infinite alternate; }
-.bubbles { position: absolute; inset: 0; }
-.beer-bubble {
-  position: absolute; bottom: -24px; border-radius: 50%;
-  border: 1.5px solid rgba(255, 236, 170, 0.9);
-  background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, 0.9), rgba(255, 200, 80, 0.25) 55%, rgba(255, 200, 80, 0.05) 70%);
-  animation: rise 8s linear infinite;
-}
-@keyframes rise { 0% { transform: translate(0, 0); opacity: 0; } 8% { opacity: 1; } 50% { transform: translate(10px, -400px); } 100% { transform: translate(-6px, -820px); opacity: 0.2; } }
-
-/* ---------------------------------------------------------------- overlays */
-.neon-wrap { position: absolute; top: 6.9%; left: 9%; right: 9%; height: 8.2%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.neon {
-  font-family: 'Baloo 2', 'Be Vietnam Pro', sans-serif; font-weight: 800; text-transform: uppercase;
-  color: #fff3f8; line-height: 0.95; letter-spacing: 0.04em; white-space: nowrap;
-  text-shadow: 0 0 3px #fff, 0 0 8px #ff4d8d, 0 0 18px #ff2a75, 0 0 34px #ff2a75, 0 0 52px #ff0055;
-  animation: neon-flicker 9s linear infinite;
-}
-.neon-sub { margin-top: 1px; font: 700 8.5px/1 'Baloo 2', sans-serif; letter-spacing: 0.42em; color: #c9fbff; text-shadow: 0 0 4px #5ff4ff, 0 0 10px #00d9ff; padding-left: 0.42em; }
-@keyframes neon-flicker { 0%, 18%, 22%, 62%, 64%, 100% { opacity: 1; } 20%, 63% { opacity: 0.55; } }
-
-.meter { position: absolute; left: 50%; transform: translateX(-50%); border-radius: 99px; overflow: hidden; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(255, 209, 102, 0.7); }
-.meter-rain { top: 16.3%; width: 80%; height: 17px; }
-.meter-wheel { top: 19.1%; width: 66%; height: 15px; }
-.meter .fill { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: linear-gradient(90deg, #f2a516, #ffd166, #fff3c4); transition: width 0.25s; }
-.meter-wheel .fill { background: linear-gradient(90deg, #06d6a0, #8ef0c8, #e9fff6); }
-.meter .label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 800 9px/1 'Be Vietnam Pro', system-ui, sans-serif; letter-spacing: 0.01em; color: #fff; text-shadow: 0 1px 2px #000, 0 0 3px #000; white-space: nowrap; padding: 0 6px; text-align: center; }
-.meter-wheel .label { font-size: 8.5px; }
-.meter.on { animation: pulse-glow 1s ease-in-out infinite; }
-@keyframes pulse-glow { 50% { box-shadow: 0 0 12px #ffd166; } }
-
-.ticker { position: absolute; top: 22.6%; left: 7%; right: 7%; height: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 99px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(242, 165, 22, 0.55); }
-.ticker-text { max-width: 100%; padding: 0 8px; box-sizing: border-box; white-space: nowrap; text-align: center; font: 700 9.5px/20px 'Be Vietnam Pro', system-ui, sans-serif; color: #ffe08a; text-shadow: 0 1px 2px #000; transition: opacity 0.5s; }
-.ticker-text.out { opacity: 0; }
-
-.hint-sign {
-  position: absolute; left: 71%; top: 47.6%; width: 25%; padding: 4px 2px 3px;
-  display: flex; flex-direction: column; align-items: center;
-  background: linear-gradient(#8a5530, #5a341b); border: 2px solid #f2a516; border-radius: 6px;
-  font: 800 10px/1.15 'Baloo 2', 'Be Vietnam Pro', sans-serif; color: #ffe9b0; text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-  animation: swing 5s ease-in-out infinite; transform-origin: 50% -10px;
-}
-.hint-sign b { color: #fff; }
-.hint-sign small { font-size: 8.5px; white-space: nowrap; }
-.hint-sign::before, .hint-sign::after { content: ''; position: absolute; top: -9px; width: 1px; height: 8px; background: #2a1a0e; }
-.hint-sign::before { left: 22%; } .hint-sign::after { right: 22%; }
-@keyframes swing { 0%, 100% { rotate: -1.5deg; } 50% { rotate: 1.5deg; } }
-
-.chalkboard {
-  position: absolute; left: 71%; top: 53.2%; width: 25%; padding: 3px 4px 4px;
-  background: #1d2923; border: 3px solid #7a4a2a; border-radius: 5px;
-  font-family: 'Baloo 2', sans-serif; color: #f6f1d8; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
-}
-.chalk-title { text-align: center; font-weight: 800; font-size: 9px; letter-spacing: 0.04em; border-bottom: 1px dashed rgba(246, 241, 216, 0.5); padding-bottom: 1px; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chalkboard ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
-.chalkboard li { display: flex; align-items: center; gap: 3px; font-size: 7.6px; line-height: 10.5px; }
-.chalkboard li.empty { justify-content: center; font-size: 6.5px; opacity: 0.85; padding: 3px 0; }
-.chalkboard .n { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1px solid #f6f1d8; font-size: 6.2px; line-height: 8px; text-align: center; }
-.chalkboard .top3 .n { background: #ffd166; color: #3a1f00; border-color: #ffd166; font-weight: 800; }
-.chalkboard .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chalkboard .sc { flex: none; font-weight: 800; color: #ffd166; }
-
-.wheel-box { position: absolute; left: 3.5%; top: 44.8%; width: 17%; display: flex; flex-direction: column; align-items: center; }
-.wheel {
-  position: relative; width: 100%; aspect-ratio: 1; border-radius: 50%;
-  background: conic-gradient(#ef476f 0 45deg, #ffd166 0 90deg, #06d6a0 0 135deg, #118ab2 0 180deg, #ef476f 0 225deg, #ffd166 0 270deg, #06d6a0 0 315deg, #118ab2 0 360deg);
-  border: 3px solid #fff3c4; box-shadow: 0 0 0 2px #7a4a2a, 0 3px 8px rgba(0, 0, 0, 0.6);
-  transition: transform 3.2s cubic-bezier(0.15, 0.7, 0.15, 1);
-}
-.wheel span { position: absolute; left: 50%; top: 50%; font-size: 9px; line-height: 1; transform: translate(-50%, -50%) rotate(calc(var(--i) * 45deg + 22.5deg)) translateY(-205%); }
-.wheel::after { content: ''; position: absolute; left: 50%; top: 50%; width: 22%; height: 22%; transform: translate(-50%, -50%); border-radius: 50%; background: #fff3c4; border: 2px solid #7a4a2a; }
-.wheel-pointer { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 9px solid #fff; margin-bottom: -6px; z-index: 2; filter: drop-shadow(0 1px 1px #000); }
-.wheel-label { margin-top: 2px; font: 800 6.5px/1 'Baloo 2', sans-serif; color: #fff3c4; text-shadow: 0 1px 2px #000; white-space: nowrap; background: rgba(0, 0, 0, 0.55); padding: 2px 4px 1px; border-radius: 99px; }
-
-.gift-banner {
-  position: absolute; left: 3%; top: 26.6%; max-width: 80%;
-  display: flex; align-items: center; gap: 6px; padding: 3px 8px 3px 3px;
-  border-radius: 22px; background: rgba(32, 16, 8, 0.92); border: 1.5px solid #f2a516; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
-}
-.gift-banner.pulse { animation: slide-in 0.35s ease-out; }
-.gift-banner .av { flex: none; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f2a516, #ffd166); color: #3a1f00; font: 800 14px 'Baloo 2', sans-serif; border: 2px solid #ffd166; }
-.gift-banner .av img { width: 100%; height: 100%; object-fit: cover; }
-.gift-banner .txt { display: flex; flex-direction: column; min-width: 0; }
-.gift-banner .txt b { font-size: 11px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
-.gift-banner .txt span { font-size: 9.5px; color: #ffd166; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
-.gift-banner .ico { font-size: 20px; }
-.gift-banner .count { font: italic 900 26px/1 'Baloo 2', sans-serif; color: #ffd166; text-shadow: 0 2px 6px #000, 0 0 10px #f2a516; }
-@keyframes slide-in { from { transform: translateX(-30px); opacity: 0; } to { transform: none; opacity: 1; } }
-
-.dish-card {
-  position: absolute; left: 50%; top: 31%; width: 66%; transform: translateX(-50%);
-  padding: 6px 10px 6px; text-align: center; border-radius: 14px;
-  background: linear-gradient(#5a3413, #2a1608); border: 2px solid #ffd166; box-shadow: 0 0 24px rgba(255, 209, 102, 0.45);
-  font-family: 'Baloo 2', sans-serif; color: #fff3d0;
-}
-.dish-card.pop { animation: card-pop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1); }
-.dc-top { font-size: 9px; color: #ffd166; }
-.dc-icon { font-size: 34px; line-height: 1.15; }
-.dc-name { font-size: 17px; font-weight: 800; line-height: 1.05; }
-.dc-line { font-family: 'Be Vietnam Pro', sans-serif; font-size: 9.5px; line-height: 1.35; margin-top: 3px; color: #fbe7b8; }
-.dc-foot { font-size: 6.5px; margin-top: 3px; opacity: 0.7; }
-@keyframes card-pop { from { transform: translateX(-50%) scale(0.6); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
-
-.spot-card {
-  position: absolute; left: 50%; top: 39.5%; transform: translateX(-50%);
-  display: flex; align-items: center; gap: 8px; padding: 3px 14px 3px 3px; border-radius: 99px;
-  background: linear-gradient(#5a3413, #2a1608); border: 2px solid #ffd166; box-shadow: 0 0 22px rgba(255, 209, 102, 0.55);
-  font: 800 15px/1 'Baloo 2', sans-serif; color: #fff3d0; white-space: nowrap; max-width: 86%;
-  animation: card-pop 0.5s ease-out;
-}
-.spot-card img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #ffd166; }
-.spot-card span { overflow: hidden; text-overflow: ellipsis; padding: 6px 0 4px; }
-.spot-card::after { content: '🍻'; font-size: 18px; }
-
-.wave-banner { position: absolute; left: 50%; top: 37%; transform: translate(-50%, -50%); display: flex; gap: 8px; align-items: baseline; font-family: 'Baloo 2', sans-serif; font-weight: 800; white-space: nowrap; }
+/* ---------------------------------------------------------------- banners */
+.wave-banner, .smash-banner, .treat-banner { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); font-family: 'Baloo 2', 'Be Vietnam Pro', sans-serif; font-weight: 800; white-space: nowrap; text-align: center; }
+.wave-banner { display: flex; gap: 8px; align-items: baseline; }
 .wave-banner span, .wave-banner b { opacity: 0; color: #fff3c4; font-size: 26px; text-shadow: 0 3px 0 #a0522d, 0 0 14px #f2a516, 0 4px 10px #000; }
 .wave-banner b { font-size: 46px; color: #ffd166; }
 .wave-banner.go span:nth-child(1) { animation: count-in 0.4s 0s both; }
@@ -257,49 +178,30 @@
 .wave-banner.go b { animation: dzo-in 0.6s 1.4s cubic-bezier(0.3, 1.7, 0.5, 1) both; }
 @keyframes count-in { from { opacity: 0; transform: scale(2); } to { opacity: 1; transform: none; } }
 @keyframes dzo-in { from { opacity: 0; transform: scale(0.3) rotate(-12deg); } to { opacity: 1; transform: rotate(-4deg); } }
-
-.unlock {
-  position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); z-index: 5;
-  padding: 10px 16px; border-radius: 14px; border: 2px solid #fff3c4; cursor: pointer;
-  background: #f2a516; color: #2a1406; font: 800 13px 'Be Vietnam Pro', sans-serif; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
-  animation: pulse-glow 1s ease-in-out infinite;
-}
-[hidden] { display: none !important; }
-
-/* ---------------------------------------------------------------- đập quán */
-.world.quake { animation: quake 0.5s linear 4; }
-@keyframes quake { 0%, 100% { translate: 0 0; } 20% { translate: -7px 4px; } 40% { translate: 6px -5px; } 60% { translate: -5px -3px; } 80% { translate: 7px 5px; } }
-.red-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 55%, rgba(255, 60, 40, 0.7), rgba(180, 0, 0, 0.25) 50%, transparent 78%); mix-blend-mode: screen; animation: flash 1.4s ease-out both; }
-.debris { position: absolute; font-size: 17px; line-height: 1; margin: -9px; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)); }
-.debris.rubble.gone { transition: opacity 0.5s, scale 0.5s; opacity: 0; scale: 0.3; }
-.broom { position: absolute; font-size: 34px; line-height: 1; margin: -30px 0 0 -17px; filter: drop-shadow(0 3px 3px #000); }
-.table { transition: rotate 0.45s cubic-bezier(0.3, 1.6, 0.5, 1), translate 0.45s; }
-.table.wrecked { rotate: var(--r, 8deg); translate: var(--tx, 4px) var(--ty, 2px); }
-.table.wrecked .items { opacity: 0; }
-.person.panic .sprite { animation: panic 0.22s ease-in-out infinite !important; }
-@keyframes panic { 0%, 100% { translate: -1.5px 0; rotate: -3deg; } 50% { translate: 1.5px -2px; rotate: 3deg; } }
-.host.crying .host-smile, .host.crying .host-arm { display: none; }
-.host.crying .host-sad { display: inline; }
-.host.crying .host-brows { display: inline; }
-.host.crying .host-svg { animation: sob 0.55s ease-in-out infinite; transform-origin: 50% 100%; }
-.host.crying .host-tear { display: inline; animation: tear 0.9s ease-in infinite; transform-box: fill-box; }
-.host.crying .host-tear.t2 { animation-delay: 0.35s; }
-.host-sad, .host-brows, .host-tear { display: none; }
-.host.crying.talking .host-sad { display: none; }
-@keyframes sob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(2%) rotate(1.5deg); } }
-@keyframes tear { 0% { opacity: 0; transform: translateY(-2px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(12px); } }
-.smash-banner { position: absolute; left: 50%; top: 36%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: 'Baloo 2', 'Be Vietnam Pro', sans-serif; font-weight: 800; white-space: nowrap; text-align: center; }
+.smash-banner, .treat-banner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .smash-banner b { font-size: 34px; color: #ff4d4d; text-shadow: 0 3px 0 #5a0000, 0 0 16px #ff2a2a, 0 4px 10px #000; }
-.smash-banner span { font-size: 15px; color: #fff3c4; text-shadow: 0 2px 4px #000; max-width: 380px; overflow: hidden; text-overflow: ellipsis; }
-.smash-banner.go { animation: smash-pop 5s both; }
-@keyframes smash-pop { 0% { opacity: 0; scale: 2.2; } 8% { opacity: 1; scale: 1; } 85% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 0.9; } }
+.treat-banner b { font-size: 30px; color: #ffd166; text-shadow: 0 3px 0 #7a3b00, 0 0 16px #f2a516, 0 4px 10px #000; }
+.smash-banner span, .treat-banner span { font-size: 15px; color: #fff3c4; text-shadow: 0 2px 4px #000; max-width: 380px; overflow: hidden; text-overflow: ellipsis; }
+.smash-banner.go { animation: banner-pop 5s both; }
+.treat-banner.go { animation: banner-pop 5s both; }
+@keyframes banner-pop { 0% { opacity: 0; scale: 2.2; } 8% { opacity: 1; scale: 1; } 85% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 0.9; } }
+.stage.smashing .world { animation: quake 0.45s ease-in-out 7; }
+.stage.smashing .fx::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 50%, rgba(200, 0, 0, 0.35)); animation: red-pulse 0.9s ease-in-out infinite alternate; }
+@keyframes quake { 0%, 100% { translate: 0 0; } 20% { translate: -6px 3px; } 40% { translate: 5px -4px; } 60% { translate: -4px -2px; } 80% { translate: 6px 4px; } }
+@keyframes red-pulse { from { opacity: 0.4; } to { opacity: 1; } }
+.shard { position: absolute; width: 7px; height: 7px; margin: -3.5px; animation: shard 1.1s cubic-bezier(0.25, 0.6, 0.5, 1) both; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)); transition: opacity 0.6s; }
+.shard.glass { background: linear-gradient(135deg, rgba(220, 245, 255, 0.95), rgba(150, 200, 230, 0.6)); clip-path: polygon(50% 0, 100% 70%, 20% 100%); }
+.shard.plate { width: 11px; height: 5px; border-radius: 50%; background: #f4f1ea; border: 1px solid #c9c1b2; }
+.shard.chop { width: 13px; height: 2px; background: #e2cfa3; border-radius: 1px; }
+.shard.beer { width: 5px; height: 6px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: radial-gradient(circle at 35% 35%, #fff4c2, #f2b632); }
+.shard.stool { width: 9px; height: 7px; border-radius: 2px; background: #1f5fb4; }
+.shard.gone { opacity: 0; }
+@keyframes shard { 0% { transform: translate(0, 0) rotate(0); } 45% { transform: translate(calc(var(--dx) * 0.6), var(--dy)) rotate(calc(var(--rot) * 0.5)); } 100% { transform: translate(var(--dx), var(--fall)) rotate(var(--rot)); } }
 
-.story-tag { position: absolute; left: 50%; top: 27.5%; transform: translateX(-50%); max-width: 88%; padding: 3px 12px; border-radius: 99px; background: rgba(20, 10, 4, 0.82); border: 1px solid #f2a516; color: #ffe08a; font: 700 10px/16px 'Be Vietnam Pro', system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px #000; }
-.story-tag.go { animation: story-in 9s both; }
-@keyframes story-in { 0% { opacity: 0; translate: 0 -6px; } 6% { opacity: 1; translate: 0 0; } 92% { opacity: 1; } 100% { opacity: 0; } }
+.unlock { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); padding: 10px 16px; border: 0; border-radius: 99px; background: #f2a516; color: #2a1606; font: 800 14px 'Be Vietnam Pro', sans-serif; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); cursor: pointer; }
 
-/* ---------------------------------------------------------------- hiệu ứng xịn (effects.js) */
-.wfx { z-index: 1500; pointer-events: none; }
+/* ---------------------------------------------------------------- effects.js */
+
 .fx-ring { position: absolute; border-radius: 50%; translate: -50% -50%; border: 2.5px solid var(--c); box-shadow: 0 0 10px var(--c), inset 0 0 8px var(--c); animation: fx-ring 1s ease-out both; }
 @keyframes fx-ring { from { scale: 0.1; opacity: 1; } to { scale: 1; opacity: 0; } }
 .fx-star { position: absolute; width: 9px; height: 9px; margin: -4.5px; background: var(--c); clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); filter: drop-shadow(0 0 3px var(--c)); animation: fx-star 1s ease-out both; }
@@ -340,315 +242,8 @@
 @keyframes fx-ico { from { transform: scale(0) rotate(-30deg); } to { transform: scale(1) rotate(0); } }
 @keyframes fx-hover { from { translate: 0 0; } to { translate: 0 -6px; } }
 
-/* gift banner: a light sweeps across it, the count bumps on each combo */
-.gift-banner { overflow: hidden; }
-.gift-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 246, 201, 0.55) 50%, transparent 70%); translate: -120% 0; animation: fx-shine 2.2s 0.3s ease-in-out infinite; pointer-events: none; }
-@keyframes fx-shine { 0% { translate: -120% 0; } 60%, 100% { translate: 120% 0; } }
-.gift-banner .count.bump { animation: fx-bump 0.4s cubic-bezier(0.3, 1.8, 0.5, 1); }
-@keyframes fx-bump { from { scale: 1.9; } to { scale: 1; } }
-.gift-banner .ico { animation: fx-hover 0.8s ease-in-out infinite alternate; }
-
-/* someone just sat down: their name tag pops with a shine */
-.person.arrived .name-tag { animation: fx-tag 0.7s cubic-bezier(0.3, 1.8, 0.5, 1); }
-@keyframes fx-tag { 0% { scale: 0.3; box-shadow: 0 0 0 #ffd166; } 60% { box-shadow: 0 0 12px #ffd166; } 100% { scale: 1; } }
-.person.followed .name-tag { border-color: #ff4d8d; box-shadow: 0 0 8px #ff4d8d; transition: box-shadow 0.6s, border-color 0.6s; }
-
 /* soft bump of the whole room (wave, big gift) */
 .world.bump { animation: fx-room 0.6s ease-out; }
 @keyframes fx-room { 0%, 100% { translate: 0 0; } 20% { translate: 0 -5px; } 45% { translate: 0 3px; } 70% { translate: 0 -1px; } }
-
-/* meters glow while filling */
-.meter.tick { box-shadow: 0 0 10px #ff4d8d; transition: box-shadow 0.3s; }
-
-/* bảng thực đơn trên tường: quà → mồi và quà đập quán, lật trang */
-.menu-board {
-  position: absolute; left: 73.1%; top: 34.2%; width: 22.8%; height: 12.8%;
-  border-radius: 4px; background: #5a3a22; padding: 4px; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
-  perspective: 300px;
-}
-.menu-board[hidden] { display: none; }
-.menu-board::before { content: ''; position: absolute; inset: 4px; border-radius: 2px; background: radial-gradient(ellipse at 40% 30%, #2a3a31, #1a241f 75%); }
-.mb-page {
-  position: absolute; inset: 4px; padding: 3px 3px 0; display: flex; flex-direction: column;
-  font-family: 'Baloo 2', sans-serif; color: #f6f1d8;
-  opacity: 0; transform: rotateX(-80deg); transform-origin: 50% 0; transition: opacity 0.5s, transform 0.6s cubic-bezier(0.3, 1.3, 0.5, 1);
-}
-.mb-page.on { opacity: 1; transform: none; }
-.mb-title { flex: none; text-align: center; font-weight: 800; font-size: 7.2px; letter-spacing: -0.01em; line-height: 10px; color: #ffd166; border-bottom: 1px dashed rgba(246, 241, 216, 0.45); margin-bottom: 2px; white-space: nowrap; }
-.mb-page ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
-.mb-page li { display: flex; flex-direction: column; white-space: nowrap; }
-.mb-page li b { font-size: 7.5px; line-height: 9px; color: #ffe6a8; font-weight: 800; overflow: hidden; text-overflow: ellipsis; }
-.mb-page li b::before { content: '🎁'; font-size: 6px; margin-right: 2px; }
-.mb-page li span { font-size: 6.9px; line-height: 9px; padding-left: 3px; overflow: hidden; text-overflow: ellipsis; }
-.mb-page li span::before { content: '→'; color: #ffd166; margin-right: 2px; }
-.mb-page.smash .mb-title { color: #ff9b9b; animation: smash-glow 1.6s ease-in-out infinite; }
-.mb-page.smash li { flex-direction: row; justify-content: center; font-size: 7px; line-height: 9.6px; color: #ffe1e1; }
-.mb-page.smash li::before { content: '•'; color: #ff8f8f; margin-right: 3px; }
-.mb-page.simple { align-items: center; text-align: center; }
-.mb-page.simple .mb-title { align-self: stretch; }
-.mb-big { margin-top: 5px; padding: 2px 6px 1px; border-radius: 99px; background: #ffd166; color: #2a1406; font: 900 9.6px/1.25 'Baloo 2', sans-serif; white-space: nowrap; }
-.mb-page.smash .mb-big { background: #ff6b6b; color: #fff; }
-.mb-line { margin-top: 5px; font: 800 8.2px/1.2 'Baloo 2', sans-serif; color: #f6f1d8; white-space: nowrap; }
-.mb-line.dim { margin-top: 3px; font-size: 6.8px; font-weight: 600; opacity: 0.8; }
-.mb-coins { margin-top: 2px; text-align: center; font-size: 6.8px; font-weight: 800; color: #1a120c; background: #ffd166; border-radius: 99px; line-height: 9px; padding: 1px 3px 0; white-space: nowrap; }
-@keyframes smash-glow { 50% { color: #ffd166; text-shadow: 0 0 5px #ff4d4d; } }
-.mb-dots { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; gap: 3px; }
-.mb-dots i { width: 3px; height: 3px; border-radius: 50%; background: rgba(246, 241, 216, 0.35); transition: background 0.3s, width 0.3s; }
-.mb-dots i.on { width: 8px; border-radius: 2px; background: #ffd166; }
-
-/* quán "sống" (living.js) */
-.living { pointer-events: none; }
-.living[hidden] { display: none; }
-.lv-star { fill: #fffbe8; animation: lv-twinkle 3s ease-in-out infinite; }
-@keyframes lv-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
-.lv-clouds { fill: #6b5a8f; opacity: 0.28; }
-.lv-cloud { animation: lv-drift 150s linear infinite; }
-@keyframes lv-drift { from { transform: translateX(-80px); } to { transform: translateX(520px); } }
-.lv-breathe { animation: lv-breathe 6s ease-in-out infinite; mix-blend-mode: screen; }
-@keyframes lv-breathe { 0%, 100% { opacity: 0.55; } 40% { opacity: 1; } 55% { opacity: 0.8; } 70% { opacity: 1; } }
-.lv-cone { animation: lv-cone 7s ease-in-out infinite; }
-@keyframes lv-cone { 0%, 100% { opacity: 0.85; } 46% { opacity: 1; } 48% { opacity: 0.5; } 50% { opacity: 1; } }
-.lv-moth { animation: lv-orbit 2.5s linear infinite; }
-@keyframes lv-orbit { from { rotate: 0deg; } to { rotate: 360deg; } }
-.lv-lantern { animation: lv-swing 3.6s ease-in-out infinite; }
-@keyframes lv-swing { 0%, 100% { rotate: -5deg; } 50% { rotate: 5deg; } }
-.lv-lantern-glow { animation: lv-glow 2.4s ease-in-out infinite alternate; }
-@keyframes lv-glow { from { opacity: 0.15; } to { opacity: 0.4; } }
-.lv-fan-blades { animation: lv-spin 0.35s linear infinite; }
-@keyframes lv-spin { to { rotate: 360deg; } }
-.lv-fan-head { animation: lv-turn 7s ease-in-out infinite; }
-@keyframes lv-turn { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.55); } }
-.lv-cat .lv-cat-legs line { transform-box: fill-box; transform-origin: 50% 0; }
-.lv-cat.walking .lv-cat-legs .a { animation: lv-leg 0.34s ease-in-out infinite alternate; }
-.lv-cat.walking .lv-cat-legs .b { animation: lv-leg 0.34s ease-in-out infinite alternate-reverse; }
-@keyframes lv-leg { from { rotate: -25deg; } to { rotate: 25deg; } }
-.lv-cat-tail { transform-box: fill-box; transform-origin: 100% 100%; animation: lv-tail 1.8s ease-in-out infinite; }
-@keyframes lv-tail { 0%, 100% { rotate: -8deg; } 50% { rotate: 12deg; } }
-.lv-cat-body { transition: transform 0.4s; transform-box: fill-box; transform-origin: 30% 100%; }
-.lv-cat.sitting .lv-cat-body { transform: rotate(-22deg); }
-.lv-cat.sitting .lv-cat-legs { opacity: 0; }
-
-/* steam from dishes on the tables, glasses clinking on their own */
 .fx-steam { position: absolute; width: 6px; height: 14px; margin: -14px -3px 0; border-radius: 50%; background: radial-gradient(ellipse, rgba(255, 255, 255, 0.55), transparent 70%); filter: blur(1.5px); animation: fx-steam 2.6s ease-out both; }
 @keyframes fx-steam { 0% { transform: translate(0, 0) scale(0.6); opacity: 0; } 25% { opacity: 0.9; } 100% { transform: translate(var(--dx), -26px) scale(1.6, 2); opacity: 0; } }
-
-/* the drawn scene breathes a little, like a camera on a tripod */
-.world > .layer:first-child, .world > .living { animation: lv-cam 24s ease-in-out infinite alternate; transform-origin: 50% 40%; }
-@keyframes lv-cam { from { scale: 1; } to { scale: 1.012; } }
-
-/* ======================================================= quán thật: order, hóa đơn, cấp bậc, sự kiện, trò chơi */
-.name-tag .lvb { flex: none; font-size: 7.5px; line-height: 9px; margin-right: 1px; }
-.person.vip .name-tag .lvb { font-size: 8.5px; }
-
-/* dây treo phiếu order trên kệ */
-.order-rail { position: absolute; left: 28%; width: 45%; top: 36.3%; height: 6.4%; pointer-events: none; z-index: 2; }
-.order-rail[hidden] { display: none; }
-.rail-wire { position: absolute; left: -2%; right: -2%; top: 2px; height: 2px; background: linear-gradient(90deg, #8a8f96, #d9dde2, #8a8f96); border-radius: 2px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
-.rail-tickets { position: absolute; inset: 0; display: flex; justify-content: center; gap: 4px; }
-.ticket {
-  position: relative; width: 31%; margin-top: 3px; padding: 4px 3px 3px; box-sizing: border-box;
-  background: #fffaf0; color: #2a1a0e; border-radius: 0 0 3px 3px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
-  font: 700 6px/1.2 'Be Vietnam Pro', sans-serif; text-align: center; transform-origin: 50% 0;
-  animation: tk-in 0.45s cubic-bezier(0.3, 1.6, 0.5, 1), tk-sway 3.2s ease-in-out 0.45s infinite;
-  clip-path: polygon(0 0, 100% 0, 100% 92%, 92% 100%, 84% 92%, 76% 100%, 68% 92%, 60% 100%, 52% 92%, 44% 100%, 36% 92%, 28% 100%, 20% 92%, 12% 100%, 4% 92%, 0 100%);
-}
-.ticket.vip { background: #fff3c4; box-shadow: 0 0 6px #ffd166, 0 2px 4px rgba(0, 0, 0, 0.55); }
-.ticket .pin { position: absolute; left: 50%; top: -3px; width: 6px; height: 4px; margin-left: -3px; background: #c0392b; border-radius: 1px; }
-.ticket .t-ico { font-size: 11px; line-height: 12px; }
-.ticket .t-name { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ticket .t-who { font-weight: 600; font-size: 5.6px; color: #8a5530; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ticket .t-bar { height: 3px; margin: 2px 1px 1px; border-radius: 2px; background: #eadfc9; overflow: hidden; }
-.ticket .t-bar b { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ff7b00, #ffd166); }
-.ticket .t-state { font-size: 5.4px; color: #c0392b; padding-bottom: 2px; }
-.ticket.done { animation: tk-done 1.4s ease-in both; }
-.ticket.done .t-state { color: #1b8a3a; font-weight: 900; font-size: 6.4px; }
-@keyframes tk-in { from { transform: translateY(-12px) rotate(-8deg); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes tk-sway { 0%, 100% { rotate: -1.5deg; } 50% { rotate: 1.5deg; } }
-@keyframes tk-done { 0% { transform: scale(1); } 20% { transform: scale(1.15); } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: translateY(30px) scale(0.6); opacity: 0; } }
-.rail-more { position: absolute; right: -3%; bottom: -8px; font: 800 5.8px/1 'Be Vietnam Pro', sans-serif; color: #ffd166; background: rgba(0, 0, 0, 0.6); padding: 2px 4px; border-radius: 99px; }
-.rail-more:empty { display: none; }
-
-/* hóa đơn ảo */
-.bill-card {
-  position: absolute; left: 50%; top: 26.5%; width: 58%; translate: -50% 0; padding: 7px 9px 9px; box-sizing: border-box;
-  background: #fffdf6; color: #2a1a0e; font: 600 7.4px/1.35 'Be Vietnam Pro', sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
-  clip-path: polygon(0 3%, 4% 0, 8% 3%, 12% 0, 16% 3%, 20% 0, 24% 3%, 28% 0, 32% 3%, 36% 0, 40% 3%, 44% 0, 48% 3%, 52% 0, 56% 3%, 60% 0, 64% 3%, 68% 0, 72% 3%, 76% 0, 80% 3%, 84% 0, 88% 3%, 92% 0, 96% 3%, 100% 0, 100% 97%, 96% 100%, 92% 97%, 88% 100%, 84% 97%, 80% 100%, 76% 97%, 72% 100%, 68% 97%, 64% 100%, 60% 97%, 56% 100%, 52% 97%, 48% 100%, 44% 97%, 40% 100%, 36% 97%, 32% 100%, 28% 97%, 24% 100%, 20% 97%, 16% 100%, 12% 97%, 8% 100%, 4% 97%, 0 100%);
-}
-.bill-card[hidden] { display: none; }
-.bill-card.in { animation: bill-in 0.7s cubic-bezier(0.2, 1.3, 0.4, 1); }
-@keyframes bill-in { from { transform: translateY(-40px) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
-.b-head { text-align: center; font: 900 10px/1.2 'Baloo 2', sans-serif; letter-spacing: 0.04em; border-bottom: 1px dashed #b9a88a; padding: 3px 0 3px; }
-.b-who { text-align: center; color: #8a5530; padding: 2px 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.b-row { display: flex; justify-content: space-between; gap: 6px; padding: 1px 0; }
-.b-row span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.b-row b { flex: none; }
-.b-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; padding-top: 3px; border-top: 1.5px solid #2a1a0e; font: 900 10px/1.2 'Baloo 2', sans-serif; }
-.b-total b { font-size: 14px; color: #c0392b; }
-.b-note { text-align: center; color: #8a5530; font-size: 6.6px; margin-top: 2px; }
-.b-stamp { position: absolute; right: 7%; bottom: 22%; padding: 2px 5px; border: 2px solid #d62828; border-radius: 4px; color: #d62828; font: 900 6.6px/1.15 'Baloo 2', sans-serif; text-align: center; rotate: -14deg; opacity: 0; animation: stamp 0.35s 0.9s cubic-bezier(0.3, 1.8, 0.5, 1) forwards; }
-@keyframes stamp { from { opacity: 0; scale: 2.4; } to { opacity: 0.85; scale: 1; } }
-
-/* lên cấp */
-.lvup-card { position: absolute; left: 50%; top: 33.6%; translate: -50% 0; display: flex; align-items: center; gap: 6px; padding: 3px 12px 3px 4px; border-radius: 99px; background: linear-gradient(90deg, #6a3dbd, #c13584, #f2a516); border: 1.5px solid #fff3c4; box-shadow: 0 0 18px rgba(255, 209, 102, 0.7); color: #fff; white-space: nowrap; max-width: 86%; }
-.lvup-card[hidden] { display: none; }
-.lvup-card.in { animation: card-pop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1); }
-.lvup-card .ic { font-size: 22px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
-.lvup-card .tx { display: flex; flex-direction: column; min-width: 0; }
-.lvup-card small { font: 900 7px/1 'Baloo 2', sans-serif; letter-spacing: 0.18em; color: #fff3c4; }
-.lvup-card b { font: 800 12px/1.2 'Baloo 2', sans-serif; overflow: hidden; text-overflow: ellipsis; }
-
-/* giờ vàng */
-.happy-pill { position: absolute; right: 2.5%; top: 1.3%; padding: 3px 9px 2px; border-radius: 99px; background: linear-gradient(90deg, #f2a516, #ffd166); color: #3a1f00; font: 900 8.6px/1.2 'Baloo 2', sans-serif; box-shadow: 0 0 12px #ffd166; animation: pulse-glow 1.2s ease-in-out infinite; }
-.happy-pill[hidden] { display: none; }
-.stage.happy .fx::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 60px rgba(255, 196, 60, 0.45); animation: flash 2.4s ease-in-out infinite alternate; pointer-events: none; }
-.stage.happy .ticker { border-color: #ffd166; box-shadow: 0 0 10px rgba(255, 209, 102, 0.6); }
-
-/* mất điện */
-.blackout { position: absolute; inset: 0; z-index: 35; overflow: hidden; pointer-events: none; animation: bo-in 0.6s steps(4) both; }
-.blackout .torch { position: absolute; left: 50%; top: 60%; width: 1500px; height: 1500px; margin: -750px; background: radial-gradient(circle, rgba(255, 240, 190, 0.08) 0 50px, rgba(2, 2, 10, 0.92) 105px); animation: torch 6s ease-in-out infinite alternate; }
-.blackout.flicker { animation: bo-out 0.9s steps(6) both; }
-@keyframes bo-in { 0% { opacity: 0; } 25% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-@keyframes bo-out { 0% { opacity: 1; } 20% { opacity: 0.2; } 40% { opacity: 0.9; } 60% { opacity: 0.1; } 80% { opacity: 0.6; } 100% { opacity: 0; } }
-@keyframes torch { 0% { translate: -120px 60px; } 30% { translate: 110px -40px; } 60% { translate: -60px -120px; } 100% { translate: 130px 120px; } }
-.neon-wrap.off .neon, .neon-wrap.off .neon-sub { opacity: 0.12; text-shadow: none; animation: none; transition: opacity 0.2s; }
-
-/* mưa bão */
-.storm { position: absolute; inset: 0; background: rgba(12, 18, 46, 0.3); animation: storm-in 1.5s ease-out both; }
-@keyframes storm-in { from { opacity: 0; } to { opacity: 1; } }
-.storm.out { transition: opacity 1.4s; opacity: 0; }
-.storm .rain { position: absolute; inset: -20% -10% 0; background-image: repeating-linear-gradient(104deg, transparent 0 9px, rgba(190, 215, 255, 0.32) 9px 10px, transparent 10px 23px); background-size: 46px 70px; animation: rainfall 0.45s linear infinite; }
-.storm .rain.r2 { opacity: 0.6; background-size: 31px 52px; animation-duration: 0.32s; }
-@keyframes rainfall { from { background-position: 0 0; } to { background-position: -14px 70px; } }
-.storm .bolt { position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 0%, rgba(235, 240, 255, 0.95), rgba(180, 200, 255, 0.35) 40%, transparent 70%); opacity: 0; }
-.storm .bolt.go { animation: bolt 0.7s ease-out; }
-@keyframes bolt { 0% { opacity: 0; } 8% { opacity: 1; } 16% { opacity: 0.2; } 24% { opacity: 0.9; } 100% { opacity: 0; } }
-
-/* người bán dạo, karaoke */
-.person.vendor { transform: translate(-50%, -100%); }
-.person.vendor .vendor-item { position: absolute; left: 50%; bottom: 96%; translate: -50% 0; font-size: 14px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)); animation: bob 0.42s ease-in-out infinite; }
-.person.vendor .bubble { bottom: calc(100% + 16px); }
-.karaoke-tag { position: absolute; translate: -50% 0; padding: 1px 6px; border-radius: 4px; font: 900 7.5px/1.3 'Baloo 2', sans-serif; color: #fff; background: rgba(40, 0, 40, 0.75); border: 1px solid #ff4d8d; text-shadow: 0 0 4px #ff4d8d, 0 0 8px #ff2a75; box-shadow: 0 0 8px #ff2a75; animation: neon-flicker 3s linear infinite; white-space: nowrap; }
-.person.singing .body { animation: sway-tipsy 1.1s ease-in-out infinite; }
-.person.singing .arm { animation: cheer-arm 2.4s ease-in-out infinite; }
-
-/* bảng trò chơi */
-.game-panel {
-  position: absolute; left: 50%; top: 29.4%; width: 68%; translate: -50% 0; padding: 5px 8px 6px; box-sizing: border-box;
-  border-radius: 12px; background: linear-gradient(#3a2210f2, #1e1006f2); border: 2px solid #ffd166; box-shadow: 0 0 20px rgba(255, 209, 102, 0.45);
-  font-family: 'Baloo 2', sans-serif; color: #fff3d0; animation: card-pop 0.45s ease-out;
-}
-.game-panel[hidden] { display: none; }
-.g-head { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; line-height: 1.2; }
-.g-head b { letter-spacing: 0.04em; color: #ffd166; }
-.g-time { font-weight: 800; font-size: 10px; background: #c0392b; color: #fff; border-radius: 99px; padding: 0 6px; }
-.g-rule { font: 600 7.4px/1.35 'Be Vietnam Pro', sans-serif; color: #fbe7b8; text-align: center; margin-top: 2px; }
-.g-rule b { color: #ffd166; font-size: 9px; }
-.g-range { position: relative; height: 7px; margin: 4px 2px 3px; border-radius: 99px; background: #0d0704; border: 1px solid #5a3a1a; }
-.g-range i { position: absolute; top: 0; bottom: 0; border-radius: 99px; background: linear-gradient(90deg, #06d6a0, #ffd166); transition: left 0.4s, right 0.4s; }
-.g-last { display: flex; justify-content: center; gap: 3px; flex-wrap: wrap; min-height: 9px; }
-.g-last span { font: 700 6.4px/1.4 'Be Vietnam Pro', sans-serif; padding: 0 4px; border-radius: 99px; background: #ffffff14; max-width: 46%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.g-teams { display: flex; justify-content: space-between; font-size: 8.5px; margin-top: 2px; }
-.g-teams small { font-size: 6.4px; opacity: 0.75; }
-.g-teams b { font-size: 11px; color: #ffd166; }
-.g-rope { position: relative; height: 9px; margin: 4px 2px 2px; border-radius: 99px; background: repeating-linear-gradient(60deg, #c8a165 0 4px, #8a6a3a 4px 7px); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5); }
-.g-rope .mid { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: #fff; opacity: 0.8; }
-.g-rope .knot { position: absolute; top: 50%; translate: -50% -50%; font-size: 13px; line-height: 1; transition: left 0.35s cubic-bezier(0.3, 1.4, 0.5, 1); }
-.game-panel.done { border-color: #06d6a0; }
-.g-result { text-align: center; font-weight: 800; font-size: 13px; line-height: 1.3; padding: 4px 0; color: #fff; text-shadow: 0 0 8px #f2a516; }
-
-/* ======================================================================= v3: quán vỉa hè phố cổ, bếp ngoài trời */
-/* biển hiệu sơn đỏ chữ vàng, viền bóng đèn */
-.neon-wrap {
-  top: 1.5%; left: 14%; right: 14%; height: 9.2%;
-  background: linear-gradient(#d32323, #9c1414); border: 3px solid #ffd166; border-radius: 6px;
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.65), 0 0 22px rgba(255, 170, 60, 0.35), inset 0 0 0 2px #7a0d0d;
-}
-.neon-wrap::before {
-  content: ''; position: absolute; inset: -3px; border-radius: 6px; pointer-events: none;
-  background: radial-gradient(circle, #fff6c4 0 1.6px, transparent 2.2px) 0 0 / 11px 11px;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; padding: 2px;
-  animation: marquee 1.2s steps(2) infinite;
-}
-@keyframes marquee { 50% { opacity: 0.45; } }
-.neon { color: #ffe14d; text-shadow: 0 2px 0 #7a0d0d, 0 3px 6px rgba(0, 0, 0, 0.6), 0 0 14px rgba(255, 220, 90, 0.55); animation: none; }
-.neon-sub { color: #fff3d6; text-shadow: 0 1px 2px #5a0a0a; letter-spacing: 0.32em; }
-.neon-wrap.off { filter: brightness(0.35); }
-
-.stats { position: absolute; left: 50%; top: 11.7%; translate: -50% 0; padding: 2px 10px 1px; border-radius: 99px; white-space: nowrap; background: rgba(15, 8, 4, 0.82); border: 1px solid #f2a516; font: 800 8.6px/1.35 'Be Vietnam Pro', sans-serif; color: #ffe8b0; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); }
-.meter-rain { top: 15%; width: 62%; height: 15px; }
-.meter-wheel { top: 17.6%; width: 54%; height: 13px; }
-.meter .label { font-size: 8.4px; }
-.meter-wheel .label { font-size: 7.8px; }
-.ticker { top: 20.1%; left: 19%; right: 19%; height: 17px; }
-.ticker-text { font-size: 8.4px; line-height: 17px; }
-.hint-sign, .menu-board { display: none !important; }
-
-/* khách mới tới: mời follow / chat nhậu */
-.arrive { position: absolute; left: 50%; top: 22.9%; translate: -50% 0; max-width: 31%; padding: 2px 7px 2px; border-radius: 9px; text-align: center; background: linear-gradient(90deg, #ff4d8d, #ff7b39); color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); z-index: 2; display: flex; flex-direction: column; }
-.arrive[hidden] { display: none; }
-.arrive.in { animation: card-pop 0.45s cubic-bezier(0.3, 1.6, 0.5, 1); }
-.arrive b { font: 800 7.4px/1.25 'Be Vietnam Pro', sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.arrive span { font: 600 6.2px/1.25 'Be Vietnam Pro', sans-serif; opacity: 0.95; white-space: nowrap; }
-
-/* bảng gỗ bên trái: gọi món, tặng quà, luật vào bàn */
-.menu-panel {
-  position: absolute; left: 1.5%; top: 24%; width: 33.8%; padding: 4px 5px 5px; box-sizing: border-box;
-  background: #1c2620; border: 3px solid #7a4a2a; border-radius: 6px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.65), inset 0 0 12px rgba(0, 0, 0, 0.5);
-  font-family: 'Baloo 2', sans-serif; color: #f6f1d8;
-}
-.mp-title { text-align: center; font-weight: 800; font-size: 8.4px; line-height: 1.3; color: #ffd166; border-bottom: 1px dashed rgba(246, 241, 216, 0.45); margin-bottom: 2px; white-space: nowrap; }
-.mp-title.gift { margin-top: 4px; color: #ff9bb8; }
-.mp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 4px; }
-.mp-item { font: 700 6.9px/1.55 'Be Vietnam Pro', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mp-tiers { display: flex; flex-direction: column; gap: 2px; }
-.mp-tier { display: flex; align-items: center; gap: 4px; padding: 1px 3px; border-radius: 4px; background: rgba(255, 255, 255, 0.06); }
-.mp-tier b { flex: none; min-width: 27px; text-align: center; font: 900 7.4px/1.5 'Baloo 2', sans-serif; color: #2a1406; background: #ffd166; border-radius: 99px; padding: 0 3px; }
-.mp-tier.t1 b { background: #ff9f43; }
-.mp-tier.t2 b { background: #ff6b6b; color: #fff; }
-.mp-tier.t3 b { background: linear-gradient(90deg, #c77dff, #ff4d8d); color: #fff; }
-.mp-tier span { display: flex; flex-direction: column; min-width: 0; }
-.mp-tier i { font-style: normal; font-weight: 800; font-size: 7.6px; line-height: 1.1; }
-.mp-tier small { font: 600 6px/1.2 'Be Vietnam Pro', sans-serif; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mp-foot { margin-top: 4px; padding-top: 3px; border-top: 1px dashed rgba(246, 241, 216, 0.45); display: flex; flex-direction: column; gap: 1px; font: 600 6.3px/1.35 'Be Vietnam Pro', sans-serif; text-align: center; }
-.mp-foot b { color: #ffd166; font-weight: 800; }
-
-/* bảng TOP bên phải, cùng kiểu gỗ */
-.chalkboard { left: auto; right: 1.5%; top: 24%; width: 31%; border-width: 3px; }
-
-/* vòng quay chỉ hiện lúc quay */
-.wheel-box { display: none; left: 50%; top: 27%; width: 30%; translate: -50% 0; z-index: 3; }
-.wheel-box.spinning { display: flex; animation: card-pop 0.45s ease-out; }
-.wheel span { font-size: 15px; }
-.wheel-label { font-size: 9px; }
-
-/* chủ quán đứng bếp; đi bưng món thì chỗ bếp trống */
-.host { left: 50%; top: 50.8%; width: 15%; transition: opacity 0.35s; }
-.host.away { opacity: 0; }
-.host.cooking:not(.talking) .host-arm { animation: host-stir 0.5s ease-in-out infinite; }
-@keyframes host-stir { 0%, 100% { transform: rotate(8deg); } 50% { transform: rotate(-22deg); } }
-.kitchen .flame { opacity: 0.55; transform-box: fill-box; transform-origin: 50% 100%; animation: fire 0.5s ease-in-out infinite alternate; }
-.kitchen.cooking .flame { opacity: 1; animation-duration: 0.22s; scale: 1.5; }
-@keyframes fire { from { transform: scaleY(0.8); } to { transform: scaleY(1.2); } }
-.kitchen .coal { animation: coal 1.8s ease-in-out infinite; }
-@keyframes coal { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
-.kitchen .wok { transform-box: fill-box; transform-origin: 50% 50%; }
-.kitchen.cooking .wok { animation: toss 0.9s ease-in-out infinite; }
-.kitchen.cooking .wok-food { animation: food-hop 0.9s ease-in-out infinite; transform-box: fill-box; }
-@keyframes toss { 0%, 60%, 100% { transform: none; } 30% { transform: translate(-2px, -3px) rotate(-8deg); } }
-@keyframes food-hop { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(-9px); } }
-.kitchen .steam { animation: steam 2.4s ease-in-out infinite; transform-box: fill-box; }
-.kitchen .steam.s2 { animation-delay: -1.2s; }
-.kitchen.cooking .steam { animation-duration: 1.2s; }
-.tube { animation: tube 7s steps(1) infinite; }
-@keyframes tube { 0%, 92%, 96%, 100% { opacity: 0.6; } 94% { opacity: 0.1; } }
-
-/* chủ quán đi bộ bưng mâm */
-.waiter.host-walk { z-index: 965 !important; }
-.waiter.host-walk svg { filter: drop-shadow(0 0 4px #ffd166) drop-shadow(0 3px 3px rgba(0, 0, 0, 0.6)); }
-
-/* phiếu order treo dưới mép bạt */
-.order-rail { left: 31%; width: 38%; top: 35.6%; }
-
-/* chỗ khác của các thẻ */
-.gift-banner { left: 50%; top: 30.8%; translate: -50% 0; max-width: 62%; }
-.dish-card { top: 42%; }
