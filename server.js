@@ -653,13 +653,15 @@ const routes = {
     const role = url.searchParams.get('role');
     clients.set(res, role === 'stage' || role === 'preview' ? role : 'dash');
     if (role === 'stage') broadcast('stages', { n: stagePages() });
+    // Nhịp tim: trang dùng nó để biết đường truyền còn sống (api.js tự nối lại nếu im quá lâu)
     const beat = setInterval(() => {
       try {
-        res.write(': keep-alive\n\n');
+        res.write(`event: ping\ndata: {"t":${Date.now()}}\n\n`);
       } catch {
         clearInterval(beat);
+        clients.delete(res);
       }
-    }, 20_000);
+    }, 15_000);
     req.on('close', () => {
       clearInterval(beat);
       clients.delete(res);

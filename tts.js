@@ -91,16 +91,22 @@ async function edgeOnce(text, rate, v, /** @type {number} */ waitMs) {
   }
 }
 
-/** At most 2 at a time (more makes the service drop some), tried up to 3 times */
+/**
+ * At most 2 at a time (more makes the service drop some), tried twice.
+ * Hàng chờ có trần: live đông mà mạng chậm thì câu mới bị từ chối ngay để sân khấu bỏ câu đó và đọc tiếp,
+ * chứ không dồn thành một đống chờ hàng phút rồi quán im ru.
+ */
 let edgeBusy = 0;
 /** @type {Array<() => void>} */
 const edgeWaiting = [];
+const EDGE_QUEUE_MAX = 4;
 async function edge(/** @type {string} */ text, /** @type {number} */ rate, /** @type {Extract<Voice, { provider: 'edge' }>} */ v) {
+  if (edgeWaiting.length >= EDGE_QUEUE_MAX) throw new Error('Giọng Microsoft đang nghẽn, bỏ qua câu này');
   if (edgeBusy >= 2) await new Promise((ok) => edgeWaiting.push(() => ok(undefined)));
   edgeBusy++;
   try {
     let last;
-    for (const [i, ms] of [15_000, 9_000, 9_000].entries()) {
+    for (const [i, ms] of [12_000, 8_000].entries()) {
       try {
         return await edgeOnce(text, rate, v, ms);
       } catch (err) {
@@ -148,7 +154,7 @@ async function google(/** @type {string} */ text) {
 // ------------------------------------------------------------------------------------------------ FPT.AI
 
 /** The file behind an "async" link is ready a moment later: ask again until it is there */
-async function pollAudio(/** @type {string} */ url, /** @type {string} */ who, totalMs = 25_000) {
+async function pollAudio(/** @type {string} */ url, /** @type {string} */ who, totalMs = 16_000) {
   const until = Date.now() + totalMs;
   let delay = 500;
   while (Date.now() < until) {
@@ -195,6 +201,8 @@ async function zalo(/** @type {string} */ text, /** @type {number} */ rate, /** 
 // ------------------------------------------------------------------------------------------------ cache + entry
 
 const cache = new Map();
+/** @type {Map<string, Promise<Buffer>>} câu đang được tổng hợp: hỏi lại thì chờ chung, không làm hai lần */
+const inflight = new Map();
 let cacheBytes = 0;
 const CACHE_MAX = 60 * 1024 * 1024;
 function remember(/** @type {string} */ k, /** @type {Buffer} */ audio) {
@@ -219,12 +227,23 @@ export async function synth(text, rate, voiceKey, keys) {
   const k = `${voiceKey}|${rate}|${clean}`;
   const hit = cache.get(k);
   if (hit) return hit;
-  /** @type {Buffer} */
-  let audio;
-  if (v.provider === 'edge') audio = await edge(clean, rate, v);
-  else if (v.provider === 'google') audio = await google(clean);
-  else if (v.provider === 'fpt') audio = await fpt(clean, rate, v.id, keys.fptKey);
-  else audio = await zalo(clean, rate, v.id, keys.zaloKey);
-  remember(k, audio);
-  return audio;
+  // Sân khấu bỏ cuộc rồi hỏi lại cùng một câu thì dùng chung một lần tổng hợp, không gọi dịch vụ hai lần
+  const running = inflight.get(k);
+  if (running) return running;
+  const job = (async () => {
+    /** @type {Buffer} */
+    let audio;
+    if (v.provider === 'edge') audio = await edge(clean, rate, v);
+    else if (v.provider === 'google') audio = await google(clean);
+    else if (v.provider === 'fpt') audio = await fpt(clean, rate, v.id, keys.fptKey);
+    else audio = await zalo(clean, rate, v.id, keys.zaloKey);
+    remember(k, audio);
+    return audio;
+  })();
+  inflight.set(k, job);
+  try {
+    return await job;
+  } finally {
+    inflight.delete(k);
+  }
 }

@@ -23,6 +23,23 @@ html, body { margin: 0; background: #050307; }
 /* mỗi lớp tự vẽ phần của mình: trình duyệt không phải tính lại cả sân khấu khi một người bước một bước */
 .street, .floor, .wfx, .fx { contain: layout paint style; }
 
+/* Máy nặng (stage.js tự bật): tắt mấy thứ nhúc nhích suốt, giữ lại chuyện đang xảy ra trong quán */
+.stage.low .sitter .pbody,
+.stage.low .sb-bulb,
+.stage.low .sb-bulb u,
+.stage.low .sb-glow,
+.stage.low .sb-flick,
+.stage.low .sb-num::after,
+.stage.low .ticket,
+.stage.low .bulb,
+.stage.low .tv-screen,
+.stage.low .kitchen .coal,
+.stage.low .fx-firefly { animation: none !important; }
+.stage.low .sb-glow { opacity: 0.85; }
+.stage.low .sb-num::after { opacity: 0.7; }
+.stage.low .fx-steam, .stage.low .sb-glow { filter: none; }
+.stage.low .sitter.glow svg { filter: drop-shadow(0 0 3px #ffd166); }
+
 /* ---------------------------------------------------------------- scene life */
 .bulb { animation: twinkle 4s ease-in-out infinite; }
 @keyframes twinkle { 0%, 100% { opacity: 1; } 45% { opacity: 0.7; } 50% { opacity: 1; } 72% { opacity: 0.86; } }
@@ -51,35 +68,39 @@ html, body { margin: 0; background: #050307; }
 .burner { animation: coal 0.4s ease-in-out infinite alternate; }
 
 /* ---------------------------------------------------------------- the lit sign, the LED board */
-.signboard { position: absolute; left: 50px; top: 142px; width: 330px; height: 48px; box-sizing: border-box; border-radius: 3px; background: linear-gradient(180deg, #d12a2a, #9c1414 70%, #7d0f0f); border: 2px solid #f3cf62; box-shadow: 0 0 22px rgba(255, 70, 50, 0.55), 0 5px 10px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(255, 220, 150, 0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; animation: sign-hum 11s infinite; }
+.signboard { position: absolute; left: 50px; top: 142px; width: 330px; height: 48px; box-sizing: border-box; border-radius: 3px; background: linear-gradient(180deg, #d12a2a, #9c1414 70%, #7d0f0f); border: 2px solid #f3cf62; box-shadow: 0 0 22px rgba(255, 70, 50, 0.55), 0 5px 10px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(255, 220, 150, 0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .signboard::before { content: ''; position: absolute; inset: 2px; border: 1px solid rgba(255, 233, 160, 0.45); border-radius: 2px; }
 .signboard::after { content: ''; position: absolute; left: 4px; right: 4px; top: 2px; height: 40%; border-radius: 2px; background: linear-gradient(rgba(255, 255, 255, 0.18), transparent); }
-/* đèn neon bật lên là chớp vài cái rồi sáng đều, thỉnh thoảng nháy nhẹ như bảng hiệu thật */
-@keyframes sign-hum { 0%, 92%, 100% { filter: none; } 93% { filter: brightness(0.6) saturate(0.85); } 93.6% { filter: brightness(1.12); } 94.4% { filter: brightness(0.5) saturate(0.8); } 95% { filter: none; } 97.4% { filter: brightness(0.82); } 97.9% { filter: none; } }
-/* quầng sáng đỏ thở ra thở vào sau bảng */
+/* đèn neon thỉnh thoảng chớp: một tấm tối mờ đi mờ lại, rẻ hơn hẳn so với đổi filter của cả bảng */
+.sb-flick { position: absolute; inset: 0; border-radius: 3px; background: #1a0303; opacity: 0; pointer-events: none; animation: sign-flick 11s infinite; }
+@keyframes sign-flick { 0%, 92%, 100% { opacity: 0; } 93% { opacity: 0.5; } 93.6% { opacity: 0; } 94.3% { opacity: 0.55; } 95% { opacity: 0; } 97.4% { opacity: 0.25; } 97.9% { opacity: 0; } }
+/* quầng sáng đỏ thở ra thở vào sau bảng (chỉ đổi độ mờ, không làm lại vệt nhòe mỗi khung hình) */
 .sb-glow { position: absolute; left: -14px; right: -14px; top: -10px; bottom: -10px; border-radius: 10px; background: radial-gradient(ellipse at center, rgba(255, 90, 60, 0.55), rgba(255, 60, 40, 0.18) 55%, transparent 75%); filter: blur(5px); z-index: -1; animation: sign-breathe 3.6s ease-in-out infinite alternate; }
-@keyframes sign-breathe { from { opacity: 0.55; transform: scale(0.98); } to { opacity: 1; transform: scale(1.03); } }
+@keyframes sign-breathe { from { opacity: 0.5; } to { opacity: 1; } }
 .sb-main { display: flex; gap: 8px; align-items: center; line-height: 1; }
-.sb-name { font: 800 28px/1 'Baloo 2', 'Be Vietnam Pro', sans-serif; color: #ffe14d; letter-spacing: 0.5px; text-shadow: 0 0 7px rgba(255, 225, 77, 0.85), 0 2px 0 #6a0b0b; white-space: nowrap; animation: neon-tube 2.8s ease-in-out infinite alternate; }
-@keyframes neon-tube {
-  from { color: #ffe14d; text-shadow: 0 0 6px rgba(255, 225, 77, 0.75), 0 0 14px rgba(255, 170, 40, 0.45), 0 2px 0 #6a0b0b; }
-  to { color: #fff6b0; text-shadow: 0 0 10px rgba(255, 236, 140, 1), 0 0 24px rgba(255, 180, 50, 0.8), 0 0 40px rgba(255, 120, 40, 0.45), 0 2px 0 #6a0b0b; }
-}
-.sb-num { font: 800 24px/1 'Baloo 2', sans-serif; color: #fff; background: #1d4fa3; border: 1.5px solid #e8eef8; border-radius: 4px; padding: 3px 5px 0; box-shadow: 0 0 10px rgba(110, 168, 255, 0.9); animation: plate-blink 2.8s ease-in-out infinite alternate-reverse; }
-@keyframes plate-blink { from { box-shadow: 0 0 7px rgba(110, 168, 255, 0.7); } to { box-shadow: 0 0 16px rgba(140, 195, 255, 1), 0 0 28px rgba(80, 150, 255, 0.6); } }
-/* dây bóng đèn chạy quanh bảng: một lớp duy nhất mỗi cạnh, chạy bằng background-position nên rất nhẹ */
-.sb-bulb { position: absolute; pointer-events: none; --b: radial-gradient(circle, #fff6c8 0 1.4px, rgba(255, 196, 80, 0.55) 1.9px, transparent 2.4px); }
-.sb-bulb.t, .sb-bulb.b { left: -3px; right: -3px; height: 5px; background: var(--b) 0 50% / 13px 100% repeat-x; animation: bulb-run 1.4s linear infinite, bulb-blink 1.6s ease-in-out infinite alternate; }
+.sb-name { font: 800 28px/1 'Baloo 2', 'Be Vietnam Pro', sans-serif; color: #ffe14d; letter-spacing: 0.5px; text-shadow: 0 0 7px rgba(255, 225, 77, 0.85), 0 2px 0 #6a0b0b; white-space: nowrap; }
+.sb-num { font: 800 24px/1 'Baloo 2', sans-serif; color: #fff; background: #1d4fa3; border: 1.5px solid #e8eef8; border-radius: 4px; padding: 3px 5px 0; box-shadow: 0 0 10px rgba(110, 168, 255, 0.9); }
+.sb-sub { font: 800 7.6px/1 'Be Vietnam Pro', sans-serif; color: #fff4c8; letter-spacing: 1.8px; margin-top: 3px; text-shadow: 0 1px 2px #5a0808; }
+/* biển số nhấp nháy bằng một lớp sáng chồng lên, không đụng tới box-shadow */
+.sb-num { position: relative; }
+.sb-num::after { content: ''; position: absolute; inset: -3px; border-radius: 6px; box-shadow: 0 0 12px rgba(140, 195, 255, 0.95); opacity: 0; animation: plate-blink 2.8s ease-in-out infinite alternate-reverse; }
+@keyframes plate-blink { from { opacity: 0.15; } to { opacity: 1; } }
+/* dây bóng đèn: khung ngoài cắt bớt, dải trong trượt bằng transform nên chạy trên GPU */
+.sb-bulb { position: absolute; overflow: hidden; pointer-events: none; animation: bulb-blink 1.6s ease-in-out infinite alternate; }
+.sb-bulb u { position: absolute; display: block; --b: radial-gradient(circle, #fff6c8 0 1.4px, rgba(255, 196, 80, 0.55) 1.9px, transparent 2.4px); }
+.sb-bulb.t, .sb-bulb.b { left: -3px; right: -3px; height: 5px; }
+.sb-bulb.t u, .sb-bulb.b u { top: 0; bottom: 0; left: -13px; right: -13px; background: var(--b) 0 50% / 13px 100% repeat-x; animation: bulb-run 1.4s linear infinite; }
 .sb-bulb.t { top: -4px; }
-.sb-bulb.b { bottom: -4px; animation: bulb-run-rev 1.4s linear infinite, bulb-blink 1.6s ease-in-out -0.8s infinite alternate; }
-.sb-bulb.l, .sb-bulb.r { top: -3px; bottom: -3px; width: 5px; background: var(--b) 50% 0 / 100% 13px repeat-y; animation: bulb-down 1.4s linear infinite, bulb-blink 1.6s ease-in-out -0.4s infinite alternate; }
+.sb-bulb.b { bottom: -4px; animation-delay: -0.8s; }
+.sb-bulb.b u { animation-name: bulb-run-rev; }
+.sb-bulb.l, .sb-bulb.r { top: -3px; bottom: -3px; width: 5px; animation-delay: -0.4s; }
+.sb-bulb.l u, .sb-bulb.r u { left: 0; right: 0; top: -13px; bottom: -13px; background: var(--b) 50% 0 / 100% 13px repeat-y; animation: bulb-down 1.4s linear infinite; }
 .sb-bulb.l { left: -4px; }
 .sb-bulb.r { right: -4px; }
-@keyframes bulb-run { to { background-position-x: 13px; } }
-@keyframes bulb-run-rev { to { background-position-x: -13px; } }
-@keyframes bulb-down { to { background-position-y: 13px; } }
-@keyframes bulb-blink { from { opacity: 0.6; } to { opacity: 1; } }
-.sb-sub { font: 800 7.6px/1 'Be Vietnam Pro', sans-serif; color: #fff4c8; letter-spacing: 1.8px; margin-top: 3px; text-shadow: 0 1px 2px #5a0808; }
+@keyframes bulb-run { to { transform: translateX(13px); } }
+@keyframes bulb-run-rev { to { transform: translateX(-13px); } }
+@keyframes bulb-down { to { transform: translateY(13px); } }
+@keyframes bulb-blink { from { opacity: 0.62; } to { opacity: 1; } }
 .led { position: absolute; left: 98px; top: 192px; width: 234px; height: 21px; box-sizing: border-box; overflow: hidden; border: 1.5px solid #2b2b2f; border-radius: 2px; background: #140405 radial-gradient(circle, rgba(255, 50, 40, 0.16) 0.55px, transparent 0.75px) 0 0 / 2.4px 2.4px; box-shadow: 0 0 10px rgba(255, 30, 30, 0.35); }
 .led-track { position: absolute; left: 0; top: 0; white-space: nowrap; transform: translateX(230px); }
 .led-track span { display: inline-block; font: 800 9.4px/18px 'Be Vietnam Pro', system-ui, sans-serif; letter-spacing: 0.7px; color: #ff4b3a; text-shadow: 0 0 4px #ff1f1f, 0 0 1px #ffb3a8; }
