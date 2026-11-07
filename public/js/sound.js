@@ -43,6 +43,7 @@ export class SoundEngine {
   /** Called on the first click/key (browsers only allow sound after one) and by the dashboard */
   unlock() {
     this.audio();
+    this.loadDzo();
     if (this.ctx?.state === 'suspended') this.ctx.resume().catch(() => {});
     this.applyMusic();
     this.applyAmbience();
@@ -262,6 +263,34 @@ export class SoundEngine {
         o.stop(t0 + hit + decay + 0.05);
       }
     }
+  }
+
+  /** @type {AudioBuffer[]} the recorded-style clinks of two bia hơi glasses (tools/tieng-dzo.py) */
+  dzoBuffers = [];
+  dzoLoading = false;
+  loadDzo() {
+    const ctx = this.ctx;
+    if (!ctx || this.dzoLoading || this.dzoBuffers.length) return;
+    this.dzoLoading = true;
+    Promise.all([1, 2, 3].map((k) => fetch(`/assets/audio/dzo${k}.mp3`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b))))
+      .then((bufs) => (this.dzoBuffers = bufs))
+      .catch(() => (this.dzoLoading = false));
+  }
+  /** Two thick glasses clinking for "dzô" (falls back to the synthesized clink until the files are in) */
+  dzo(volume = 0.7, delay = 0) {
+    const ctx = this.audio();
+    if (!ctx || !this.sfxBus || ctx.state !== 'running') return;
+    if (!this.dzoBuffers.length) {
+      this.loadDzo();
+      return this.clink(volume * 0.8, delay);
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = this.dzoBuffers[Math.floor(Math.random() * this.dzoBuffers.length)];
+    src.playbackRate.value = 0.94 + Math.random() * 0.12;
+    const g = ctx.createGain();
+    g.gain.value = volume;
+    src.connect(g).connect(this.sfxBus);
+    src.start(ctx.currentTime + delay);
   }
 
   /** Cả quán bị đập: tiếng rầm, ly chén vỡ loảng xoảng */

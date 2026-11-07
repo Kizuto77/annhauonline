@@ -248,3 +248,27 @@ html, body { margin: 0; background: #050307; }
 @keyframes fx-room { 0%, 100% { translate: 0 0; } 20% { translate: 0 -5px; } 45% { translate: 0 3px; } 70% { translate: 0 -1px; } }
 .fx-steam { position: absolute; width: 6px; height: 14px; margin: -14px -3px 0; border-radius: 50%; background: radial-gradient(ellipse, rgba(255, 255, 255, 0.55), transparent 70%); filter: blur(1.5px); animation: fx-steam 2.6s ease-out both; }
 @keyframes fx-steam { 0% { transform: translate(0, 0) scale(0.6); opacity: 0; } 25% { opacity: 0.9; } 100% { transform: translate(var(--dx), -26px) scale(1.6, 2); opacity: 0; } }
+
+/* ---------------------------------------------------------------- dzô: two glasses clinking (cheers.js) */
+.toast-big { position: absolute; left: 50%; top: 40%; width: 0; height: 0; z-index: 4; transition: opacity 0.4s; }
+.toast-big .mug-l, .toast-big .mug-r { position: absolute; left: -42px; top: -56px; width: 84px; height: 112px; opacity: 0; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.55)); }
+.toast-big .mug-l { transform-origin: 70% 30%; }
+.toast-big .mug-r { transform-origin: 30% 30%; }
+.toast-big .mug { width: 100%; height: 100%; display: block; overflow: visible; }
+.toast-big .glow { position: absolute; left: -110px; top: -130px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 236, 170, 0.75), rgba(255, 190, 70, 0.25) 40%, transparent 70%); opacity: 0; transform: scale(0.4); }
+.toast-big.hit .glow { animation: toast-glow 0.9s ease-out forwards; }
+@keyframes toast-glow { 0% { opacity: 0; transform: scale(0.3); } 18% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.25; transform: scale(1.4); } }
+.toast-big.hit .foam { animation: foam-jump 0.45s ease-out; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes foam-jump { 30% { transform: scale(1.12, 1.25) translateY(-2px); } 100% { transform: none; } }
+.toast-name { position: absolute; left: -160px; width: 320px; top: 62px; display: flex; flex-direction: column; align-items: center; opacity: 0; transform: scale(0.4); font-family: 'Baloo 2', 'Be Vietnam Pro', sans-serif; }
+.toast-big.hit .toast-name { animation: toast-name 0.5s cubic-bezier(0.3, 1.7, 0.5, 1) forwards; }
+@keyframes toast-name { to { opacity: 1; transform: none; } }
+.toast-name b { font-size: 42px; line-height: 0.9; font-weight: 800; color: #ffd166; letter-spacing: 1px; text-shadow: 0 3px 0 #8a3b00, 0 0 18px rgba(242, 165, 22, 0.9), 0 5px 12px #000; transform: rotate(-4deg); }
+.toast-name span { margin-top: 4px; max-width: 300px; padding: 1px 12px 0; border-radius: 99px; background: rgba(28, 12, 4, 0.82); border: 1px solid #f2a516; color: #fff3c4; font: 800 13px/1.5 'Be Vietnam Pro', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toast-big.out { opacity: 0; }
+.toast-mini { position: absolute; width: 0; height: 0; z-index: 4; pointer-events: none; }
+.toast-mini .mug-l, .toast-mini .mug-r { position: absolute; left: -7.5px; top: -20px; width: 15px; height: 20px; opacity: 0; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5)); }
+.toast-mini .mug { width: 100%; height: 100%; display: block; overflow: visible; }
+.mug .bub { animation: bub 1.6s linear infinite; }
+@keyframes bub { from { transform: translateY(0); opacity: 0.8; } to { transform: translateY(-34px); opacity: 0; } }
+.wave-banner { top: 57% !important; }

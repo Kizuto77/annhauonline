@@ -18,6 +18,7 @@ import { readableComment } from './bua.js';
 import { tokensOf } from './text.js';
 import { beams, fireworks, flyArc, floatUp, reveal, ring, sparkles, splash } from './effects.js';
 import { answerFor } from './answers.js';
+import { bigToast, miniToast } from './cheers.js';
 import { REGULARS, NPC_TALK, NPC_ORDER, NPC_SERVED } from './npc.js';
 
 const params = new URLSearchParams(location.search);
@@ -538,14 +539,15 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean; kind?: stri
     if (dzo) {
       cups++;
       cheer(occ);
-      setTimeout(() => splash(wfx, h.x + 1.5, h.y + 6, 7), 600);
+      toast(user.name, h);
       occ.dzo++;
       if ([5, 10, 20, 50].includes(occ.dzo) && sound && sound.waiting() < 2) auto(say().dzoMilestone(user.name, occ.dzo));
-      sound?.clink(0.45, 0.5);
       for (const o of occupantsAt(SEATS[occ.seat].table)) if (o !== occ && Math.random() < 0.7) cheer(o, 200 + Math.random() * 500);
     }
   }
   // xin ngồi, đổi bàn, gọi món: answered by their own events
+  // a viewer without a seat cheering still gets the two glasses in the middle
+  if (dzo && !occ) toast(user.name, null);
   if (kind) return;
   const topic = detectTopic(text);
   if (topic === 'dao') {
@@ -756,6 +758,21 @@ function treat(/** @type {{ user: User }} */ { user }) {
 const HOTPOTS = ['Lẩu thái hải sản', 'Lẩu riêu cua bắp bò', 'Lẩu gà lá é', 'Lẩu bò nhúng giấm', 'Lẩu nấm', 'Lẩu cá kèo lá giang'];
 const hotpotAt = (/** @type {number} */ i) => ({ id: `lau${i % 6}`, ten: HOTPOTS[i % 6], short: HOTPOTS[i % 6], icon: '🍲', kind: 'hotpot' });
 
+// -------------------------------------------------------------------------------------------- dzô: two glasses clinking
+
+/** The big clink in the middle at most every 5 s (busy chat: the rest get the small one over their heads) */
+let lastBigToast = 0;
+function toast(/** @type {string} */ name, /** @type {{ x: number; y: number } | null} */ head) {
+  const now = Date.now();
+  if (now - lastBigToast > 5000 && !smashing) {
+    lastBigToast = now;
+    bigToast(fx, name, () => sound?.dzo(0.8));
+    if (head) setTimeout(() => miniToast(wfx, head.x, head.y - 1, () => {}), 300);
+    return;
+  }
+  if (head) miniToast(wfx, head.x, head.y - 1, () => sound?.dzo(0.4));
+}
+
 // -------------------------------------------------------------------------------------------- dzô wave
 
 let lastWaveAt = 0;
@@ -769,9 +786,12 @@ function wave(withVoice = true) {
   b.classList.add('go');
   setTimeout(() => (b.hidden = true), 3600);
   if (withVoice) auto(say().wave(), true);
+  // the two big glasses meet right on "DZÔ!!!"
+  lastBigToast = Date.now();
+  setTimeout(() => bigToast(fx, 'Cả quán', () => sound?.dzo(0.9)), 1400 - 650);
   setTimeout(() => {
     everyone().forEach((o) => cheer(o, Math.random() * 400));
-    for (let i = 0; i < 4; i++) sound?.clink(0.35, i * 0.12);
+    for (let i = 0; i < 4; i++) sound?.dzo(0.25, 0.15 + i * 0.13);
     sound?.cheers(0.5);
     for (const t of TABLES) if (occupantsAt(t.id).length) sparkles(wfx, pct(t).x, pct({ x: t.x, y: t.y - 60 * t.s }).y, 4, 16);
   }, 1400);
@@ -1015,7 +1035,8 @@ function onNpc(/** @type {{ k: number; talk: number }} */ e) {
   if (/dzô/i.test(pair[0])) {
     cheer(o);
     occupantsAt(SEATS[o.seat].table).forEach((x, i) => x !== o && cheer(x, 300 + i * 150));
-    sound?.clink(0.3, 0.6);
+    const h = pct(headOf(o.seat));
+    miniToast(wfx, h.x, h.y - 1, () => sound?.dzo(0.35));
   }
   if (hostFree()) {
     setTimeout(() => {

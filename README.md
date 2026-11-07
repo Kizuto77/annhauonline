@@ -86,6 +86,7 @@ Kiểm tra kiểu: `npm run check`.
 
 - `public/assets/audio/quan_nhau.mp3`: nhạc nền quán nhậu, tự tổng hợp bằng `tools/nhac-nhau.py`.
 - `public/assets/audio/chill_relax.mp3`: nhạc chill, lấy từ dự án gốc.
+- `public/assets/audio/dzo1..3.mp3`: tiếng hai cốc bia hơi cụng nhau, tự tổng hợp bằng `tools/tieng-dzo.py`.
 - Mọi hình ảnh đều vẽ bằng code trong repo này.
 
 ## Giấy phép

@@ -17,6 +17,7 @@ A virtual sidewalk beer pub (quán nhậu vỉa hè) streamed on TikTok through 
 - Seats only on follow / chat "nhậu" / order / gift / "bàn N"; idle `seatIdleMin` frees the seat (TikTok sends no leave event). NPC regulars fill some seats and give them up to viewers. The cook leaves the stove to serve each finished dish (`serve`), up to 2 waiters help when the queue grows.
 - Regulars (`public/js/npc.js`, setting `npcLife`): the server picks when a regular talks (`npc` event) or orders a free dish (`pub.npcOrder`, user id `npc-K`, never on the board); the stage shows it only if that regular still has their seat, and the host answers only when no viewer comment is waiting (`hostFree`). Never put words in a real viewer's mouth.
 - Real answers to viewer questions: `public/js/answers.js` (time, date, address 134 Trần Phú, how to sit/order/change table, gift tiers, my table, my dish, top 1, arithmetic, "is this a bot" answered honestly). Unknown questions fall back to the bựa lines.
+- Dzô: `public/js/cheers.js` draws two bia hơi glasses clinking (big one in the middle at most every 5 s, small ones over heads); the clink sound is `sound.dzo()` playing `assets/audio/dzo1..3.mp3` (made by `tools/tieng-dzo.py`).
 - Voice lines: `lines.js`, `bua.js`, `order-lines.js`; comment topics in `chat.js` match accented words (no accent stripping: "thì" must not match "thi").
 
 ## Owner decisions to keep
