@@ -840,7 +840,7 @@ function renderMenu() {
 
 /** The red LED board over the door: rules and reminders scroll by; news (someone came, a gift) jumps the line */
 const LED_BASE = [
-  () => `CHÀO MỪNG CẢ NHÀ TỚI ${String(settings.channelName).toUpperCase()}`,
+  () => `CHÀO MỪNG ĐẾN VỚI ${String(settings.channelName).toUpperCase()}`,
   () => 'CHAT "NHẬU" ĐỂ VÀO BÀN · "BÀN 3" ĐỂ ĐỔI BÀN',
   () => 'GÕ TÊN MÓN LÀ CÓ: ĐẬU LẠC, NEM CHUA, KHOAI CHIÊN… MIỄN PHÍ',
   () => `GÕ "${firstKeyword().toUpperCase()}" ĐỂ CỤNG LY CẢ QUÁN`,
@@ -864,9 +864,16 @@ function ledNext() {
   t.textContent = text;
   const track = /** @type {HTMLElement} */ (t.parentElement);
   const width = t.offsetWidth;
-  const ms = Math.max(4500, (width + 230) * 22);
   track.getAnimations().forEach((a) => a.cancel());
-  track.animate([{ transform: 'translateX(230px)' }, { transform: `translateX(${-width}px)` }], { duration: ms, easing: 'linear' }).finished.then(ledNext, () => {});
+  // short lines stand still in the middle of the board; long ones scroll through
+  const box = /** @type {HTMLElement} */ (track.parentElement).clientWidth;
+  if (width <= box - 8) {
+    const x = `translateX(${Math.round((box - width) / 2)}px)`;
+    track.animate([{ transform: x, opacity: 0 }, { transform: x, opacity: 1, offset: 0.06 }, { transform: x, opacity: 1, offset: 0.94 }, { transform: x, opacity: 0 }], { duration: 4200 }).finished.then(ledNext, () => {});
+    return;
+  }
+  const ms = Math.max(4500, (width + box) * 22);
+  track.animate([{ transform: `translateX(${box}px)` }, { transform: `translateX(${-width}px)` }], { duration: ms, easing: 'linear' }).finished.then(ledNext, () => {});
 }
 
 function applySettings(/** @type {any} */ s) {
