@@ -514,7 +514,7 @@ function cacheTts(key, audio) {
 // ---------------------------------------------------------------------------------------------------------------
 
 const DEMO_NAMES = ['Tuấn Bia Hơi', 'Lan Ốc Len', 'Hùng Xe Ôm', 'Mai Trà Sữa', 'Khánh Đậu Phộng', 'Ngọc 2k', 'Phát Mực Nướng', 'Vy Hạt Dẻ', 'Bảo Lẩu Thái', 'Thảo Nem Chua', 'Duyên Dễ Thương', 'Long Sụn Gà', 'An Vui Vẻ', 'Trâm Khô Gà', 'Quân 9x'];
-const DEMO_CHATS = ['Quán vui quá', 'Hôm nay sinh nhật mình nè', 'Buồn quá, mới chia tay', 'Cho xin đĩa mồi đi chủ quán', 'Say rồi, đi ngủ đây', 'Chào cả nhà', 'Mai đi làm sớm rồi', 'Bia ngon ghê'];
+const DEMO_CHATS = ['Quán vui quá', 'Hôm nay sinh nhật mình nè', 'Buồn quá, mới chia tay', 'Cho xin đĩa mồi đi chủ quán', 'Say rồi, đi ngủ đây', 'Chào cả nhà', 'Mai đi làm sớm rồi', 'Bia ngon ghê', 'Mình từ Hà Nội nè', 'Chủ quán giọng hay quá', 'Haha cười xỉu', 'Cho em ngồi bàn VIP với', 'Thả tim đi cả nhà ơi', 'Quán tên gì vậy ạ?', 'Cuối tuần rồi vui quá', 'Mưa to quá trời', 'Nay lương về rồi nè', 'Em vừa follow nha', 'Cảm ơn chủ quán', 'Tui đang ở Đà Nẵng', 'Ốc len xào ngon quá', 'Yêu quán quá trời'];
 const pick = (/** @type {any[]} */ list) => list[Math.floor(Math.random() * list.length)];
 const demoUser = () => {
   const name = pick(DEMO_NAMES);

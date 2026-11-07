@@ -161,6 +161,40 @@ const IDLE = [
   'Mẹo nhỏ: trước khi đi nhậu ăn chút gì lót dạ, và nhớ hẹn người chở về trước nha cả nhà.',
 ];
 
+// A comment the host has no special line for
+const ACK = [
+  'Cảm ơn {ban} đã lên tiếng nha!',
+  '{ban} nói đúng quá!',
+  'Hay đó {ban}! Cả quán đang nghe nè.',
+  'Ui, {ban} nói chuyện duyên ghê.',
+  '{ban} ơi, chủ quán đọc được rồi nha, cảm ơn {ban}!',
+  'Có {ban} ngồi chơi là quán vui hẳn lên.',
+  '{ban} cứ comment thoải mái, quán thích nghe lắm.',
+];
+
+// Chat is busy: thank several people at once
+const SHOUT = [
+  'Cảm ơn {list} đang trò chuyện sôi nổi! Quán vui hẳn lên.',
+  '{list} chat hăng quá, chủ quán đọc không kịp luôn! Cả quán đang nghe nè.',
+  'Ở bàn {list} đang nói chuyện rôm rả ghê. Cả nhà cứ tự nhiên nha!',
+  'Hoan hô {list}, chat nhiệt tình quá. {q} cảm ơn cả nhà, gõ {kw} cho quán thêm vui nào!',
+  'Mấy bạn {list} làm quán ồn ào dễ thương quá, cảm ơn cả nhà nha!',
+];
+
+// Comments are flying in too fast to answer them all
+const FAST = [
+  'Cả nhà comment nhanh quá, chủ quán đọc không kịp! Câu nào quan trọng thì nhắc lại một lần nha.',
+  'Chat chạy ào ào luôn, {q} cảm ơn cả nhà nhiệt tình quá! Chủ quán đọc từ từ nha.',
+  'Wow, bình luận nhiều dữ vậy! Quán cảm ơn cả nhà, ai có câu hỏi hay thì gõ ngắn gọn cho quán dễ đọc nha.',
+];
+
+// A person has cheered with the keyword many times
+const DZO_MILESTONE = [
+  '{ban} dzô lần thứ {n} rồi! Chiến hữu thứ thiệt của quán luôn.',
+  'Hoan hô {ban}, cụng ly tới lần thứ {n}! Cả quán nâng ly mừng {ban} nào.',
+  '{ban} dzô hăng quá trời, lần thứ {n} rồi đó. Cả quán vỗ tay!',
+];
+
 /** @type {Record<import('./chat.js').Topic, string[]>} */
 const REPLIES = {
   birthday: ['Chúc mừng sinh nhật {ban}! Cả {q} nâng ly mừng tuổi mới, nhiều tiền, ít muộn phiền nha!', 'Ui, sinh nhật {ban} hả? Cả quán dzô một cái mừng {ban}, chúc tuổi mới thật nhiều niềm vui!', 'Sinh nhật {ban} nè! Cả quán hát chúc mừng, chúc {ban} tuổi mới khỏe mạnh, hạnh phúc, tiền vô như lá mùa thu.'],
@@ -169,6 +203,30 @@ const REPLIES = {
   tired: ['{ban} vất vả rồi. Ngồi xuống nghỉ chân đi, ở quán không có deadline đâu.', 'Mệt thì nghỉ chút nha {ban}. Làm việc cả ngày rồi, giờ là lúc thả lỏng với cả nhà.', 'Nghe {ban} mệt mà thương. Ngả lưng xíu, nghe nhạc chill với quán, mọi lo toan để mai tính.'],
   hungry: ['{ban} đói rồi hả? Cả nhà thả đủ chín mươi chín tim là vòng quay mồi ra món liền!', 'Mồi tới liền, {ban} chờ xíu nha! Thả tim cho vòng quay mồi chạy nào cả nhà.', 'Đói hả {ban}? Quán đang nấu nè, thả tim cho vòng quay mồi chạy, may mắn thì trúng món ngon liền.'],
   bye: ['{ban} về hả? Về cẩn thận nha, mai ghé {q} tiếp nhé!', 'Tạm biệt {ban}, ngủ ngon nha. Nhớ đường về quán đó!', 'Tạm biệt {ban} nha, về nhà bình an, giấc ngủ ngon. Quán luôn chừa ghế cho {ban}!'],
+  thanks: ['Không có chi {ban} ơi! {q} luôn vui khi có {ban} ghé chơi.', 'Cảm ơn lại {ban} nha, có {ban} quán mới vui đó.', '{ban} khách sáo quá, ngồi chơi cho vui thôi mà. Có {ban} là quán đông vui rồi.'],
+  hello: ['Chào {ban}! {q} chào {ban} nha, ngồi chơi cho vui.', 'Hello {ban}! Vô ngồi đi, gõ {kw} cho quán nghe nào.', 'Chào {ban} nha! Quán mình hôm nay vui lắm, {ban} ngồi chơi với cả nhà.', 'Ê, {ban} chào quán nè! Chào {ban}, ngồi xuống bắt chuyện đi.'],
+  first: ['Wow, {ban} là người comment sớm nhất luôn! Quán tặng {ban} một tràng vỗ tay.', 'Nhanh tay ghê, {ban} nhanh nhất quán hôm nay! Cả nhà vỗ tay nào.'],
+  praise: ['Cảm ơn {ban} nha! Nghe {ban} khen là chủ quán vui cả buổi.', 'Ui, {ban} khen làm quán mắc cỡ luôn. Cảm ơn {ban} nhiều nha!', '{ban} dễ thương quá, quán cảm ơn! Cả nhà thấy vui thì thả tim ủng hộ quán nha.', 'Nghe {ban} khen quán, chủ quán muốn nhảy cẫng lên luôn đó.'],
+  praiseHost: ['Ôi {ban} khen chủ quán quá trời! Chủ quán đỏ mặt luôn nè, cảm ơn {ban} nha.', 'Cảm ơn {ban} đã khen! Chủ quán ngại quá, tặng {ban} một ly nước ngọt mừng nha.', '{ban} khéo miệng ghê! Chủ quán cảm ơn, hôm nay vui cả ngày luôn.'],
+  love: ['Ôi, {ban} yêu quán hả? Quán cũng thương {ban} lắm luôn! Ghé thường xuyên nha.', 'Nghe {ban} nói vậy chủ quán xúc động ghê. {q} cũng thương {ban} nhiều lắm.', 'Trời ơi dễ thương quá, cả quán thương {ban} nè. Dzô một cái nào!'],
+  laugh: ['Ha ha, {ban} cười gì mà vui dữ vậy! Cười cho cả quán nghe với.', '{ban} cười làm cả quán cười theo luôn. Cười nhiều trẻ lâu nha!', 'Ui, {ban} cười tới nghẹn rồi đó. Uống miếng nước đi {ban}.'],
+  music: ['{ban} muốn nghe nhạc hả? Quán đang mở nhạc chill đó, nhạc nền êm êm nghe cho thư giãn nha.', 'Nhạc quán là nhạc chill, nghe để thư giãn cho {ban} nè. {ban} thích thể loại nào cứ nói chủ quán nghe.', 'Chủ quán hát dở lắm {ban} ơi, để nhạc chill nghe cho an toàn nha!'],
+  seat: ['{ban} muốn có ghế hả? Gõ {kw} là quán kéo ghế liền! Muốn lên bàn VIP thì comment nhiều và gửi quà nha.', '{ban} ơi, ghế còn nhiều lắm, cứ gõ {kw} là có chỗ ngồi liền. Lên được bàn VIP thì phải lọt top sáu của quán.', 'Bàn VIP dành cho sáu chiến hữu nhiều điểm nhất. {ban} comment thật nhiều, gửi quà là có ghế đó!'],
+  gift: ['Cảm ơn {ban} có lòng nha! Quà nào cũng được quán cảm ơn tên, đưa mồi ra bàn, còn lên bảng chiến hữu nữa.', '{ban} định tặng quà hả? Quán cảm ơn trước nha! Mỗi món quà là một món mồi ra bàn đó.', 'Quà là tấm lòng, không bắt buộc đâu {ban}. Nhưng nếu {ban} gửi, quán sẽ đọc tên cảm ơn thiệt lớn!'],
+  like: ['{ban} nhắc đúng ý chủ quán! Cả nhà thả tim đi, đủ chín mươi chín tim là quay vòng mồi.', 'Cảm ơn {ban} nha! Cả nhà theo {ban} thả tim cho quán đi, tim càng nhiều quán càng vui.'],
+  follow: ['Cảm ơn {ban} đã follow quán! Từ nay {ban} là khách quen rồi, ghé thường xuyên nha.', 'Ôi, {ban} follow quán rồi hả? Quán cảm ơn nhiều nha, có ghế riêng cho khách quen đó!'],
+  share: ['Cảm ơn {ban} đã chia sẻ quán! {ban} tốt bụng quá, cả quán cảm ơn nha.', '{ban} chia sẻ live cho quán hả? Chủ quán cảm ơn {ban} nhiều nha, rủ thêm bạn vô ngồi chung nữa nha.'],
+  money: ['Ôi, chuyện tiền bạc ai cũng có lúc. {ban} cứ ngồi chơi ở quán ảo, không tốn đồng nào. Rồi tiền sẽ về thôi nha.', '{ban} có lương rồi hả? Chúc mừng nha! Nhớ chi tiêu cho khôn khéo, giữ lại chút để dành nha.', 'Ví mỏng thì tim vui bù lại nha {ban}. Ở quán này ngồi miễn phí, chỉ cần mang tiếng cười.'],
+  work: ['{ban} vất vả rồi, ngồi xuống nghỉ ngơi nha. Công việc để mai tính, giờ là giờ chill.', 'Tan ca rồi hả {ban}? Ghé quán ngồi xả stress với cả nhà đi.', 'Làm việc cả ngày rồi, giờ {ban} xứng đáng được thư giãn. Ngồi xuống nghe nhạc, tám chuyện với quán nha.'],
+  weekend: ['Cuối tuần rồi, vui quá! Cả quán nghỉ ngơi xả hơi thôi, {ban} nhỉ.', '{ban} sắp được nghỉ hả? Vậy chúc {ban} nghỉ thiệt vui, ngủ thiệt đã nha!', 'Cuối tuần là phải chill, cả nhà ha! {ban} có dự định gì không, kể quán nghe với.'],
+  weather: ['Trời vậy mà {ban} vẫn ghé quán, quý quá! Vô ngồi cho ấm, đừng ra ngoài nha.', '{ban} nhớ giữ gìn sức khỏe nha, thời tiết thất thường lắm. Ngồi quán mình cho an toàn.', 'Mưa gió thế này ngồi quán là nhất rồi {ban} ơi. Nhạc chill, mồi nóng, bạn bè quanh bàn.'],
+  sleepy: ['{ban} buồn ngủ thì đi ngủ đi, giữ sức khỏe quan trọng hơn. Quán mai vẫn mở cho {ban} nha.', 'Thức khuya hoài không tốt đâu {ban} ơi, nhưng nếu chưa ngủ được thì ngồi với quán một chút, nghe nhạc nhẹ nha.', 'Cú đêm hả {ban}? Quán cũng là hội cú đêm nè. Nhưng nhớ ngủ đủ giấc nha.'],
+  lovelife: ['{ban} chuyện tình cảm hả? Cả quán đang ngồi nghe nè. Duyên tới là tới, đừng vội nha!', 'Độc thân vui tính cũng tốt mà {ban}. Quán đây toàn bạn bè, không lo cô đơn đâu.', 'Ôi chuyện tim gan, cả nhà ơi cho {ban} lời khuyên đi. Còn quán chúc {ban} sớm gặp người thương nha!'],
+  about: ['Quán mình tên {q}, là quán nhậu ảo cho vui, mở trong buổi live này nha {ban}. Ai vô cũng được ngồi chơi miễn phí.', '{ban} hỏi hay ghê! {q} là quán ảo, không bán gì thiệt, chỉ có tiếng cười và bạn bè thôi.', 'Quán chỉ có trên live này thôi {ban} ơi. Muốn gặp lại thì bấm follow để biết khi nào quán mở cửa nha.'],
+  food: ['Nghe {ban} nói là thèm luôn! Thả đủ chín mươi chín tim để vòng quay mồi quay ra món ngon nha.', '{ban} gọi món hay ghê! Quán ảo nên chỉ có mồi ảo, nhưng cứ tưởng tượng thơm phức nha.', 'Món đó nghe ngon ghê {ban} ơi. Cả nhà ơi, ai thích món đó thì gõ {kw} cho quán xem nào!'],
+  critic: ['Quán cảm ơn góp ý của {ban}, quán sẽ cố gắng vui hơn nha. {ban} muốn quán làm gì thêm thì nói chủ quán nghe.', 'Ui, {ban} thấy chưa vui hả? Vậy gõ {kw} cho quán nghe, rồi cả nhà cùng cụng ly cho vui lên nào.'],
+  city: ['Chào {ban} từ {city}! Xa vậy mà vẫn ghé quán, quý quá. Ngồi chơi với cả nhà nha.', 'Wow, có khách từ {city} nè! Cả quán chào {ban} nha, {city} dạo này thế nào rồi?', '{city} có {ban} ghé quán là quán vinh dự lắm! Cả nhà ai ở {city} giơ tay lên nào.', 'Hello {city}! {ban} ơi, quê mình {city} nhiều bạn không, rủ thêm về quán chơi nha.'],
+  question: ['{ban} hỏi hay ghê! Chủ quán nghe rồi, câu này để cả nhà trả lời giùm nha.', 'Câu hỏi của {ban} hay quá, nhưng quán ảo nên chủ quán chỉ biết một điều: ngồi lại là vui. Cả nhà ai biết thì giúp {ban} nha.', '{ban} hỏi chi vậy? Cả nhà ơi, ai trả lời giùm {ban} nào.'],
 };
 
 /** @param {{ q: string; kw: string }} ctx */
@@ -201,5 +259,11 @@ export const lines = (ctx) => ({
   smashDone: () => pick([`Xong rồi! ${ctx.q} sạch bóng, lần sau đập nhẹ tay nha!`, `Dọn xong, ${ctx.q} mở cửa lại! Nhẹ tay giùm tôi nha!`]),
   wheel: (/** @type {{ ten: string; loi: string }} */ dish) => [`Cả nhà thả đủ chín mươi chín tim rồi! Vòng quay mồi ra món ${dish.ten}.`, dish.loi],
   rain: () => pick(['Sáu trăm sáu mươi sáu tim! Quán mưa bọt bia một phút, cả nhà cụng ly nào!', 'Đủ tim rồi! Mưa bọt bia khắp quán, cảm ơn cả nhà nha!']),
-  reply: (/** @type {import('./chat.js').Topic} */ topic, /** @type {string} */ name) => fill(pick(REPLIES[topic]), { q: ctx.q, ban: ban(name) }),
+  reply: (/** @type {import('./chat.js').Topic} */ topic, /** @type {string} */ name, /** @type {string} */ city = '') => fill(pick(REPLIES[topic]), { q: ctx.q, kw: ctx.kw, ban: ban(name), city }),
+  /** A comment that matched nothing: a short friendly acknowledgement */
+  ack: (/** @type {string} */ name) => fill(pick(ACK), { q: ctx.q, kw: ctx.kw, ban: ban(name) }),
+  /** Several people chatting at once: thank them together */
+  shoutout: (/** @type {string[]} */ names) => fill(pick(SHOUT), { q: ctx.q, kw: ctx.kw, list: listNames(names) }),
+  fastChat: () => fill(pick(FAST), { q: ctx.q, kw: ctx.kw }),
+  dzoMilestone: (/** @type {string} */ name, /** @type {number} */ n) => fill(pick(DZO_MILESTONE), { q: ctx.q, ban: ban(name), n: String(n) }),
 });

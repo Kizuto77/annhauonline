@@ -8,7 +8,7 @@ import { TABLES, SEATS, VIP_SEATS, SEAT_ORDER, NPC_SEATS, personWidth, scaleAt }
 import { SoundEngine } from './sound.js';
 import { lines } from './lines.js';
 import { tellNext } from './stories.js';
-import { detectTopic, mayAnswer } from './chat.js';
+import { detectTopic, detectCity, mayAnswer } from './chat.js';
 import { DISHES } from './dishes.js';
 
 const params = new URLSearchParams(location.search);
@@ -500,14 +500,64 @@ function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user
       cheer(occ);
       occ.dzo++;
       if (occ.dzo >= 3) occ.el.classList.add('tipsy');
+      if ([5, 10, 20, 50, 100].includes(occ.dzo) && sound && sound.waiting() < 2) auto(say().dzoMilestone(user.name, occ.dzo));
       sound?.clink(0.45);
       // the table cheers along
       for (const o of occupantsAt(SEATS[occ.seat].table)) if (o !== occ && Math.random() < 0.6) cheer(o, 200 + Math.random() * 500);
     }
   }
+  noteChatter(user, dzo);
+  if (!settings.chatReply) return;
   const topic = detectTopic(text);
-  if (topic && settings.chatReply && mayAnswer(user.id)) auto(say().reply(topic, user.name));
+  if (topic) {
+    // too many lines waiting already: skip, a late answer is worse than none
+    if (sound && sound.waiting() >= 4) return;
+    if (mayAnswer(user.id, topic)) {
+      chatters.delete(user.id); // answered by name: no need to thank in the group line
+      auto(say().reply(topic, user.name, topic === 'city' ? detectCity(text) : ''));
+    }
+  } else if (!dzo && sound && sound.waiting() < 2 && Math.random() < 0.25 && mayAck(user.id)) {
+    chatters.delete(user.id);
+    auto(say().ack(user.name));
+  }
 }
+
+/** People who commented and were not answered by name; thanked together while the chat is busy */
+/** @type {Map<string, string>} */
+const chatters = new Map();
+/** @type {number[]} */
+let chatTimes = [];
+let lastFastNote = 0;
+const noteChatter = (/** @type {User} */ u, /** @type {boolean} */ dzo) => {
+  const now = Date.now();
+  if (!dzo) chatters.set(u.id, u.name);
+  chatTimes = chatTimes.filter((t) => now - t < 20_000);
+  chatTimes.push(now);
+};
+/** Plain acknowledgements: once per person every 6 minutes, once every 15 seconds overall */
+/** @type {Map<string, number>} */
+const lastAck = new Map();
+let lastAckAny = 0;
+function mayAck(/** @type {string} */ id) {
+  const now = Date.now();
+  if (now - lastAckAny < 15_000 || now - (lastAck.get(id) ?? 0) < 6 * 60_000) return false;
+  lastAckAny = now;
+  lastAck.set(id, now);
+  return true;
+}
+setInterval(() => {
+  if (!sound || !settings.autoVoice || !settings.chatReply || smashing) return;
+  const now = Date.now();
+  if (chatTimes.length >= 12 && now - lastFastNote > 90_000 && sound.waiting() < 2) {
+    lastFastNote = now;
+    chatters.clear();
+    auto(say().fastChat());
+  } else if (chatters.size >= 2 && sound.waiting() < 2) {
+    const names = [...chatters.values()].slice(-3);
+    chatters.clear();
+    auto(say().shoutout(names));
+  } else if (chatters.size > 40) chatters.clear();
+}, 15_000);
 
 /** @type {Map<string, { at: number; coins: number; count: number; giftName: string; served: number }>} */
 const combos = new Map();
