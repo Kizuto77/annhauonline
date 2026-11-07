@@ -115,6 +115,7 @@ export class SoundEngine {
     const s = this.settings;
     const audio = new Audio(`/api/tts?voice=${s.voice}&rate=${s.rate}&text=${encodeURIComponent(text)}`);
     this.current = audio;
+    this.brighten(audio);
     let done = false;
     const finish = (/** @type {number} */ pause) => {
       if (done) return;
@@ -143,6 +144,45 @@ export class SoundEngine {
         this.setBlocked(true);
       } else finish(800);
     });
+  }
+
+  /**
+   * Voice polish: cut low rumble, lift the "presence" and "air" bands that make speech sound clear instead of muffled,
+   * then a gentle compressor so every line has the same loudness. Skipped when the audio context isn't running
+   * (a media element routed into a suspended context would be silent).
+   */
+  brighten(/** @type {HTMLAudioElement} */ audio) {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running') return;
+    try {
+      const src = ctx.createMediaElementSource(audio);
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 90;
+      const mud = ctx.createBiquadFilter();
+      mud.type = 'peaking';
+      mud.frequency.value = 320;
+      mud.gain.value = -2.5;
+      const presence = ctx.createBiquadFilter();
+      presence.type = 'peaking';
+      presence.frequency.value = 3200;
+      presence.Q.value = 0.9;
+      presence.gain.value = 4;
+      const air = ctx.createBiquadFilter();
+      air.type = 'highshelf';
+      air.frequency.value = 7000;
+      air.gain.value = 4.5;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -20;
+      comp.ratio.value = 3;
+      comp.attack.value = 0.005;
+      comp.release.value = 0.18;
+      const out = ctx.createGain();
+      out.gain.value = 1.25;
+      src.connect(hp).connect(mud).connect(presence).connect(air).connect(comp).connect(out).connect(ctx.destination);
+    } catch {
+      // already routed or unsupported: the plain audio element still plays
+    }
   }
 
   /** Stop talking now and forget what was waiting */

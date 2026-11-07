@@ -417,10 +417,19 @@ function disconnectTikTok(announce = true) {
 // ---------------------------------------------------------------------------------------------------------------
 
 const VOICES = {
-  female: { name: 'vi-VN-HoaiMyNeural', pitch: '+2%' }, // chị chủ quán, vui vẻ
-  male: { name: 'vi-VN-NamMinhNeural', pitch: '-2%' }, // anh chủ quán, trầm ấm
+  female: { name: 'vi-VN-HoaiMyNeural', pitch: '+4%' }, // chị chủ quán, vui vẻ
+  male: { name: 'vi-VN-NamMinhNeural', pitch: '-1%' }, // anh chủ quán, trầm ấm
 };
 const escapeXml = (/** @type {string} */ s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** Text as the voice should say it: no emoji or symbols, a breath after "!" and "?" so it sounds less flat */
+const speakable = (/** @type {string} */ t) =>
+  t
+    .replace(/[\p{Extended_Pictographic}\u200d\ufe0f]/gu, '')
+    .replace(/\s*[·•|]\s*/g, ', ')
+    .replace(/\.{2,}/g, '…')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 /** @param {string} text @param {number} rate @param {'female' | 'male'} voice */
 async function edgeTts(text, rate, voice) {
@@ -430,8 +439,9 @@ async function edgeTts(text, rate, voice) {
   /** @type {NodeJS.Timeout | undefined} */
   let timer;
   try {
-    await tts.setMetadata(VOICES[voice].name, OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
-    const { audioStream } = tts.toStream(escapeXml(text), { rate: `${Math.round((rate - 1) * 100)}%`, pitch: VOICES[voice].pitch });
+    // 48 kHz / 192 kbps: giữ được âm cao, giọng sáng và rõ hơn bản 24 kHz (tiếng bị "tù")
+    await tts.setMetadata(VOICES[voice].name, OUTPUT_FORMAT.AUDIO_48KHZ_192KBITRATE_MONO_MP3 ?? OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
+    const { audioStream } = tts.toStream(escapeXml(speakable(text)), { rate: `${Math.round((rate - 1) * 100)}%`, pitch: VOICES[voice].pitch, volume: '+6%' });
     /** @type {Buffer[]} */
     const chunks = [];
     const read = (async () => {

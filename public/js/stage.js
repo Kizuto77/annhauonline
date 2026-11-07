@@ -444,6 +444,26 @@ const noteActive = (/** @type {User} */ u) => {
 let joiners = [];
 const greeted = new Set();
 
+/** Viewers this computer has seen before (kept between lives) */
+const seenBefore = (() => {
+  try {
+    return new Set(JSON.parse(localStorage.getItem('xb-seen') || '[]'));
+  } catch {
+    return new Set();
+  }
+})();
+const rememberViewer = (/** @type {string} */ id) => {
+  if (seenBefore.has(id)) return;
+  seenBefore.add(id);
+  try {
+    localStorage.setItem('xb-seen', JSON.stringify([...seenBefore].slice(-1500)));
+  } catch {
+    // storage blocked: just no "khách quen" lines
+  }
+};
+/** Current TOP board ids, best first */
+let topIds = /** @type {string[]} */ ([]);
+
 function onJoin(/** @type {{ user: User }} */ { user }) {
   seatUser(user, false);
   if (greeted.has(user.id) || joiners.some((j) => j.id === user.id)) return;
@@ -452,11 +472,21 @@ function onJoin(/** @type {{ user: User }} */ { user }) {
 setInterval(() => {
   if (!sound || !settings.autoVoice || !settings.greet || !joiners.length || sound.waiting() >= 2) return;
   const batch = joiners.splice(0, 6);
+  /** @type {User[]} */
+  const fresh = [];
   for (const u of batch) {
     greeted.add(u.id);
     if (greeted.size > 5000) greeted.delete(greeted.values().next().value);
+    const rank = topIds.indexOf(u.id);
+    const back = seenBefore.has(u.id);
+    rememberViewer(u.id);
+    // someone on the board or a regular gets their own line; the rest are greeted together
+    if (rank >= 0 && rank < 6) auto(say().greetVip(u.name, rank + 1));
+    else if (back) auto(say().greetBack(u.name));
+    else fresh.push(u);
   }
-  for (let i = 0; i < batch.length; i += 3) auto(say().greet(batch.slice(i, i + 3).map((u) => u.name)));
+  if (batch.length >= 5 && Math.random() < 0.5) auto(say().crowd());
+  for (let i = 0; i < fresh.length; i += 3) auto(say().greet(fresh.slice(i, i + 3).map((u) => u.name)));
 }, GREET_EVERY_MS);
 
 function onChat(/** @type {{ user: User; text: string; dzo: boolean }} */ { user, text, dzo }) {
@@ -693,6 +723,7 @@ function updateMeters() {
 }
 
 function renderBoard(/** @type {Array<{ id: string; name: string; avatar: string; score: number }>} */ top) {
+  topIds = top.map((t) => t.id);
   const list = $('board-list');
   list.replaceChildren();
   if (!top.length) {
