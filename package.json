@@ -1,0 +1,18 @@
+{
+  "name": "xin-bia-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Xỉn Bia – quán nhậu online tương tác cho TikTok LIVE",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "check": "npx -y -p typescript tsc -p jsconfig.json"
+  },
+  "dependencies": {
+    "msedge-tts": "2.1.0",
+    "tiktok-live-connector": "^2.5.0"
+  }
+}

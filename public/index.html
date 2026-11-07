@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xỉn Bia · Quán nhậu online</title>
+    <meta name="description" content="Quán nhậu ảo tương tác cho TikTok LIVE: khách vào ngồi bàn, gõ dzô là cụng ly, tặng quà là có mồi và tháp bia, chủ quán đọc tên cảm ơn." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍺</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap&subset=vietnamese" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/stage.css" />
+    <link rel="stylesheet" href="/css/dashboard.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      // ?view=stage: the live stage (Link source in TikTok LIVE Studio); anything else: the dashboard
+      const view = new URLSearchParams(location.search).get('view');
+      import(view === 'stage' ? '/js/stage.js' : '/js/dashboard.js');
+    </script>
+  </body>
+</html>
