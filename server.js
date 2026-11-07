@@ -499,7 +499,18 @@ async function connectTikTok(username) {
     const count = Number(data?.likeCount) || 1;
     const total = typeof data?.totalLikeCount === 'number' ? data.totalLikeCount : null;
     if (total === null) return addLikes(count);
-    if (lastTotal === null || total < lastTotal) lastTotal = total - count;
+    if (lastTotal === null || total < lastTotal) {
+      // first news of this live (or the server was restarted mid-live): line the bars up with TikTok's own total
+      // instead of starting from 0, without raining for all the hearts that came before
+      lastTotal = total;
+      meters.likes = total % settings.likeGoal;
+      meters.wheel = total % settings.wheelGoal;
+      meters.total = Math.max(meters.total, total);
+      status.totalLikes = total;
+      sendStatus();
+      sendMeters();
+      return;
+    }
     const delta = total - lastTotal;
     lastTotal = total;
     status.totalLikes = total;
