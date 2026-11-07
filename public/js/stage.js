@@ -57,7 +57,10 @@ const floor = el('div', 'layer floor');
 const sign = el('div', 'neon-wrap');
 sign.innerHTML = '<div class="neon"></div><div class="neon-sub">QUÁN NHẬU ONLINE</div>';
 const wfx = el('div', 'layer wfx'); // effects that live in the room and follow the camera
-world.append(bgLayer, customBg, sign, host, counter, floor, wfx);
+// The wall menu board shows what each gift does (gift -> dish, gifts that smash the quán), page by page
+const menuBoard = el('div', 'menu-board');
+menuBoard.hidden = true;
+world.append(bgLayer, customBg, sign, menuBoard, host, counter, floor, wfx);
 stage.appendChild(world);
 
 const fx = el('div', 'layer fx'); // rain, confetti, foam: over the world, under the boards
@@ -70,7 +73,6 @@ ui.innerHTML = `
   <div class="ticker"><div class="ticker-text" id="ticker"></div></div>
   <div class="hint-sign"><span>Gõ <b id="kw"></b></span><small>để cụng ly 🍻</small></div>
   <div class="chalkboard" id="board"><div class="chalk-title" id="board-title"></div><ol id="board-list"></ol></div>
-  <div class="chalkboard giftboard" id="giftboard" hidden><div id="giftboard-food"><div class="chalk-title">QUÀ → MỒI</div><ul id="giftboard-list"></ul></div><div class="smash-list" id="smash-list"><div class="chalk-title">💥 QUÀ ĐẬP QUÁN</div><p id="smash-gifts"></p><p class="coins" id="smash-coins"></p></div></div>
   <div class="wheel-box"><div class="wheel-pointer"></div><div class="wheel" id="wheel"></div><div class="wheel-label">VÒNG QUAY MỒI</div></div>
   <div class="gift-banner" id="gift-banner" hidden></div>
   <div class="dish-card" id="dish-card" hidden></div>
@@ -906,7 +908,10 @@ function renderBoard(/** @type {Array<{ id: string; name: string; avatar: string
   seatVips(top);
 }
 
-/** Menu board of "gift -> dish" so viewers know what to send */
+/** Menu board on the wall: "gift -> dish" and the gifts that smash the quán, turning page every few seconds */
+/** @type {ReturnType<typeof setInterval> | undefined} */
+let menuTimer;
+let menuKey = '';
 function renderGiftMenu() {
   const rows = [];
   for (const row of String(settings.giftFoods || '').split('\n')) {
@@ -916,28 +921,71 @@ function renderGiftMenu() {
     const dish = DISHES.find((d) => foldName(d.ten) === foldName(dishName));
     rows.push({ gift, dish: dishName, icon: dish?.icon ?? '🍽️' });
   }
-  const list = $('giftboard-list');
-  list.replaceChildren();
-  for (const r of rows.slice(0, 6)) {
-    const li = el('li');
-    const a = el('b');
-    a.textContent = r.gift;
-    const b = el('span');
-    b.textContent = `${r.icon} ${r.dish}`;
-    li.append(a, b);
-    list.appendChild(li);
-  }
-  $('giftboard-food').hidden = !rows.length;
-  // which gifts smash the quán, so viewers know what to send
   const smashNames = String(settings.smashGifts || '').split(',').map((x) => x.trim()).filter(Boolean);
   const coins = Number(settings.smashMinCoins) || 0;
   const smashOn = settings.smashEnabled !== false && (smashNames.length > 0 || coins > 0);
-  $('smash-list').hidden = !smashOn;
-  $('smash-gifts').textContent = smashNames.join(' · ');
-  $('smash-gifts').hidden = !smashNames.length;
-  $('smash-coins').textContent = coins > 0 ? `${smashNames.length ? 'hoặc ' : ''}quà từ ${coins.toLocaleString('vi-VN')} xu trở lên` : '';
-  $('smash-coins').hidden = !(coins > 0);
-  $('giftboard').hidden = !rows.length && !smashOn;
+  const key = JSON.stringify([rows, smashOn, smashNames, coins]);
+  if (key === menuKey) return;
+  menuKey = key;
+
+  /** @type {HTMLElement[]} */
+  const pages = [];
+  // 3 gifts a page, so the names fit and can be read on a phone
+  const shown = rows.slice(0, 9);
+  for (let k = 0; k < shown.length; k += 3) {
+    const p = el('div', 'mb-page');
+    const h = el('div', 'mb-title');
+    h.textContent = '🎁 TẶNG QUÀ LÊN MỒI';
+    const ul = el('ul');
+    for (const r of shown.slice(k, k + 3)) {
+      const li = el('li');
+      const g = el('b');
+      g.textContent = r.gift;
+      const d = el('span');
+      d.textContent = `${r.icon} ${r.dish}`;
+      li.append(g, d);
+      ul.appendChild(li);
+    }
+    p.append(h, ul);
+    pages.push(p);
+  }
+  if (smashOn) {
+    const p = el('div', 'mb-page smash');
+    const h = el('div', 'mb-title');
+    h.textContent = '💥 QUÀ ĐẬP QUÁN';
+    const ul = el('ul');
+    for (const n of smashNames.slice(0, 5)) {
+      const li = el('li');
+      li.textContent = n;
+      ul.appendChild(li);
+    }
+    p.append(h, ul);
+    if (coins > 0) {
+      const c = el('div', 'mb-coins');
+      c.textContent = `${smashNames.length ? 'hoặc ' : ''}quà từ ${coins.toLocaleString('vi-VN')} xu`;
+      p.appendChild(c);
+    }
+    pages.push(p);
+  }
+  clearInterval(menuTimer);
+  menuBoard.replaceChildren(...pages);
+  menuBoard.hidden = !pages.length;
+  if (!pages.length) return;
+  const dots = el('div', 'mb-dots');
+  if (pages.length > 1) for (let i = 0; i < pages.length; i++) dots.appendChild(el('i'));
+  menuBoard.appendChild(dots);
+  let at = 0;
+  const show = () => {
+    pages.forEach((p, i) => p.classList.toggle('on', i === at));
+    [...dots.children].forEach((d, i) => d.classList.toggle('on', i === at));
+  };
+  show();
+  if (pages.length > 1) {
+    menuTimer = setInterval(() => {
+      at = (at + 1) % pages.length;
+      show();
+    }, 5500);
+  }
 }
 
 function applySettings(/** @type {any} */ s) {
