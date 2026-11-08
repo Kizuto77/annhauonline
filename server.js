@@ -519,7 +519,7 @@ function disconnectTikTok(announce = true) {
 // ---------------------------------------------------------------------------------------------------------------
 
 const DEMO_NAMES = ['Tuấn Bia Hơi', 'Lan Ốc Len', 'Hùng Xe Ôm', 'Mai Trà Sữa', 'Khánh Đậu Phộng', 'Ngọc 2k', 'Phát Mực Nướng', 'Vy Hạt Dẻ', 'Bảo Lẩu Thái', 'Thảo Nem Chua', 'Duyên Dễ Thương', 'Long Sụn Gà', 'An Vui Vẻ', 'Trâm Khô Gà', 'Quân 9x', 'Đức Phố Cổ', 'Hoa Hàng Mã'];
-const DEMO_CHATS = ['Quán vui quá', 'Hôm nay sinh nhật mình nè', 'Buồn quá, mới chia tay', 'Say rồi, đi ngủ đây', 'Chào cả nhà', 'Mai đi làm sớm rồi', 'Mình từ Hà Nội nè', 'Chủ quán giọng hay quá', 'Haha cười xỉu', 'Thả tim đi cả nhà ơi', 'Quán ở đâu vậy ạ?', 'Cuối tuần rồi vui quá', 'Mưa to quá trời', 'Nay lương về rồi nè', 'Cảm ơn chủ quán', 'Tui đang ở Đà Nẵng', 'Cho thêm 2 em đào đi chủ quán', 'Yêu quán quá trời'];
+const DEMO_CHATS = ['Quán vui quá', 'Hôm nay sinh nhật mình nè', 'Buồn quá, mới chia tay', 'Say rồi, đi ngủ đây', 'Chào cả nhà', 'Mai đi làm sớm rồi', 'Mình từ Hà Nội nè', 'Chủ quán giọng hay quá', 'Haha cười xỉu', 'Thả tim đi cả nhà ơi', 'Quán ở đâu vậy ạ?', 'Cuối tuần rồi vui quá', 'Mưa to quá trời', 'Nay lương về rồi nè', 'Cảm ơn chủ quán', 'Tui đang ở Đà Nẵng', 'Cho thêm 2 em đào đi chủ quán', 'Yêu quán quá trời', 'Vợ gọi về rồi anh em ơi', 'Tối nay đội tuyển đá mấy giờ vậy', 'Kẹt xe quá trời luôn', 'Ế bền vững mấy năm nay', 'Chán quá chẳng muốn làm gì', 'Mệt mỏi quá anh em'];
 const pick = (/** @type {any[]} */ list) => list[Math.floor(Math.random() * list.length)];
 const demoUser = () => {
   const name = pick(DEMO_NAMES);

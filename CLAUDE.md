@@ -25,7 +25,7 @@ A virtual sidewalk beer pub (quán nhậu vỉa hè) streamed on TikTok through 
 - Regulars (`public/js/npc.js`, setting `npcLife`, six of them): the server picks when a regular talks (`npc` event) or orders a free dish (`pub.npcOrder`, user id `npc-K`, never on the board); the stage shows it only if that regular still has their seat, and the host answers only when no viewer comment is waiting (`hostFree`). Never put words in a real viewer's mouth.
 - Real answers to viewer questions: `public/js/answers.js` (time, date, address 134 Trần Phú, how to sit/order/change table, gift tiers, my table, my dish, top 1, arithmetic, "is this a bot" answered honestly). Unknown questions fall back to the bựa lines.
 - Dzô: `public/js/cheers.js` draws two bia hơi glasses clinking (big one in the middle at most every 5 s, small ones over heads); the clink sound is `sound.dzo()` playing `assets/audio/dzo1..3.mp3` (made by `tools/tieng-dzo.py`).
-- Voice lines: `lines.js`, `bua.js`, `order-lines.js`; comment topics in `chat.js` match accented words (no accent stripping: "thì" must not match "thi").
+- Voice lines: `lines.js`, `bua.js`, `order-lines.js`; comment topics in `chat.js` match accented words (no accent stripping: "thì" must not match "thi"). A new topic needs an entry in the `Topic` typedef, in `TOPICS`, and in **both** `BUA_REPLIES` (bua.js) and `REPLIES` (lines.js) — `npm run check` catches a missing one. `vo` (vợ/chồng gọi về) must stay before `lovelife`, which would otherwise swallow it. The pools worth growing when the quán feels repetitive: `BUA_ACK` (any comment), `TALK_NAMED` / `TALK_ROOM` (the host starting a conversation), `IDLE` and `NPC_TALK`.
 
 ## Owner decisions to keep
 

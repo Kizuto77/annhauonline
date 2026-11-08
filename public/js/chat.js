@@ -5,7 +5,7 @@
 // banned words, links and phone numbers.
 import { tokensOf } from './text.js';
 
-/** @typedef {'birthday' | 'drunk' | 'sad' | 'hungry' | 'bye' | 'tired' | 'thanks' | 'hello' | 'first' | 'praise' | 'praiseHost' | 'love' | 'laugh' | 'music' | 'seat' | 'gift' | 'like' | 'follow' | 'share' | 'money' | 'work' | 'weekend' | 'weather' | 'sleepy' | 'lovelife' | 'about' | 'food' | 'critic' | 'city' | 'question' | 'dao'} Topic */
+/** @typedef {'birthday' | 'drunk' | 'sad' | 'hungry' | 'bye' | 'tired' | 'thanks' | 'hello' | 'first' | 'praise' | 'praiseHost' | 'love' | 'laugh' | 'music' | 'seat' | 'gift' | 'like' | 'follow' | 'share' | 'money' | 'work' | 'weekend' | 'weather' | 'sleepy' | 'lovelife' | 'vo' | 'bongda' | 'xe' | 'about' | 'food' | 'critic' | 'city' | 'question' | 'dao'} Topic */
 
 /** @type {Array<[Topic, string[]]>} checked in order, first match wins */
 const TOPICS = [
@@ -32,6 +32,10 @@ const TOPICS = [
   ['weekend', ['cuối tuần', 'thứ bảy', 'chủ nhật', 'thứ sáu', 'mai nghỉ', 'nghỉ lễ', 'được nghỉ', 'cuối tuần rồi', 'mai được nghỉ', 'ngày mai nghỉ']],
   ['weather', ['trời mưa', 'mưa quá', 'mưa to', 'nóng quá', 'nóng ghê', 'lạnh quá', 'trời lạnh', 'trời nóng', 'mưa rồi', 'rét quá', 'lạnh ghê', 'đang mưa', 'mưa lớn']],
   ['sleepy', ['buồn ngủ', 'ngủ gật', 'mất ngủ', 'khó ngủ', 'thức khuya', 'cú đêm', 'chưa ngủ', 'thức trắng', 'không ngủ được']],
+  // "vợ gọi về" phải đứng trước lovelife, không là dính vào "người yêu"
+  ['vo', ['vợ gọi', 'vợ kêu', 'vợ la', 'vợ mắng', 'vợ réo', 'vợ bắt về', 'vợ không cho', 'vợ cấm', 'sợ vợ', 'bà xã', 'bị vợ', 'chồng gọi', 'chồng kêu', 'chồng la', 'chồng không cho', 'ông xã', 'bị chồng', 'vợ đợi', 'vợ chờ', 'sợ chồng']],
+  ['bongda', ['bóng đá', 'đá banh', 'đá bóng', 'xem bóng', 'trận đấu', 'đội tuyển', 'ngoại hạng', 'ghi bàn', 'tỉ số', 'tỷ số', 'thẻ đỏ', 'cầu thủ', 'world cup', 'sút phạt', 'hiệp một', 'hiệp hai', 'đội nhà', 'vô địch', 'bắt kèo']],
+  ['xe', ['kẹt xe', 'tắc đường', 'đổ xăng', 'hết xăng', 'xe hư', 'thủng săm', 'xe máy', 'chạy xe', 'đi xe ôm', 'gọi xe', 'xe buýt', 'dắt bộ', 'công an giao thông', 'thổi nồng độ cồn', 'nồng độ cồn']],
   ['lovelife', ['người yêu', 'crush', 'có người yêu', 'tìm người yêu', 'ế quá', 'ế rồi', 'độc thân', 'single', 'ế quá trời', 'ế bền vững', 'tìm bồ', 'thả thính']],
   ['about', ['quán tên gì', 'tên quán', 'mở cửa mấy giờ', 'mấy giờ đóng', 'quán ở đâu', 'địa chỉ quán', 'quán thật', 'có thật không', 'quán ảo', 'thật hay ảo', 'live mấy giờ', 'mấy giờ live', 'ai làm quán', 'ai làm ra']],
   ['hello', ['xin chào', 'chào cả nhà', 'chào quán', 'chào chủ quán', 'hello', 'hi cả nhà', 'alo', 'chào mọi người', 'chào mn', 'chào cả quán', 'chào mng', 'hi mọi người', 'hello cả nhà', 'helo', 'hế lô', 'chào nha']],
@@ -86,7 +90,7 @@ const PER_USER_MS = 3 * 60 * 1000;
 const GLOBAL_MS = 6 * 1000;
 const GLOBAL_PRIORITY_MS = 3 * 1000;
 /** @type {Set<Topic>} */
-const PRIORITY = new Set(['dao', 'birthday', 'bye', 'city', 'thanks', 'sad', 'drunk', 'first', 'follow', 'share']);
+const PRIORITY = new Set(['dao', 'birthday', 'bye', 'city', 'thanks', 'sad', 'drunk', 'first', 'follow', 'share', 'vo', 'xe']);
 /** @type {Map<string, number>} */
 const lastByUser = new Map();
 let lastAny = 0;
