@@ -262,6 +262,7 @@ const pub = createPub({ broadcast, uid, show, settings: () => settings });
 function onChat(user, text) {
   const clean = cleanText(text, 200);
   if (!clean) return;
+  openHall(); // có người chat là quán mở cửa lại, không bao giờ kẹt ở trạng thái đã dọn
   realChats.push(Date.now());
   addPoints(user, 1);
   pub.touchSeat(user); // nói chuyện là ghế còn giữ, im lâu thì mất ghế như trên sân khấu
@@ -288,6 +289,7 @@ function triggerSmash(user) {
  * @param {User} user @param {string} giftName @param {number} coinsEach @param {number} count
  */
 function onGift(user, giftName, coinsEach, count) {
+  openHall();
   const each = Math.max(1, Math.round(coinsEach));
   const n = Math.max(1, Math.round(count));
   const coins = each * n;
@@ -324,8 +326,8 @@ function openHall() {
   hallClosed = false;
   broadcast('opening', { id: uid() });
 }
-/** Mất kết nối có thể chỉ là chớp nhoáng: đợi một lúc, vẫn chưa nối lại thì mới dọn quán */
-const closeSoon = (/** @type {string} */ reason, ms = 25_000) => {
+/** Mất kết nối thì cứ để khách ngồi đó, nối lại được là live chạy tiếp. Mất hẳn lâu quá mới dọn quán. */
+const closeSoon = (/** @type {string} */ reason, ms = 5 * 60_000) => {
   clearTimeout(closeTimer);
   closeTimer = setTimeout(() => !status.connected && closeHall(reason), ms);
 };
@@ -334,6 +336,7 @@ const closeSoon = (/** @type {string} */ reason, ms = 25_000) => {
 const onJoin = (user) => broadcast('join', { user: show(user) });
 /** @param {User} user */
 const onFollow = (user) => {
+  openHall();
   pub.noteSeated(user); // follow là có ghế (sân khấu cho ngồi), nên gọi món được luôn
   broadcast('follow', { user: show(user) });
 };
@@ -382,7 +385,49 @@ function userOf(data) {
 }
 
 /** @param {string} username */
-async function connectTikTok(username) {
+// TikTok hay tự ngắt websocket giữa buổi live (vài phút tới vài chục phút một lần) và thư viện
+// tiktok-live-connector KHÔNG tự nối lại: nó chỉ báo "disconnected" rồi thôi. Không có đoạn dưới đây thì live
+// chạy được một lúc là hết comment, hết quà, quán đứng im như tắt live. Nên: hễ rớt là tự nối lại, giãn dần
+// 5s, 10s, 15s… tối đa 1 phút một lần, tới khi nào chủ quán bấm Ngắt kết nối mới thôi.
+/** Tài khoản chủ quán muốn bám theo. Rỗng = chủ quán chủ động ngắt, đừng nối lại nữa. */
+let wantUser = '';
+let retries = 0;
+/** @type {NodeJS.Timeout | undefined} */
+let retryTimer;
+const RETRY_MAX = 40; // ~35 phút cố gắng rồi mới chịu thua
+
+function stopRetry() {
+  clearTimeout(retryTimer);
+  retryTimer = undefined;
+  wantUser = '';
+  retries = 0;
+}
+function scheduleReconnect(/** @type {string} */ why) {
+  if (!wantUser) return;
+  clearTimeout(retryTimer);
+  if (retries >= RETRY_MAX) {
+    Object.assign(status, { connecting: false, error: `Mất kết nối @${wantUser} và nối lại ${retries} lần không được. Bấm Kết nối lại giùm nha.` });
+    sendStatus();
+    return;
+  }
+  retries++;
+  const wait = Math.min(60_000, 5000 * retries);
+  Object.assign(status, { connected: false, connecting: true, error: `Mất kết nối (${why}). Đang tự nối lại lần ${retries}, thử sau ${Math.round(wait / 1000)} giây…` });
+  sendStatus();
+  console.log(`[TikTok] ${status.error}`);
+  retryTimer = setTimeout(async () => {
+    if (!wantUser) return;
+    const user = wantUser;
+    try {
+      await connectTikTok(user, true);
+    } catch (err) {
+      if (wantUser === user) scheduleReconnect(err instanceof Error ? err.message : String(err));
+    }
+  }, wait);
+}
+
+/** @param {string} username @param {boolean} retrying nối lại tự động (giữ nguyên số lần đã thử) */
+async function connectTikTok(username, retrying = false) {
   /** @type {any} */
   let lib;
   try {
@@ -393,6 +438,8 @@ async function connectTikTok(username) {
   const { TikTokLiveConnection, WebcastEvent, ControlEvent } = lib;
 
   disconnectTikTok(false);
+  wantUser = username; // từ giờ rớt là tự nối lại
+  if (!retrying) retries = 0;
   Object.assign(status, { connected: false, connecting: true, username, roomId: '', viewers: 0, totalLikes: 0, error: '' });
   sendStatus();
 
@@ -406,23 +453,26 @@ async function connectTikTok(username) {
 
   conn.on(ControlEvent.CONNECTED, (/** @type {any} */ state) => {
     if (!live()) return;
+    retries = 0;
+    clearTimeout(retryTimer);
     Object.assign(status, { connected: true, connecting: false, roomId: String(state?.roomId || ''), error: '' });
     sendStatus();
-    openHall();
+    openHall(); // nối lại được là quán mở cửa, khách quen về chỗ
     console.log(`[TikTok] Đã kết nối @${username}, phòng ${state?.roomId}`);
   });
-  conn.on(ControlEvent.DISCONNECTED, () => {
+  conn.on(ControlEvent.DISCONNECTED, (/** @type {any} */ info) => {
     if (!live()) return;
-    Object.assign(status, { connected: false, connecting: false });
-    sendStatus();
-    closeSoon('mất kết nối'); // rớt mạng một chút thì thôi, mất hẳn mới dọn quán
-    console.log(`[TikTok] Mất kết nối @${username}`);
+    console.log(`[TikTok] Rớt kết nối @${username}${info?.code ? ` (mã ${info.code})` : ''}, tự nối lại đây.`);
+    scheduleReconnect('TikTok ngắt websocket');
+    closeSoon('mất kết nối quá lâu'); // khách vẫn ngồi nguyên, 5 phút nữa mà vẫn chưa nối lại thì mới dọn quán
   });
   conn.on(WebcastEvent.STREAM_END, () => {
     if (!live()) return;
     Object.assign(status, { connected: false, connecting: false, error: 'Phiên LIVE trên TikTok đã kết thúc' });
     sendStatus();
     closeHall('phiên live kết thúc');
+    // chủ quán live lại là quán tự mở cửa, khỏi phải bấm kết nối
+    scheduleReconnect('phiên live đã kết thúc, chờ chủ quán live lại');
   });
   conn.on(ControlEvent.ERROR, (/** @type {unknown} */ err) => {
     if (!live()) return;
@@ -508,6 +558,7 @@ function disconnectTikTok(announce = true) {
     }
   }
   if (announce) {
+    stopRetry(); // chủ quán tự bấm ngắt: đừng nối lại nữa
     Object.assign(status, { connected: false, connecting: false, username: '', roomId: '', viewers: 0, totalLikes: 0, error: '' });
     sendStatus();
     closeHall('ngắt kết nối'); // chủ quán bấm Ngắt kết nối: khách đứng dậy ra về
@@ -834,6 +885,11 @@ server.on('error', (/** @type {NodeJS.ErrnoException} */ err) => {
   }
   throw err;
 });
+
+// Giữa buổi live mà server tắt là sân khấu đứng hình, không ai biết vì sao. Thà ghi lỗi ra rồi chạy tiếp:
+// mất một sự kiện còn hơn mất cả buổi live.
+process.on('uncaughtException', (err) => console.error('[Lỗi không bắt được, quán vẫn chạy tiếp]', err));
+process.on('unhandledRejection', (err) => console.error('[Lỗi chưa xử lý, quán vẫn chạy tiếp]', err));
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`\n🍻 ${settings.channelName} đang chạy:`);

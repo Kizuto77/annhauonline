@@ -52,6 +52,7 @@ Khóa chỉ lưu trong `settings.json` trên máy bạn (file này không đưa 
 - Nếu trang stage hiện nút **"Bấm vào đây để bật tiếng quán"**, trình duyệt đang chặn âm thanh: bấm nút đó (hoặc "Bật tiếng stage" trong admin).
 - Sửa `server.js` thì phải tắt mở lại BAT; sửa giao diện thì chỉ cần làm mới nguồn Link.
 - App chỉ nhận kết nối từ chính máy đang chạy nó. `lvh.me` là tên miền công khai trỏ về 127.0.0.1; app dùng nó vì LIVE Studio không nhận `localhost`.
+- **Rớt kết nối giữa buổi live:** TikTok hay tự ngắt, app sẽ tự nối lại (5 giây, 10 giây… tối đa 1 phút một lần) nên khách vẫn ngồi nguyên, live chạy tiếp. Trang admin hiện "Đang tự nối lại lần N". Chỉ khi mất hẳn 5 phút quán mới dọn bàn.
 - **Hình lên live bị mờ:** nguồn Link phải đặt đúng **1080 × 1920** và không kéo to/thu nhỏ trong khung hình (kéo nguồn nhỏ cho to ra là mờ). Chọn độ phân giải **1080p** và bitrate cao nhất máy chịu được: cảnh quán tối nhiều đèn, bitrate thấp là nhòe.
 
 ## Sửa lỗi thường gặp
