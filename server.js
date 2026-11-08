@@ -262,6 +262,7 @@ const pub = createPub({ broadcast, uid, show, settings: () => settings });
 function onChat(user, text) {
   const clean = cleanText(text, 200);
   if (!clean) return;
+  openHall(); // có người chat là quán mở cửa lại, không bao giờ kẹt ở trạng thái đã dọn
   realChats.push(Date.now());
   addPoints(user, 1);
   pub.touchSeat(user); // nói chuyện là ghế còn giữ, im lâu thì mất ghế như trên sân khấu
@@ -288,6 +289,7 @@ function triggerSmash(user) {
  * @param {User} user @param {string} giftName @param {number} coinsEach @param {number} count
  */
 function onGift(user, giftName, coinsEach, count) {
+  openHall();
   const each = Math.max(1, Math.round(coinsEach));
   const n = Math.max(1, Math.round(count));
   const coins = each * n;
@@ -305,10 +307,36 @@ function onGift(user, giftName, coinsEach, count) {
   else if (tier === 'smash') triggerSmash(user);
   else if (tier === 'hotpot' || tier === 'food') pub.giftOrder(user, each, n);
 }
+// Hết phiên live (tắt live, mất kết nối hẳn, bấm Ngắt kết nối): cả quán đứng dậy khỏi bàn và đi ra đường.
+// Kết nối lại thì quán mở cửa, khách quen về chỗ.
+let hallClosed = false;
+/** @type {NodeJS.Timeout | undefined} */
+let closeTimer;
+function closeHall(/** @type {string} */ reason) {
+  clearTimeout(closeTimer);
+  if (hallClosed) return;
+  hallClosed = true;
+  pub.clearSeats();
+  broadcast('closing', { id: uid(), reason });
+  console.log(`[Quán] Dọn hàng (${reason}): khách đứng dậy ra về.`);
+}
+function openHall() {
+  clearTimeout(closeTimer);
+  if (!hallClosed) return;
+  hallClosed = false;
+  broadcast('opening', { id: uid() });
+}
+/** Mất kết nối thì cứ để khách ngồi đó, nối lại được là live chạy tiếp. Mất hẳn lâu quá mới dọn quán. */
+const closeSoon = (/** @type {string} */ reason, ms = 5 * 60_000) => {
+  clearTimeout(closeTimer);
+  closeTimer = setTimeout(() => !status.connected && closeHall(reason), ms);
+};
+
 /** @param {User} user */
 const onJoin = (user) => broadcast('join', { user: show(user) });
 /** @param {User} user */
 const onFollow = (user) => {
+  openHall();
   pub.noteSeated(user); // follow là có ghế (sân khấu cho ngồi), nên gọi món được luôn
   broadcast('follow', { user: show(user) });
 };
@@ -357,7 +385,49 @@ function userOf(data) {
 }
 
 /** @param {string} username */
-async function connectTikTok(username) {
+// TikTok hay tự ngắt websocket giữa buổi live (vài phút tới vài chục phút một lần) và thư viện
+// tiktok-live-connector KHÔNG tự nối lại: nó chỉ báo "disconnected" rồi thôi. Không có đoạn dưới đây thì live
+// chạy được một lúc là hết comment, hết quà, quán đứng im như tắt live. Nên: hễ rớt là tự nối lại, giãn dần
+// 5s, 10s, 15s… tối đa 1 phút một lần, tới khi nào chủ quán bấm Ngắt kết nối mới thôi.
+/** Tài khoản chủ quán muốn bám theo. Rỗng = chủ quán chủ động ngắt, đừng nối lại nữa. */
+let wantUser = '';
+let retries = 0;
+/** @type {NodeJS.Timeout | undefined} */
+let retryTimer;
+const RETRY_MAX = 40; // ~35 phút cố gắng rồi mới chịu thua
+
+function stopRetry() {
+  clearTimeout(retryTimer);
+  retryTimer = undefined;
+  wantUser = '';
+  retries = 0;
+}
+function scheduleReconnect(/** @type {string} */ why) {
+  if (!wantUser) return;
+  clearTimeout(retryTimer);
+  if (retries >= RETRY_MAX) {
+    Object.assign(status, { connecting: false, error: `Mất kết nối @${wantUser} và nối lại ${retries} lần không được. Bấm Kết nối lại giùm nha.` });
+    sendStatus();
+    return;
+  }
+  retries++;
+  const wait = Math.min(60_000, 5000 * retries);
+  Object.assign(status, { connected: false, connecting: true, error: `Mất kết nối (${why}). Đang tự nối lại lần ${retries}, thử sau ${Math.round(wait / 1000)} giây…` });
+  sendStatus();
+  console.log(`[TikTok] ${status.error}`);
+  retryTimer = setTimeout(async () => {
+    if (!wantUser) return;
+    const user = wantUser;
+    try {
+      await connectTikTok(user, true);
+    } catch (err) {
+      if (wantUser === user) scheduleReconnect(err instanceof Error ? err.message : String(err));
+    }
+  }, wait);
+}
+
+/** @param {string} username @param {boolean} retrying nối lại tự động (giữ nguyên số lần đã thử) */
+async function connectTikTok(username, retrying = false) {
   /** @type {any} */
   let lib;
   try {
@@ -368,6 +438,8 @@ async function connectTikTok(username) {
   const { TikTokLiveConnection, WebcastEvent, ControlEvent } = lib;
 
   disconnectTikTok(false);
+  wantUser = username; // từ giờ rớt là tự nối lại
+  if (!retrying) retries = 0;
   Object.assign(status, { connected: false, connecting: true, username, roomId: '', viewers: 0, totalLikes: 0, error: '' });
   sendStatus();
 
@@ -381,20 +453,26 @@ async function connectTikTok(username) {
 
   conn.on(ControlEvent.CONNECTED, (/** @type {any} */ state) => {
     if (!live()) return;
+    retries = 0;
+    clearTimeout(retryTimer);
     Object.assign(status, { connected: true, connecting: false, roomId: String(state?.roomId || ''), error: '' });
     sendStatus();
+    openHall(); // nối lại được là quán mở cửa, khách quen về chỗ
     console.log(`[TikTok] Đã kết nối @${username}, phòng ${state?.roomId}`);
   });
-  conn.on(ControlEvent.DISCONNECTED, () => {
+  conn.on(ControlEvent.DISCONNECTED, (/** @type {any} */ info) => {
     if (!live()) return;
-    Object.assign(status, { connected: false, connecting: false });
-    sendStatus();
-    console.log(`[TikTok] Mất kết nối @${username}`);
+    console.log(`[TikTok] Rớt kết nối @${username}${info?.code ? ` (mã ${info.code})` : ''}, tự nối lại đây.`);
+    scheduleReconnect('TikTok ngắt websocket');
+    closeSoon('mất kết nối quá lâu'); // khách vẫn ngồi nguyên, 5 phút nữa mà vẫn chưa nối lại thì mới dọn quán
   });
   conn.on(WebcastEvent.STREAM_END, () => {
     if (!live()) return;
     Object.assign(status, { connected: false, connecting: false, error: 'Phiên LIVE trên TikTok đã kết thúc' });
     sendStatus();
+    closeHall('phiên live kết thúc');
+    // chủ quán live lại là quán tự mở cửa, khỏi phải bấm kết nối
+    scheduleReconnect('phiên live đã kết thúc, chờ chủ quán live lại');
   });
   conn.on(ControlEvent.ERROR, (/** @type {unknown} */ err) => {
     if (!live()) return;
@@ -480,8 +558,10 @@ function disconnectTikTok(announce = true) {
     }
   }
   if (announce) {
+    stopRetry(); // chủ quán tự bấm ngắt: đừng nối lại nữa
     Object.assign(status, { connected: false, connecting: false, username: '', roomId: '', viewers: 0, totalLikes: 0, error: '' });
     sendStatus();
+    closeHall('ngắt kết nối'); // chủ quán bấm Ngắt kết nối: khách đứng dậy ra về
   }
 }
 
@@ -490,7 +570,7 @@ function disconnectTikTok(announce = true) {
 // ---------------------------------------------------------------------------------------------------------------
 
 const DEMO_NAMES = ['Tuấn Bia Hơi', 'Lan Ốc Len', 'Hùng Xe Ôm', 'Mai Trà Sữa', 'Khánh Đậu Phộng', 'Ngọc 2k', 'Phát Mực Nướng', 'Vy Hạt Dẻ', 'Bảo Lẩu Thái', 'Thảo Nem Chua', 'Duyên Dễ Thương', 'Long Sụn Gà', 'An Vui Vẻ', 'Trâm Khô Gà', 'Quân 9x', 'Đức Phố Cổ', 'Hoa Hàng Mã'];
-const DEMO_CHATS = ['Quán vui quá', 'Hôm nay sinh nhật mình nè', 'Buồn quá, mới chia tay', 'Say rồi, đi ngủ đây', 'Chào cả nhà', 'Mai đi làm sớm rồi', 'Mình từ Hà Nội nè', 'Chủ quán giọng hay quá', 'Haha cười xỉu', 'Thả tim đi cả nhà ơi', 'Quán ở đâu vậy ạ?', 'Cuối tuần rồi vui quá', 'Mưa to quá trời', 'Nay lương về rồi nè', 'Cảm ơn chủ quán', 'Tui đang ở Đà Nẵng', 'Cho thêm 2 em đào đi chủ quán', 'Yêu quán quá trời'];
+const DEMO_CHATS = ['Quán vui quá', 'Hôm nay sinh nhật mình nè', 'Buồn quá, mới chia tay', 'Say rồi, đi ngủ đây', 'Chào cả nhà', 'Mai đi làm sớm rồi', 'Mình từ Hà Nội nè', 'Chủ quán giọng hay quá', 'Haha cười xỉu', 'Thả tim đi cả nhà ơi', 'Quán ở đâu vậy ạ?', 'Cuối tuần rồi vui quá', 'Mưa to quá trời', 'Nay lương về rồi nè', 'Cảm ơn chủ quán', 'Tui đang ở Đà Nẵng', 'Cho thêm 2 em đào đi chủ quán', 'Yêu quán quá trời', 'Vợ gọi về rồi anh em ơi', 'Tối nay đội tuyển đá mấy giờ vậy', 'Kẹt xe quá trời luôn', 'Ế bền vững mấy năm nay', 'Chán quá chẳng muốn làm gì', 'Mệt mỏi quá anh em'];
 const pick = (/** @type {any[]} */ list) => list[Math.floor(Math.random() * list.length)];
 const demoUser = () => {
   const name = pick(DEMO_NAMES);
@@ -508,7 +588,7 @@ function demo(type) {
   else if (type === 'free') {
     const u = demoUser();
     onChat(u, 'nhậu');
-    setTimeout(() => onChat(u, pick(['đậu lạc', 'cho dĩa nem chua', 'bia hơi', 'trà đá', 'gọi khoai tây chiên', 'lên dưa chuột', 'đậu tẩm hành'])), 1200);
+    setTimeout(() => onChat(u, pick(['đậu lạc', 'cho dĩa nem chua', 'bia hơi', 'trà đá', 'gọi khoai tây chiên', 'lên dưa chuột', 'đậu tẩm hành', 'cho xin thêm đá', 'cho cái khăn lạnh', 'thêm chén đũa', 'cho xin tăm', 'cho chén nước mắm'])), 1200);
   } else if (type === 'gift') onGift(demoUser(), pick(['Rose', 'TikTok', 'GG']), 1, 1);
   else if (type === 'food') onGift(demoUser(), pick(['Rose', 'Finger Heart', 'Rosa']), Math.max(1, s.foodMinCoins), pick([1, 1, 2]));
   else if (type === 'hotpot') onGift(demoUser(), pick(['Doughnut', 'Bubble Tea', 'Perfume']), Math.max(1, s.hotpotMinCoins), 1);
@@ -614,7 +694,7 @@ function sendFile(res, file, cache) {
 
 const snapshot = () => ({ settings: publicSettings(), voices: voiceList(), status, board: topBoard(), stages: stagePages(), pub: pub.snapshot() });
 
-const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGreet', 'clearHall', 'unlockAudio', 'hush']);
+const CONTROL_ACTIONS = new Set(['speak', 'share', 'testGreet', 'clearHall', 'closeUp', 'unlockAudio', 'hush']);
 
 /** @type {Record<string, (req: http.IncomingMessage, res: http.ServerResponse, url: URL) => Promise<void> | void>} */
 const routes = {
@@ -624,13 +704,15 @@ const routes = {
     const role = url.searchParams.get('role');
     clients.set(res, role === 'stage' || role === 'preview' ? role : 'dash');
     if (role === 'stage') broadcast('stages', { n: stagePages() });
+    // Nhịp tim: trang dùng nó để biết đường truyền còn sống (api.js tự nối lại nếu im quá lâu)
     const beat = setInterval(() => {
       try {
-        res.write(': keep-alive\n\n');
+        res.write(`event: ping\ndata: {"t":${Date.now()}}\n\n`);
       } catch {
         clearInterval(beat);
+        clients.delete(res);
       }
-    }, 20_000);
+    }, 15_000);
     req.on('close', () => {
       clearInterval(beat);
       clients.delete(res);
@@ -662,6 +744,10 @@ const routes = {
     if (action === 'wave') {
       triggerWave();
       return json(res, 200, { success: true });
+    }
+    if (action === 'closeUp') {
+      closeHall('chủ quán bấm dọn quán');
+      return json(res, 200, { success: true, stages: stagePages() });
     }
     if (!CONTROL_ACTIONS.has(action)) return json(res, 400, { success: false, error: 'Lệnh không hợp lệ' });
     const line = typeof text === 'string' ? cleanText(text, 500) : '';
@@ -799,6 +885,11 @@ server.on('error', (/** @type {NodeJS.ErrnoException} */ err) => {
   }
   throw err;
 });
+
+// Giữa buổi live mà server tắt là sân khấu đứng hình, không ai biết vì sao. Thà ghi lỗi ra rồi chạy tiếp:
+// mất một sự kiện còn hơn mất cả buổi live.
+process.on('uncaughtException', (err) => console.error('[Lỗi không bắt được, quán vẫn chạy tiếp]', err));
+process.on('unhandledRejection', (err) => console.error('[Lỗi chưa xử lý, quán vẫn chạy tiếp]', err));
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`\n🍻 ${settings.channelName} đang chạy:`);

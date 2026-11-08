@@ -411,6 +411,52 @@ export function dishSVG(item) {
       <g class="steam-up"><path d="M19 14 c-2 -4 2 -6 0 -11" stroke="#fff" stroke-opacity="0.5" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M26 14 c-2 -4 2 -6 0 -11" stroke="#fff" stroke-opacity="0.45" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M32 14 c-2 -4 2 -6 0 -11" stroke="#fff" stroke-opacity="0.4" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>
     </svg>`;
   }
+  // lặt vặt của quán nhậu thật: xô đá, khăn lạnh, chén đũa, tăm giấy, chanh ớt, nước mắm
+  if (item.kind === 'item') {
+    const small = /** @type {Record<string, string>} */ ({
+      da: `<g transform="translate(25 37)">
+        <path d="M-11 -17 L11 -17 L8.4 0 L-8.4 0 Z" fill="#cfd6dd"/><path d="M-11 -17 L11 -17 L8.4 0 L-8.4 0 Z" fill="url(#pPlastic)"/>
+        <ellipse cx="0" cy="-17" rx="11" ry="3.2" fill="#e6ebf0"/><ellipse cx="0" cy="-17" rx="9" ry="2.3" fill="#9fc6e8"/>
+        <g fill="#eaf6ff" stroke="#b9dcf5" stroke-width="0.4">
+          <rect x="-7.6" y="-21.4" width="5.4" height="5" rx="1" transform="rotate(-12 -5 -19)"/>
+          <rect x="-1.6" y="-22.6" width="5.6" height="5.2" rx="1" transform="rotate(9 1 -20)"/>
+          <rect x="3.4" y="-20.6" width="5" height="4.6" rx="1" transform="rotate(-6 6 -18)"/>
+          <rect x="-4.4" y="-19" width="5" height="4.4" rx="1" transform="rotate(16 -2 -17)"/>
+        </g>
+        <path d="M-9 -12 Q0 -10 9 -12" stroke="#fff" stroke-opacity="0.45" stroke-width="0.8" fill="none"/>
+        <path d="M6 -22 L12 -27" stroke="#9aa2ab" stroke-width="1.4" stroke-linecap="round"/>
+      </g>`,
+      khanlanh: `<g transform="translate(25 37)">
+        <ellipse cx="0" cy="-1" rx="13" ry="3.4" fill="#e9e4d8"/><ellipse cx="0" cy="-1.6" rx="11.6" ry="2.6" fill="#f6f3ec"/>
+        ${[-6, 0, 6].map((x, i) => `<g transform="translate(${x} ${-4 - i * 0.2})"><rect x="-4.2" y="-3.6" width="8.4" height="4.4" rx="2.2" fill="#f7fbff" stroke="#cfd9e2" stroke-width="0.4"/><rect x="-4.2" y="-3.6" width="8.4" height="4.4" rx="2.2" fill="url(#pPlastic)"/><path d="M-2 -3.4 L-2 0.6 M1.4 -3.4 L1.4 0.6" stroke="#dbe6ef" stroke-width="0.5"/></g>`).join('')}
+      </g>`,
+      chendua: `<g transform="translate(25 37)">
+        <g stroke="#d9c39a" stroke-width="1" stroke-linecap="round"><path d="M4 -1 L15 -13"/><path d="M6 -0.4 L17 -12.4"/></g>
+        ${[0, 1, 2].map((i) => `<g transform="translate(-6 ${-2 - i * 3.4})"><path d="M-7 0 Q-6.4 4.4 0 4.6 Q6.4 4.4 7 0 Z" fill="#f4f1ea" transform="scale(1 -1)"/><ellipse cx="0" cy="0" rx="7" ry="2" fill="#fbf9f4"/><ellipse cx="0" cy="0" rx="7" ry="2" fill="none" stroke="#cdc5b6" stroke-width="0.45"/><path d="M-5.6 -0.6 Q0 -2 5.6 -0.6" stroke="#2f6fb4" stroke-width="0.5" fill="none" opacity="0.6"/></g>`).join('')}
+      </g>`,
+      tamgiay: `<g transform="translate(25 37)">
+        <g transform="translate(-7 0)"><rect x="-5.4" y="-7" width="10.8" height="7" rx="1" fill="#f4f1ea"/><rect x="-5.4" y="-7" width="10.8" height="1.8" fill="#e4dccb"/><path d="M-2 -7 q2 -3.6 4 0" fill="#fff"/><rect x="-5.4" y="-7" width="10.8" height="7" rx="1" fill="url(#pShadeV)"/></g>
+        <g transform="translate(7 0)"><path d="M-3.4 0 L-2.8 -7.6 L2.8 -7.6 L3.4 0 Z" fill="#cfe3f5" opacity="0.85"/><path d="M-3.4 0 L-2.8 -7.6 L2.8 -7.6 L3.4 0 Z" fill="url(#pPlastic)"/><g stroke="#e8d6ac" stroke-width="0.5" stroke-linecap="round"><path d="M-1.6 -7.4 L-2.4 -11.4"/><path d="M0 -7.6 L0.4 -11.8"/><path d="M1.6 -7.4 L2.6 -11.2"/></g></g>
+      </g>`,
+      chanhot: `<g transform="translate(25 37)">
+        <ellipse cx="0" cy="-1" rx="12" ry="3.2" fill="#f4f1ea"/><ellipse cx="0" cy="-1" rx="12" ry="3.2" fill="none" stroke="#c9c1b2" stroke-width="0.5"/><ellipse cx="0" cy="-1.4" rx="9" ry="2.2" fill="#e9e4d8"/>
+        <path d="M-8.6 -2.4 Q-6 -5.4 -3.4 -2.4 Q-6 -0.6 -8.6 -2.4 Z" fill="#f2f0e4"/>
+        <path d="M-7.4 -3 L-4.6 -3" stroke="#cfcab8" stroke-width="0.4"/>
+        <g><path d="M0.4 -2.8 a3.4 3.4 0 0 1 6.6 0 a3.4 3.4 0 0 1 -6.6 0 Z" fill="#d7e86a"/><path d="M0.6 -2.8 a3.2 3.2 0 0 0 6.2 0 Z" fill="#eaf5a0"/><path d="M3.7 -2.8 L3.7 -5.6 M3.7 -2.8 L1.4 -1.6 M3.7 -2.8 L6 -1.6" stroke="#b9cf4e" stroke-width="0.4"/></g>
+        <path d="M-2.6 -4.6 q3.4 -1.4 6 0.6 q-3 1.4 -6 -0.6 Z" fill="#e53935"/><path d="M-2.6 -4.6 q-1 -1.2 -2.2 -1" stroke="#4e8b2f" stroke-width="0.7" fill="none"/>
+      </g>`,
+      mam: `<g transform="translate(25 37)">
+        <path d="M-8.6 -6 Q-7.4 -0.4 0 -0.2 Q7.4 -0.4 8.6 -6 Z" fill="#f7f4ed"/><path d="M-8.6 -6 Q-7.4 -0.4 0 -0.2 Q7.4 -0.4 8.6 -6 Z" fill="url(#pShadeV)"/>
+        <ellipse cx="0" cy="-6" rx="8.6" ry="2.5" fill="#fbf9f4"/><ellipse cx="0" cy="-6" rx="8.6" ry="2.5" fill="none" stroke="#cdc5b6" stroke-width="0.5"/>
+        <ellipse cx="0" cy="-5.8" rx="6.8" ry="1.8" fill="#8c4a14"/><ellipse cx="0" cy="-6" rx="4.6" ry="1.1" fill="#a85c1c" opacity="0.8"/>
+        <ellipse cx="-1.8" cy="-6.2" rx="1.1" ry="0.45" fill="#e53935"/><ellipse cx="1.8" cy="-5.6" rx="0.9" ry="0.4" fill="#e53935"/><circle cx="3.2" cy="-6.4" r="0.4" fill="#f6e27a"/>
+      </g>`,
+    });
+    return `<svg viewBox="0 0 50 40" class="dish small" aria-hidden="true">
+      <ellipse cx="25" cy="37.4" rx="13" ry="1.8" fill="url(#pShadow)"/>
+      ${small[item.id] ?? small.chendua}
+    </svg>`;
+  }
   if (item.kind === 'drink') {
     const one = (/** @type {number} */ x) =>
       item.id === 'trada'

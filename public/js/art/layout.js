@@ -55,7 +55,8 @@ for (const row of ROWS) {
 }
 
 /**
- * Seats that start with a regular from the neighbourhood (NPC), so the quán is never empty. Six of them only,
- * one per table at most and never on the two front seats: the rest of the 48 seats stay for real viewers.
+ * Seats that start with a regular from the neighbourhood (NPC), so the quán is never empty. Three of them only:
+ * two sitting together at the ends of table 2 (seats 8 and 9, facing each other across the table) and one on his
+ * own at table 7 (seat 38). The other 45 stools stay for real viewers — the owner's rule.
  */
-export const NPC_SEATS = [2, 8, 15, 20, 27, 38].filter((i) => i < SEATS.length);
+export const NPC_SEATS = [8, 9, 38].filter((i) => i < SEATS.length);

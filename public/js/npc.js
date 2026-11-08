@@ -4,13 +4,35 @@
 // Không bao giờ đặt lời vào miệng người xem thật.
 
 /**
- * Names of the regulars, in the order of NPC_SEATS (layout.js). Six only: the quán is never empty, and the other
- * 42 stools stay free for real viewers (the owner's rule).
+ * Names of the regulars, in the order of NPC_SEATS (layout.js). Three only — chú Tư and anh Hùng share a table,
+ * chị Lan sits at hers — so the quán is never empty while 45 stools stay free for real viewers (the owner's rule).
  */
-export const REGULARS = ['chú Tư', 'anh Hùng', 'chị Lan', 'anh Tuấn', 'cô Ba', 'chị Mai'];
+export const REGULARS = ['chú Tư', 'anh Hùng', 'chị Lan'];
 
 /** What a regular says [bubble], and how the host answers ({name} = "chú Tư bàn ba") */
 export const NPC_TALK = /** @type {Array<[string, string]>} */ ([
+  ['Ê chủ quán, nhạc này nghe được đó', 'Khen nhạc là khen đúng gu chủ quán rồi {name}! Để quán mở tiếp bài này nha.'],
+  ['Hôm nay làm mệt quá trời', 'Mệt thì ngồi lâu lâu chút {name}, quán này không đuổi khách bao giờ.'],
+  ['Vợ gọi rồi, về đây', 'Dạ dạ, {name} về đi kẻo ở nhà chờ! Mai ghé quán sớm nha.'],
+  ['Ai ngồi bàn trống kia không?', 'Còn trống đó {name}! Cả nhà trên live ai chat nhậu là qua ngồi với {name} liền!'],
+  ['Cho xin khăn lạnh với', 'Khăn lạnh cho {name} đây, lau mặt cái cho tỉnh rồi nhậu tiếp!'],
+  ['Trà đá đâu rồi chủ quán', 'Trà đá tới liền {name}, quán này trà đá uống thả ga không tính tiền nha!'],
+  ['Mai chủ nhật rồi, ngồi thêm chút', 'Nghe {name} nói mà quán muốn mở cửa tới sáng luôn!'],
+  ['Chủ quán ơi, có đồ chay không?', '{name} hỏi hay đó! Đậu lạc, đậu tẩm hành, dưa chuột, toàn đồ chay mà ngon bá cháy.'],
+  ['Lâu quá không gặp mấy ông bạn', 'Rủ bạn vô quán đi {name}, ở đây lúc nào cũng còn ghế.'],
+  ['Chủ quán nay nói nhiều ghê', 'Tại khách vui quá nên quán nói hăng {name} ơi, im là quán buồn đó!'],
+  ['Đậu phộng này rang khéo đó', 'Cảm ơn {name}, bí quyết là rang lửa nhỏ, đảo đều, vớt ra lúc vừa thơm!'],
+  ['Tối nay ai nhậu tới khuya nào?', '{name} rủ kìa! Ai định ngồi tới khuya thì gõ một chữ liều coi nào!'],
+  ['Chủ quán ơi, chỗ này hút gió mát ghê', 'Chỗ đó là chỗ VIP của quán đó {name}, ngồi mát mà không tốn thêm đồng nào!'],
+  ['Hồi xưa quán có cái bàn gỗ cũ', '{name} nhớ dai ghê! Bàn đó gãy chân rồi, quán thay bàn mới mà khách cũ vẫn vậy.'],
+  ['Cho thêm chén nước mắm', 'Nước mắm ớt cho {name} đây, cay vừa phải thôi nha!'],
+  ['Ai biết mai mưa không ta?', '{name} lo xa ghê! Mưa thì quán có mái bạt, cứ ngồi đó mà nghe mưa rơi lộp bộp.'],
+  ['Ngồi đây nghe chuyện vui ghê', 'Quán vui là nhờ có {name} với cả nhà trên live đó, chứ chủ quán nói một mình buồn chết!'],
+  ['Chủ quán ơi, dọn bớt bàn giùm', 'Dạ có liền {name}, để quán dẹp bớt vỏ với dĩa cho rộng bàn nha!'],
+  ['Hôm nay lương về rồi nè', 'Mừng cho {name}! Nhưng nhớ để dành chút nha, tháng sau còn dài lắm.'],
+  ['Ai thua thì trả tiền nha', 'Khỏi cá {name} ơi, quán này không thu tiền, thua hay thắng gì cũng được ngồi!'],
+  ['Chủ quán đóng cửa mấy giờ?', 'Quán mở tới khi nào hết khách {name} à, mà {name} ngồi hoài nên quán chưa đóng ngày nào!'],
+  ['Lẩu sôi rồi kìa', 'Sôi rồi thì thả rau vô {name} ơi, chờ thêm chút là ngọt nước lắm!'],
   ['Chủ quán ơi, thêm đá!', 'Có liền {name} ơi, đá lạnh tê tay luôn!'],
   ['Hết bia rồi nè!', '{name} uống nhanh quá, bếp chạy không kịp! Bia hơi ra liền nha.'],
   ['Mồi hôm nay ngon ghê', 'Cảm ơn {name} nha, khen nữa là chủ quán tặng thêm dĩa đậu lạc!'],
@@ -34,8 +56,8 @@ export const NPC_TALK = /** @type {Array<[string, string]>} */ ([
 ]);
 
 /** The host's word when a regular orders, and when it is served ({name}, {mon}) */
-export const NPC_ORDER = ['{name} gọi thêm {mon} nè, bếp làm liền!', 'Có ngay {mon} cho {name}, khách quen là phải nhanh!', '{name} lại kêu {mon}, đúng dân sành mồi!'];
-export const NPC_SERVED = ['{mon} ra bàn {name} rồi đây, nóng hổi!', 'Mời {name} dùng {mon}, ăn ngon thì khen quán một câu nha!'];
+export const NPC_ORDER = ['{name} gọi thêm {mon} nè, bếp làm liền!', 'Có ngay {mon} cho {name}, khách quen là phải nhanh!', '{name} lại kêu {mon}, đúng dân sành mồi!', '{name} kêu {mon}, gu này là gu của người sành rồi!', 'Nghe {name} gọi {mon} là quán biết tối nay ngồi lâu đây!'];
+export const NPC_SERVED = ['{mon} ra bàn {name} rồi đây, nóng hổi!', 'Mời {name} dùng {mon}, ăn ngon thì khen quán một câu nha!', '{mon} của {name} đây, thiếu gì thì gọi tiếp nha!', 'Của {name} nè, {mon} vừa ra lò luôn!'];
 
 /** Free dishes a regular may order (menu ids) */
-export const NPC_DISHES = ['lac', 'dauhanh', 'nem', 'khoai', 'dua', 'bia', 'bia', 'trada', 'ngo', 'khoca', 'banhda'];
+export const NPC_DISHES = ['lac', 'dauhanh', 'nem', 'khoai', 'dua', 'bia', 'bia', 'trada', 'ngo', 'khoca', 'banhda', 'da', 'da', 'khanlanh', 'chendua', 'tamgiay', 'chanhot'];

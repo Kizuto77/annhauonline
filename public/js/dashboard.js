@@ -75,6 +75,7 @@ app.innerHTML = `
       <h3>🎥 Link cho TikTok LIVE Studio</h3>
       <div class="row"><code id="stage-url"></code><button class="btn" id="copy">Sao chép</button><a class="btn" href="/?view=stage" target="_blank" rel="noreferrer">Mở thử</a></div>
       <p class="note">LIVE Studio → Thêm nguồn → <b>Link</b> → dán link → kích thước <b>1080 × 1920</b>. Chỉ trang này phát tiếng; đừng mở thêm link stage ở trình duyệt khác lúc live kẻo nghe hai giọng.</p>
+      <p class="note"><b>Hình bị mờ?</b> Nguồn Link phải để đúng <b>1080 × 1920</b> và trong khung hình <b>đừng kéo to nhỏ</b> (kéo một nguồn 720 lên 1080 là mờ ngay) — muốn vừa khung thì sửa lại kích thước nguồn chứ không kéo góc. Trong LIVE Studio chọn độ phân giải <b>1080p</b> và bitrate cao nhất máy chịu được; cảnh quán tối, nhiều đèn nên bitrate thấp là nhìn nhòe.</p>
     </div>
     <div class="card">
       <h3>⚡ Lệnh nhanh</h3>
@@ -85,6 +86,7 @@ app.innerHTML = `
         <button class="tile" data-control="hush"><i>🤫</i><b>Im lặng</b><small>Bỏ các câu đang chờ đọc</small></button>
         <button class="tile" data-control="unlockAudio"><i>🔈</i><b>Bật tiếng stage</b><small>Khi trình duyệt chặn âm</small></button>
         <button class="tile" data-control="clearHall"><i>🧹</i><b>Dọn khách</b><small>Mời khách đứng dậy về</small></button>
+        <button class="tile" data-control="closeUp"><i>🌙</i><b>Dọn quán, đóng cửa</b><small>Như lúc hết phiên live: cả quán ra về</small></button>
         <button class="tile" id="reset-board"><i>♻️</i><b>Xóa bảng vàng</b><small>Làm lại điểm từ đầu</small></button>
       </div>
     </div>
@@ -111,13 +113,14 @@ app.innerHTML = `
     </div>
     <div class="card">
       <h3>🍽 Gọi món miễn phí</h3>
-      <p class="note"><b>Phải vào bàn mới gọi được món:</b> khách chưa có ghế thì chủ quán nhắc chat “nhậu” trước. Ngồi rồi, comment tên món là bếp làm, phiếu order treo dưới mép bạt, xong chủ quán bưng ra bàn: <b>${FREE.map((m) => m.short).join(', ')}</b>. Khách đã tặng quà được làm trước ⭐. Gọi món ngon hay lẩu thì chủ quán nhắc tặng quà.</p>
+      <p class="note"><b>Phải vào bàn mới gọi được món:</b> khách chưa có ghế thì chủ quán nhắc chat “nhậu” trước. Ngồi rồi, comment tên món là bếp làm, phiếu order treo dưới mép bạt, xong chủ quán bưng ra bàn: <b>${FREE.filter((m) => m.kind !== 'item').map((m) => m.short).join(', ')}</b>. Khách đã tặng quà được làm trước ⭐. Gọi món ngon hay lẩu thì chủ quán nhắc tặng quà.</p>
+      <p class="note">Lặt vặt như quán ngoài đời — <b>${FREE.filter((m) => m.kind === 'item').map((m) => m.short).join(', ')}</b> — thì chạy bàn mang ra ngay, không cần chờ bếp, và gọi được song song với món ăn.</p>
       <label class="field switch big"><input type="checkbox" id="s-orders" /><span><b>Bật gọi món</b></span></label>
       <div class="row wrap"><button class="btn" data-demo="free">🥜 Thử gọi món</button></div>
     </div>
     <div class="card">
       <h3>🧑‍🤝‍🧑 Khách quen của quán</h3>
-      <p class="note">Quán có <b>6 khách quen</b> ngồi sẵn (chú Tư, anh Hùng, chị Lan, anh Tuấn, cô Ba, chị Mai — là nhân vật của quán, không phải người xem), 42 ghế còn lại để dành cho người xem thật. Bật lên thì họ tự gọi món, nói vài câu, chủ quán đáp lại họ lúc không có comment nào cần đọc, cho quán lúc nào cũng có chuyện. Người xem vào thì khách quen nhường ghế.</p>
+      <p class="note">Quán có <b>3 khách quen</b> ngồi sẵn (chú Tư với anh Hùng ngồi chung một bàn, chị Lan ngồi bàn riêng — là nhân vật của quán, không phải người xem), 45 ghế còn lại để dành cho người xem thật. Bật lên thì họ tự gọi món, nói vài câu, chủ quán đáp lại họ lúc không có comment nào cần đọc, cho quán lúc nào cũng có chuyện. Người xem vào thì khách quen nhường ghế.</p>
       <label class="field switch big"><input type="checkbox" id="s-npcLife" /><span><b>Khách quen tự gọi món, nói chuyện</b></span></label>
     </div>
     <div class="card">

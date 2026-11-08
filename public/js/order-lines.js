@@ -38,6 +38,19 @@ const ORDER_DONE = [
   '{ban} ơi, {mon} tới rồi nè. Mời {ban} nhâm nhi, à nhớ chia cho bàn bên một miếng.',
   'Món {mon} đã lên bàn {ban}. Bếp hôm nay tay nghề lên level luôn!',
 ];
+// Lặt vặt: đá, khăn lạnh, chén đũa, tăm giấy, chanh ớt, nước mắm — chạy bàn mang ra ngay
+const ITEM = [
+  'Chạy bàn ơi, {mon} cho {ban}!',
+  '{mon} cho {ban} có liền, chạy bàn đang chạy rồi nè!',
+  'Nghe rõ, {mon} ra bàn {ban} nha!',
+  '{ban} kêu {mon}, quán phục vụ tận bàn liền đây!',
+  'Có {mon} cho {ban}, khách gọi là có, khỏi chờ bếp!',
+];
+const ITEM_DONE = [
+  '{mon} tới bàn {ban} rồi nha!',
+  'Đây nha {ban}, {mon} để sẵn trên bàn rồi đó.',
+  '{mon} cho {ban} đây, thiếu gì cứ gọi tiếp nha!',
+];
 const NEED_SEAT = [
   '{ban} ơi, chat "nhậu" vào bàn trước đã, ngồi xuống ghế là quán dọn {mon} ra liền!',
   'Chưa có ghế mà gọi {mon} là bếp không biết bưng đi đâu {ban} ơi! Gõ "nhậu" một cái là có chỗ ngay.',
@@ -51,6 +64,9 @@ export const orderLines = {
   order: (/** @type {string} */ name, /** @type {string} */ dish, /** @type {number} */ qty, /** @type {boolean} */ vip) =>
     fill(pick(vip ? ORDER_VIP : ORDER), { ban: ban(name), mon: dish, qty: `${NUM[qty] ?? qty} phần` }),
   orderDone: (/** @type {string} */ name, /** @type {string} */ dish) => fill(pick(ORDER_DONE), { ban: ban(name), mon: dish }),
+  /** Gọi lặt vặt (đá, khăn lạnh, chén đũa…): không qua bếp, chạy bàn mang ra */
+  orderItem: (/** @type {string} */ name, /** @type {string} */ thing) => fill(pick(ITEM), { ban: ban(name), mon: thing }),
+  itemDone: (/** @type {string} */ name, /** @type {string} */ thing) => fill(pick(ITEM_DONE), { ban: ban(name), mon: thing }),
   orderBusy: (/** @type {string} */ name) => fill(pick(ORDER_BUSY), { ban: ban(name) }),
   orderNeedSeat: (/** @type {string} */ name, /** @type {string} */ dish) => fill(pick(NEED_SEAT), { ban: ban(name), mon: dish }),
   giftOrder: (/** @type {string} */ name, /** @type {string} */ dish, /** @type {number} */ qty, /** @type {boolean} */ hotpot) =>

@@ -2,7 +2,7 @@
 // Thực đơn quán vỉa hè. Món bình dân: khách comment tên món là bếp làm (miễn phí). Món ngon: quà từ 1 xu.
 // Lẩu: quà từ 5 xu, bếp chọn ngẫu nhiên một nồi. Dùng chung cho server (nhận order) và sân khấu (bảng, món lên bàn).
 
-/** @typedef {{ id: string; ten: string; short: string; icon: string; kind: 'plate' | 'hotpot' | 'drink'; alias: string[] }} MenuItem */
+/** @typedef {{ id: string; ten: string; short: string; icon: string; kind: 'plate' | 'hotpot' | 'drink' | 'item'; alias: string[] }} MenuItem */
 
 /** @type {MenuItem[]} gọi bằng comment, miễn phí */
 export const FREE = [
@@ -20,6 +20,13 @@ export const FREE = [
   { id: 'trada', ten: 'Trà đá', short: 'Trà đá', icon: '🧊', kind: 'drink', alias: ['trà đá', 'tra da', 'trà'] },
   { id: 'nuocngot', ten: 'Nước ngọt', short: 'Nước ngọt', icon: '🥤', kind: 'drink', alias: ['nước ngọt', 'nước có ga'] },
   { id: 'nuocloc', ten: 'Nước lọc', short: 'Nước lọc', icon: '💧', kind: 'drink', alias: ['nước lọc', 'nước suối', 'nước'] },
+  // Lặt vặt như quán ngoài đời: gọi là chạy bàn mang ra ngay, không phải chờ bếp
+  { id: 'da', ten: 'Xô đá', short: 'Đá', icon: '🧊', kind: 'item', alias: ['xô đá', 'thêm đá', 'xin đá', 'cho đá', 'ly đá', 'đá lạnh', 'bịch đá', 'đá viên', 'đá'] },
+  { id: 'khanlanh', ten: 'Khăn lạnh', short: 'Khăn lạnh', icon: '💧', kind: 'item', alias: ['khăn lạnh', 'khăn ướt', 'khăn giấy ướt', 'khăn'] },
+  { id: 'chendua', ten: 'Chén đũa', short: 'Chén đũa', icon: '🥢', kind: 'item', alias: ['chén đũa', 'bát đũa', 'đôi đũa', 'thêm chén', 'thêm bát', 'thêm ly', 'thêm cốc', 'cái chén', 'đũa', 'chén', 'bát'] },
+  { id: 'tamgiay', ten: 'Tăm và giấy ăn', short: 'Tăm, giấy', icon: '🧻', kind: 'item', alias: ['tăm và giấy', 'giấy ăn', 'khăn giấy', 'hộp tăm', 'giấy lau', 'tờ giấy', 'tăm', 'giấy'] },
+  { id: 'chanhot', ten: 'Muối tiêu chanh ớt', short: 'Chanh ớt', icon: '🌶️', kind: 'item', alias: ['muối tiêu chanh', 'muối tiêu', 'muối ớt', 'chanh ớt', 'tương ớt', 'quả chanh', 'trái chanh', 'chanh', 'ớt'] },
+  { id: 'mam', ten: 'Chén nước mắm', short: 'Nước mắm', icon: '🥣', kind: 'item', alias: ['chén nước mắm', 'nước mắm', 'nước chấm', 'mắm tôm', 'mắm'] },
 ];
 
 /** @type {MenuItem[]} quà từ 1 xu: bếp chọn ngẫu nhiên một món ngon */
