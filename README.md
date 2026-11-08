@@ -10,7 +10,7 @@ Một quán nhậu vỉa hè Hà Nội vẽ kiểu tranh chi tiết (đèn vàng
 - **Gọi món miễn phí (phải vào bàn đã):** ngồi xuống rồi comment tên món bình dân (đậu lạc, đậu tẩm hành, nem chua, khoai chiên, dưa chuột, trứng lộn, bia hơi, trà đá…). Ai chưa có ghế mà gọi món thì chủ quán nhắc chat “nhậu” vào bàn trước. Phiếu order treo dưới mép bạt, bếp bùng lửa, chủ quán nấu xong tự bưng mâm ra tận bàn. Đông khách thì có chạy bàn phụ.
 - **Gọi lặt vặt như quán thật:** comment **đá**, **khăn lạnh**, **chén đũa**, **tăm**, **giấy ăn**, **chanh ớt**, **nước mắm** là chạy bàn mang ra ngay, không phải chờ bếp, gọi song song với món ăn luôn.
 - **Hết phiên live là quán dọn hàng:** tắt live (hoặc bấm Ngắt kết nối) thì cả quán đứng dậy khỏi bàn, đi bộ ra đường, bàn được dọn sạch, chủ quán chào tạm biệt. Live lại là khách quen về chỗ.
-- **6 khách quen** của quán ngồi sẵn cho đỡ trống (chú Tư, anh Hùng, chị Lan, anh Tuấn, cô Ba, chị Mai), 42 ghế còn lại để dành cho người xem thật; khách quen nhường ghế khi hết chỗ.
+- **3 khách quen** của quán ngồi sẵn cho đỡ trống: chú Tư với anh Hùng ngồi chung một bàn, chị Lan ngồi bàn riêng. 45 ghế còn lại để dành cho người xem thật; khách quen nhường ghế khi hết chỗ.
 - **Quà theo số xu mỗi quà** (không cần tên quà, chỉnh được trong admin):
   - từ **1 xu**: một món ngon ngẫu nhiên (mực nướng, ốc hương, gà nướng…)
   - từ **5 xu**: một nồi lẩu ngẫu nhiên, sôi bốc khói trên bếp ga mini

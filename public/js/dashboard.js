@@ -120,7 +120,7 @@ app.innerHTML = `
     </div>
     <div class="card">
       <h3>🧑‍🤝‍🧑 Khách quen của quán</h3>
-      <p class="note">Quán có <b>6 khách quen</b> ngồi sẵn (chú Tư, anh Hùng, chị Lan, anh Tuấn, cô Ba, chị Mai — là nhân vật của quán, không phải người xem), 42 ghế còn lại để dành cho người xem thật. Bật lên thì họ tự gọi món, nói vài câu, chủ quán đáp lại họ lúc không có comment nào cần đọc, cho quán lúc nào cũng có chuyện. Người xem vào thì khách quen nhường ghế.</p>
+      <p class="note">Quán có <b>3 khách quen</b> ngồi sẵn (chú Tư với anh Hùng ngồi chung một bàn, chị Lan ngồi bàn riêng — là nhân vật của quán, không phải người xem), 45 ghế còn lại để dành cho người xem thật. Bật lên thì họ tự gọi món, nói vài câu, chủ quán đáp lại họ lúc không có comment nào cần đọc, cho quán lúc nào cũng có chuyện. Người xem vào thì khách quen nhường ghế.</p>
       <label class="field switch big"><input type="checkbox" id="s-npcLife" /><span><b>Khách quen tự gọi món, nói chuyện</b></span></label>
     </div>
     <div class="card">
